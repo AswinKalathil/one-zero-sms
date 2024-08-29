@@ -2,10 +2,10 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:one_zero/constants.dart';
+import 'package:one_zero/results_page.dart';
 import 'package:one_zero/database_helper.dart';
-
+import 'package:one_zero/dataEntry.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:multilevel_drawer/multilevel_drawer.dart';
 
 void main() {
   // Initialize the FFI
@@ -82,8 +82,9 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
   }
 
-  void _loadStudents() async {
-    List<Map<String, dynamic>> classList = await dbHelper.getClasses();
+  void _loadClasess() async {
+    List<Map<String, dynamic>> classList =
+        await dbHelper.getClasses('class_table');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('class Count ${classList.length}')),
     );
@@ -102,7 +103,7 @@ class _MyHomePageState extends State<MyHomePage> {
         'class_name': className,
       };
 
-      await dbHelper.insertClass(newClass);
+      await dbHelper.insertToTable('class_table', newClass);
 
       // Clear the text fields
       // _nameController.clear();
@@ -142,7 +143,7 @@ class _MyHomePageState extends State<MyHomePage> {
             child: IconButton(
               icon: const Icon(Icons.add, color: Colors.white),
               onPressed: () {
-                createStreamPopup(context);
+                addNewStudent(context);
               },
             ),
           ),
@@ -164,6 +165,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ),
             ),
+
             ListTile(
               leading: const Icon(Icons.home),
               title: const Text('Home'),
@@ -172,33 +174,130 @@ class _MyHomePageState extends State<MyHomePage> {
                 // Handle the Home tap here
               },
             ),
-            ListTile(
+            ExpansionTile(
               leading: const Icon(Icons.add_box),
-              title: const Text('Add  Class'),
-              onTap: () {
-                Navigator.pop(context);
-                // Handle tap here
-                createClassPopup(context);
-              },
+              title: Text('Add New'),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 10.0),
+                  child: ListTile(
+                    leading: const Icon(Icons.add_box_outlined),
+                    title: const Text('Add  Class'),
+                    onTap: () {
+                      Navigator.pop(context);
+
+                      // Close the drawer
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DataEntryPage(
+                            headers: [
+                              "ID",
+                              "Class Name",
+                              "Acadamic year",
+                              "Actions"
+                            ],
+                          ),
+                        ),
+                      );
+                      // Handle tap here
+                      // createClassPopup(context);
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 10.0),
+                  child: ListTile(
+                    leading: const Icon(Icons.add_box_outlined),
+                    title: const Text('Add  Stream'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      // Handle tap here
+                      createStreamPopup(context);
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 10.0),
+                  child: ListTile(
+                    leading: const Icon(Icons.add_box_outlined),
+                    title: const Text('Add  Student'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      // Handle tap here
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DataEntryPage(
+                            headers: [
+                              "ID",
+                              "Student Name",
+                              "Photo ID",
+                              "Student Phone",
+                              "Parent Name",
+                              "Parent Phone",
+                              "School Name",
+                              "Stream ID",
+                              "Actions"
+                            ],
+                          ),
+                        ),
+                      );
+                      addNewStudent(context);
+                    },
+                  ),
+                ),
+              ],
             ),
-            ListTile(
-              leading: const Icon(Icons.add_box),
-              title: const Text('Add  Stream'),
-              onTap: () {
-                Navigator.pop(context);
-                // Handle tap here
-                createStreamPopup(context);
-              },
+            ExpansionTile(
+              leading: const Icon(Icons.search),
+              title: Text('Search'),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 10.0),
+                  child: ListTile(
+                    leading: SizedBox(
+                      width: 25,
+                    ),
+                    title: const Text('Class'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      // Handle tap here
+                      createClassPopup(context);
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 10.0),
+                  child: ListTile(
+                    leading: SizedBox(
+                      width: 25,
+                    ),
+                    title: const Text('Subject'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      // Handle tap here
+                      createStreamPopup(context);
+                    },
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(left: 10.0),
+                  child: ListTile(
+                    leading: SizedBox(
+                      width: 25,
+                    ),
+                    title: const Text('Student'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      // Handle tap here
+                      addNewStudent(context);
+                    },
+                  ),
+                ),
+              ],
             ),
-            ListTile(
-              leading: const Icon(Icons.add_box),
-              title: const Text('Add  Student'),
-              onTap: () {
-                Navigator.pop(context);
-                // Handle tap here
-                addNewStudent(context);
-              },
-            ),
+
             ListTile(
               leading: const Icon(Icons.add_box),
               title: const Text('Add  Exam'),
@@ -250,6 +349,14 @@ class _MyHomePageState extends State<MyHomePage> {
                         classIndex: index,
                       ),
                       transitionDuration: Duration.zero,
+                    ),
+                  );
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DataEntryPage(
+                        headers: ["Column1", "Column2"],
+                      ),
                     ),
                   );
                 },
@@ -327,15 +434,32 @@ class _MyHomePageState extends State<MyHomePage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    SizedBox(
-                      width: 300,
-                      child: TextField(
-                        controller: classNameController,
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: 'Class Name',
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: 300,
+                          child: TextField(
+                            controller: classNameController,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              labelText: 'Class Name',
+                            ),
+                          ),
                         ),
-                      ),
+                        SizedBox(
+                          width: 20,
+                        ),
+                        SizedBox(
+                          width: 200,
+                          child: TextField(
+                            controller: classNameController,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                              labelText: 'Acadamic Year',
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     SizedBox(
                       height: 20,
@@ -404,7 +528,7 @@ class _MyHomePageState extends State<MyHomePage> {
           actions: [
             TextButton(
               onPressed: () {
-                _loadStudents();
+                _loadClasess();
                 Navigator.of(context).pop(); // Close the dialog
               },
               child: const Text('Cancel'),
@@ -415,7 +539,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
                 createStreamPopup(context);
               },
-              child: const Text('Continue'),
+              child: const Text('Save and Continue'),
             ),
           ],
         );
@@ -549,7 +673,7 @@ class _MyHomePageState extends State<MyHomePage> {
           actions: [
             TextButton(
               onPressed: () {
-                _loadStudents();
+                _loadClasess();
                 Navigator.of(context).pop(); // Close the dialog
               },
               child: const Text('Cancel'),
@@ -560,7 +684,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 //submit
                 Navigator.of(context).pop(); // Close the dialog
               },
-              child: const Text('Continue'),
+              child: const Text('Save'),
             ),
           ],
         );
@@ -663,121 +787,212 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Future<dynamic> addNewStudent(BuildContext context) {
-    return showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            title: Text('Add New Student'),
-            content: Column(
-              children: [
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Student Name',
-                  ),
-                ),
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Stream',
-                  ),
-                ),
-                TextField(
-                  decoration: InputDecoration(
-                    labelText: 'Photo',
-                  ),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text('Add'),
-              ),
-            ],
-          );
-        });
-  }
-}
+  void addNewStudent(BuildContext context) {
+    TextEditingController studentNameController = TextEditingController();
+    TextEditingController streamController = TextEditingController();
+    TextEditingController studentPhoneController = TextEditingController();
+    TextEditingController schoolNameController = TextEditingController();
+    TextEditingController parentNameController = TextEditingController();
+    TextEditingController parentPhoneController = TextEditingController();
+    TextEditingController photoPathController = TextEditingController();
 
-class ClassDetailPage extends StatelessWidget {
-  final String className;
-  final int classIndex;
+    double maxWidth = 1400;
+    double maxheight = 600;
 
-  ClassDetailPage({required this.className, required this.classIndex});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.blue,
-        title: Text(
-          className,
-          style:
-              const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-      ),
-      body: Row(
-        children: [
-          Expanded(
-            flex: 3, // 30% of the width
-            child: Container(
-              margin: EdgeInsets.all(10),
-              color:
-                  Colors.blueGrey[200], // Background color for identification
-              child: Column(
-                children: [SearchDropdown()],
-              ),
-            ),
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text(
+            'New Student',
+            style: TextStyle(fontWeight: FontWeight.bold),
           ),
-          Expanded(
-            flex: 7, // 80% of the width
-            child: Container(
-              margin: EdgeInsets.all(10),
-              color: Color.fromARGB(
-                  255, 221, 221, 221), // Background color for identification
-              child: Column(
-                children: [],
-              ),
-            ),
+          content: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return Container(
+                  width: maxWidth / 1.5,
+                  height: maxheight / 1.5,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(vertical: 10),
+                            width: 300,
+                            child: TextField(
+                              controller: studentNameController,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                labelText: 'Name',
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.symmetric(vertical: 10),
+                            width: 300,
+                            child: TextField(
+                              controller: schoolNameController,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                labelText: 'School Name',
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.symmetric(vertical: 10),
+                            width: 300,
+                            child: TextField(
+                              controller: parentNameController,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                labelText: 'Parent Name',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      //second column --------
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(vertical: 10),
+                            width: 200,
+                            child: TextField(
+                              controller: streamController,
+                              decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  labelText: 'Class and Stream'),
+                            ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.symmetric(vertical: 10),
+                            width: 300,
+                            child: TextField(
+                              controller: studentPhoneController,
+                              decoration: const InputDecoration(
+                                  border: OutlineInputBorder(),
+                                  labelText: 'Student Phone'),
+                            ),
+                          ),
+                          Container(
+                            padding: EdgeInsets.symmetric(vertical: 10),
+                            width: 300,
+                            child: TextField(
+                              controller: parentPhoneController,
+                              decoration: const InputDecoration(
+                                border: OutlineInputBorder(),
+                                labelText: 'Parent Phone',
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          GestureDetector(
+                            onTap: () {},
+                            child: Container(
+                              height: 150,
+                              width: 116, // Take full width
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Center(
+                                child: Icon(
+                                  Icons.person_add,
+                                  size: 50,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 50, left: 100),
+                            child: ElevatedButton(
+                                onPressed: () async {
+                                  if (studentNameController.text.isEmpty ||
+                                      streamController.text.isEmpty ||
+                                      studentPhoneController.text.isEmpty ||
+                                      schoolNameController.text.isEmpty ||
+                                      parentNameController.text.isEmpty ||
+                                      parentPhoneController.text.isEmpty ||
+                                      photoPathController.text.isEmpty) {
+                                    // Show an error message if any field is empty
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            'Please fill in all the fields.'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  } else {
+                                    // All fields are filled, proceed with your logic
+                                    Map<String, dynamic> newStudent = {
+                                      'student_id':
+                                          'some_generated_id', // Replace with actual logic to generate or assign an ID
+                                      'student_name':
+                                          studentNameController.text,
+                                      'photo_id': photoPathController.text,
+                                      'student_phone':
+                                          studentPhoneController.text,
+                                      'parent_name': parentNameController.text,
+                                      'parent_phone':
+                                          parentPhoneController.text,
+                                      'school_name': schoolNameController.text,
+                                      'stream_id': streamController.text,
+                                    };
+                                    await dbHelper.insertToTable(
+                                        'student_table', newStudent);
+
+                                    // Show a success message
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                            'Data submitted successfully!'),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+
+                                    // Proceed with further processing, like saving data to a database or sending it to a server
+                                    // Example: saveDataToDatabase(studentName, stream, studentPhone, schoolName, parentName, parentPhone, photoPath);
+                                  }
+                                },
+                                child: const Text('  Save  ')),
+                          ),
+                        ],
+                      )
+                    ],
+                  ));
+            },
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class SearchDropdown extends StatefulWidget {
-  @override
-  _SearchDropdownState createState() => _SearchDropdownState();
-}
-
-class _SearchDropdownState extends State<SearchDropdown> {
-  String _selectedSearchCriteria = 'Name';
-
-  final List<String> _searchCriteria = ['Name', 'Class', 'Subject'];
-
-  @override
-  Widget build(BuildContext context) {
-    return DropdownMenu<String>(
-      initialSelection: _searchCriteria.first,
-      onSelected: (String? value) {
-        // This is called when the user selects an item.
-        setState(() {
-          _selectedSearchCriteria = value!;
-        });
+          actions: [
+            TextButton(
+              onPressed: () {
+                _loadClasess();
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                _insertClass();
+                //submit
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('Finish'),
+            ),
+          ],
+        );
       },
-      dropdownMenuEntries:
-          _searchCriteria.map<DropdownMenuEntry<String>>((String value) {
-        return DropdownMenuEntry<String>(value: value, label: value);
-      }).toList(),
     );
   }
 }

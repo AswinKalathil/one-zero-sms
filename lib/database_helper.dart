@@ -35,6 +35,7 @@ class DatabaseHelper {
 CREATE TABLE class_table (
   class_id VARCHAR(20) NOT NULL,
   class_name VARCHAR(128) NOT NULL,
+  academic_year VARCHAR(20) NOT NULL,
   PRIMARY KEY (class_id)
 );
 
@@ -49,10 +50,11 @@ CREATE TABLE stream_table
 CREATE TABLE subject_table 
 (
   subject_id varchar(20) NOT NULL,
-  subject_name varchar(128) Not NULL,
-  stream_id varchar(20),
+  subject_name varchar(128) NOT NULL,
+  class_id varchar(20),
   PRIMARY KEY (subject_id),
-  FOREIGN KEY (stream_id) REFERENCES stream(stream_id)
+  FOREIGN key (class_id) REFERENCES class_table(class_id)
+  
 );
 CREATE TABLE stream_subjects_table  (
   stream_id varchar(20),
@@ -67,7 +69,11 @@ CREATE TABLE student_table
   student_id varchar(20) NOT NULL,
   student_name varchar(255) NOT NULL,
   photo_id varchar(128),
-  stream_id varchar(20),
+  student_phone varchar(20),
+  parent_name varchar(255),
+  parent_phone varchar(20),
+  school_name varchar(255),
+  stream_id varchar(20) NOT NULL,
   primary KEY (student_id),
   FOREIGN key (stream_id) REFERENCES stream(stream_id)
 );
@@ -124,16 +130,15 @@ JOIN student_table  s ON ts.student_id = s.student_id;
     ''');
   }
 
-  Future<int> insertClass(Map<String, dynamic> newClass) async {
-    String path = join(await getDatabasesPath(), 'app_database.db');
-    print("Database Path: $path");
+  Future<int> insertToTable(
+      String tableName, Map<String, dynamic> values) async {
     final db = await database;
-    return await db.insert('class_table ', newClass);
+    return await db.insert(tableName, values);
   }
 
-  Future<List<Map<String, dynamic>>> getClasses() async {
+  Future<List<Map<String, dynamic>>> getClasses(String tableName) async {
     final db = await database;
-    return await db.query('class_table ');
+    return await db.query(tableName);
   }
 }
 
