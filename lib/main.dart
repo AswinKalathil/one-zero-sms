@@ -57,6 +57,9 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+
+  int pageNumber = 0;
+
   int classCount = classNames.length;
 
   final DatabaseHelper dbHelper = DatabaseHelper();
@@ -131,12 +134,6 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Colors.blue,
         title: const Text('One Zero SMS',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        leading: IconButton(
-          icon: const Icon(Icons.menu, color: Colors.white),
-          onPressed: () {
-            _scaffoldKey.currentState?.openDrawer();
-          },
-        ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12.0),
@@ -147,266 +144,245 @@ class _MyHomePageState extends State<MyHomePage> {
               },
             ),
           ),
+          Padding(
+              padding: const EdgeInsets.only(right: 12.0),
+              child: Row(
+                children: [
+                  Icon(Icons.nightlight_round,
+                      color: widget.isDarkMode ? Colors.white : Colors.black),
+                  Switch(
+                    value: widget.isDarkMode,
+                    onChanged: widget.onThemeChanged,
+                    activeColor: Colors.white,
+                  ),
+                ],
+              )),
         ],
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: <Widget>[
-            const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Colors.blue,
-              ),
-              child: Text(
-                'Menu',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 24,
-                ),
-              ),
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.home),
-              title: const Text('Home'),
-              onTap: () {
-                Navigator.pop(context);
-                // Handle the Home tap here
-              },
-            ),
-            ExpansionTile(
-              leading: const Icon(Icons.add_box),
-              title: Text('Add New'),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 10.0),
-                  child: ListTile(
-                    leading: const Icon(Icons.add_box_outlined),
-                    title: const Text('Add  Class'),
-                    onTap: () {
-                      Navigator.pop(context);
-
-                      // Close the drawer
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => DataEntryPage(
-                            headers: [
-                              "ID",
-                              "Class Name",
-                              "Acadamic year",
-                              "Actions"
-                            ],
-                          ),
-                        ),
-                      );
-                      // Handle tap here
-                      // createClassPopup(context);
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 10.0),
-                  child: ListTile(
-                    leading: const Icon(Icons.add_box_outlined),
-                    title: const Text('Add  Stream'),
-                    onTap: () {
-                      Navigator.pop(context);
-                      // Handle tap here
-                      createStreamPopup(context);
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 10.0),
-                  child: ListTile(
-                    leading: const Icon(Icons.add_box_outlined),
-                    title: const Text('Add  Student'),
-                    onTap: () {
-                      Navigator.pop(context);
-                      // Handle tap here
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => DataEntryPage(
-                            headers: [
-                              "ID",
-                              "Student Name",
-                              "Photo ID",
-                              "Student Phone",
-                              "Parent Name",
-                              "Parent Phone",
-                              "School Name",
-                              "Stream ID",
-                              "Actions"
-                            ],
-                          ),
-                        ),
-                      );
-                      addNewStudent(context);
-                    },
-                  ),
-                ),
-              ],
-            ),
-            ExpansionTile(
-              leading: const Icon(Icons.search),
-              title: Text('Search'),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(left: 10.0),
-                  child: ListTile(
-                    leading: SizedBox(
-                      width: 25,
-                    ),
-                    title: const Text('Class'),
-                    onTap: () {
-                      Navigator.pop(context);
-                      // Handle tap here
-                      createClassPopup(context);
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 10.0),
-                  child: ListTile(
-                    leading: SizedBox(
-                      width: 25,
-                    ),
-                    title: const Text('Subject'),
-                    onTap: () {
-                      Navigator.pop(context);
-                      // Handle tap here
-                      createStreamPopup(context);
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(left: 10.0),
-                  child: ListTile(
-                    leading: SizedBox(
-                      width: 25,
-                    ),
-                    title: const Text('Student'),
-                    onTap: () {
-                      Navigator.pop(context);
-                      // Handle tap here
-                      addNewStudent(context);
-                    },
-                  ),
-                ),
-              ],
-            ),
-
-            ListTile(
-              leading: const Icon(Icons.add_box),
-              title: const Text('Add  Exam'),
-              onTap: () {
-                Navigator.pop(context);
-                // Handle tap here
-                createClassPopup(context);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.nightlight_round),
-              title: const Text('Night Mode'),
-              trailing: Switch(
-                value: widget.isDarkMode,
-                onChanged: (value) {
-                  widget.onThemeChanged(value);
-                },
-              ),
-            ),
-            // Add more ListTile widgets for other menu items
-          ],
-        ),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(50.0),
-        child: GridView.builder(
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4, // Number of columns in the grid
-            childAspectRatio: 3 / 2, // Width/height ratio of the cards
-            crossAxisSpacing: 20,
-            mainAxisSpacing: 20,
-          ),
-          itemCount: classCount, // Number of cards in the grid
-          itemBuilder: (context, index) {
-            return Card(
-              color: Colors.white,
+      body: Row(
+        children: [
+          Expanded(
+            flex: 2,
+            child: Material(
               elevation: 5,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
+              child: ListView(
+                padding: EdgeInsets.zero,
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.home),
+                    title: const Text('Home'),
+                    onTap: () {
+                      setState(() {
+                        pageNumber = 0;
+                      });
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.rectangle_outlined),
+                    title: const Text('Class Rooms'),
+                    onTap: () {
+                      setState(() {
+                        pageNumber = 1;
+                      });
+                    },
+                  ),
+                  ExpansionTile(
+                    leading: const Icon(Icons.add_box),
+                    title: Text('Add New'),
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10.0),
+                        child: ListTile(
+                          leading: const Icon(Icons.add_box_outlined),
+                          title: const Text('Class'),
+                          onTap: () {
+                            setState(() {
+                              pageNumber = 1;
+                            });
+                            setState(() {
+                              pageNumber = 2;
+                            });
+                          },
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10.0),
+                        child: ListTile(
+                          leading: const Icon(Icons.add_box_outlined),
+                          title: const Text('Stream'),
+                          onTap: () {
+                            setState(() {
+                              pageNumber = 3;
+                            });
+                            // createStreamPopup(context);
+                          },
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 10.0),
+                        child: ListTile(
+                          leading: const Icon(Icons.add_box_outlined),
+                          title: const Text('Student'),
+                          onTap: () {
+                            setState(() {
+                              pageNumber = 1;
+                            });
+                            setState(() {
+                              pageNumber = 4;
+                              print(4);
+                            });
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.receipt_long_outlined),
+                    title: const Text('Results'),
+                    onTap: () {
+                      setState(() {
+                        pageNumber = 5;
+                      });
+                    },
+                  ),
+
+                  ListTile(
+                    leading: const Icon(Icons.add_box),
+                    title: const Text('Add  Exam'),
+                    onTap: () {
+                      setState(() {
+                        pageNumber = 6;
+                      });
+                    },
+                  ),
+
+                  // Add more ListTile widgets for other menu items
+                ],
               ),
-              child: InkWell(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) =>
-                          ClassDetailPage(
-                        className: classNames[index],
-                        classIndex: index,
-                      ),
-                      transitionDuration: Duration.zero,
-                    ),
-                  );
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DataEntryPage(
-                        headers: ["Column1", "Column2"],
-                      ),
-                    ),
-                  );
-                },
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: cardBackgroundColors[
-                                  index % cardBackgroundColors.length],
-                              borderRadius: const BorderRadius.only(
-                                  topLeft: Radius.circular(4),
-                                  topRight: Radius.circular(4),
-                                  bottomLeft: Radius.circular(30)),
-                              image: DecorationImage(
-                                image: AssetImage(
-                                    'assets/class-bg-${index % 2}.png'),
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          Positioned(
-                            top: 10,
-                            left: 10,
-                            child: Text(
-                              classNames[index],
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors
-                                    .black87, // Ensure text is visible over the image
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: SizedBox(height: 5),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
+            ),
+          ),
+          Expanded(
+              flex: 8,
+              child: switch (pageNumber) {
+                0 => _buildHome(),
+                1 => _buildClassRooms(),
+                2 => _buildEntrySection(
+                    ["ID", "Class Name", "Acadamic year", "Actions"],
+                    UniqueKey()),
+                3 => _buildEntrySection(
+                    ["ID", "Stream Name", "Class ID", "Actions"], UniqueKey()),
+                4 => _buildEntrySection([
+                    "ID",
+                    "Student Name",
+                    "Photo ID",
+                    "Student Phone",
+                    "Parent Name",
+                    "Parent Phone",
+                    "School Name",
+                    "Stream ID",
+                    "Actions"
+                  ], UniqueKey()),
+                5 => _buildClassPage(),
+                6 => _buildEntrySection(
+                    ["ID", "Subject Name", "Max Marks", "Test Date", "Actions"],
+                    UniqueKey()),
+
+                // TODO: Handle this case.
+                int() => throw UnimplementedError(),
+              }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHome() {
+    return Container();
+  }
+
+  Widget _buildClassPage([int index = 0]) {
+    return ClassDetailPage(
+      className: classNames[index],
+      classIndex: index,
+    );
+  }
+
+  Widget _buildEntrySection(List<String> headers, Key key) {
+    return DataEntryPage(
+      headers: headers,
+      key: key,
+    );
+  }
+
+  Widget _buildClassRooms() {
+    return Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: GridView.builder(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 4, // Number of columns in the grid
+          childAspectRatio: 3 / 2, // Width/height ratio of the cards
+          crossAxisSpacing: 20,
+          mainAxisSpacing: 20,
         ),
+        itemCount: classCount, // Number of cards in the grid
+        itemBuilder: (context, index) {
+          return Card(
+            color: Colors.white,
+            elevation: 5,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  pageNumber = 5;
+                });
+              },
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            color: cardBackgroundColors[
+                                index % cardBackgroundColors.length],
+                            borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(4),
+                                topRight: Radius.circular(4),
+                                bottomLeft: Radius.circular(30)),
+                            image: DecorationImage(
+                              image: AssetImage(
+                                  'assets/class-bg-${index % 2}.png'),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 10,
+                          left: 10,
+                          child: Text(
+                            classNames[index],
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors
+                                  .black87, // Ensure text is visible over the image
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: SizedBox(height: 5),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }

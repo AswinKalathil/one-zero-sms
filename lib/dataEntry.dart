@@ -87,99 +87,93 @@ class _DataEntryPageState extends State<DataEntryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Data Entry'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                SizedBox(
-                  width: 300,
-                  child: Text(
-                    'Enter New Class Details',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 300,
+                child: Text(
+                  'Enter New Class Details',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
-                ElevatedButton(
-                  onPressed: _addNewRow,
-                  child: Text('Add Row'),
-                ),
-                SizedBox(width: 20),
-                ElevatedButton(
-                  onPressed: _onSubmit,
-                  child: Text('Submit'),
-                ),
-              ],
-            ),
-            SizedBox(height: 20),
-            Expanded(
+              ),
+              ElevatedButton(
+                onPressed: _addNewRow,
+                child: Text('Add Row'),
+              ),
+              SizedBox(width: 20),
+              ElevatedButton(
+                onPressed: _onSubmit,
+                child: Text('Submit'),
+              ),
+            ],
+          ),
+          SizedBox(height: 20),
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.vertical,
               child: SingleChildScrollView(
-                scrollDirection: Axis.vertical,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    columnSpacing: 16.0, // Space between columns
-                    border: TableBorder(
-                      verticalInside: BorderSide(color: Colors.grey, width: 1),
-                    ),
-                    headingRowColor:
-                        MaterialStateProperty.resolveWith<Color>((states) {
-                      return Colors.blue.shade100; // Header background color
-                    }),
-                    columns: headers.map((header) {
-                      return DataColumn(
-                        label: _buildHeaderCell(header),
-                      );
-                    }).toList(),
-                    rows: List<DataRow>.generate(
-                      rows.length,
-                      (rowIndex) => DataRow(
-                        color:
-                            MaterialStateProperty.resolveWith<Color>((states) {
-                          return rowIndex % 2 == 0
-                              ? Colors.grey.shade200
-                              : Colors.white;
-                        }),
-                        cells: headers.map((header) {
-                          if (header == 'Actions') {
-                            return DataCell(
-                              IconButton(
-                                icon: Icon(Icons.delete,
-                                    color: const Color.fromARGB(
-                                        255, 241, 167, 161)),
-                                onPressed: () {
-                                  setState(() {
-                                    rows.removeAt(rowIndex);
-                                    focusNodes.removeAt(rowIndex);
-                                  });
-                                },
-                              ),
-                            );
-                          } else {
-                            int cellIndex = headers.indexOf(header);
-                            return _buildDataCell(
-                              rows[rowIndex][header]!,
-                              focusNodes[rowIndex][cellIndex],
-                              cellIndex < focusNodes[rowIndex].length - 1
-                                  ? focusNodes[rowIndex][cellIndex + 1]
-                                  : null,
-                            );
-                          }
-                        }).toList(),
-                      ),
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columnSpacing: 16.0, // Space between columns
+                  border: TableBorder(
+                    verticalInside: BorderSide(color: Colors.grey, width: 1),
+                  ),
+                  headingRowColor:
+                      MaterialStateProperty.resolveWith<Color>((states) {
+                    return Colors.blue.shade100; // Header background color
+                  }),
+                  columns: headers.map((header) {
+                    return DataColumn(
+                      label: _buildHeaderCell(header),
+                    );
+                  }).toList(),
+                  rows: List<DataRow>.generate(
+                    rows.length,
+                    (rowIndex) => DataRow(
+                      color: MaterialStateProperty.resolveWith<Color>((states) {
+                        return rowIndex % 2 == 0
+                            ? Colors.grey.shade200
+                            : Colors.white;
+                      }),
+                      cells: headers.map((header) {
+                        if (header == 'Actions') {
+                          return DataCell(
+                            IconButton(
+                              icon: Icon(Icons.delete,
+                                  color:
+                                      const Color.fromARGB(255, 241, 167, 161)),
+                              onPressed: () {
+                                setState(() {
+                                  rows.removeAt(rowIndex);
+                                  focusNodes.removeAt(rowIndex);
+                                });
+                              },
+                            ),
+                          );
+                        } else {
+                          int cellIndex = headers.indexOf(header);
+                          return _buildDataCell(
+                            rows[rowIndex][header]!,
+                            focusNodes[rowIndex][cellIndex],
+                            cellIndex < focusNodes[rowIndex].length - 1
+                                ? focusNodes[rowIndex][cellIndex + 1]
+                                : null,
+                          );
+                        }
+                      }).toList(),
                     ),
                   ),
                 ),
               ),
-            )
-          ],
-        ),
+            ),
+          )
+        ],
       ),
     );
   }
