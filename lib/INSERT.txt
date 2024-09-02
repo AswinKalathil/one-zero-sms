@@ -1,0 +1,117 @@
+INSERT INTO class_table (class_id, class_name, academic_year)
+VALUES 
+('C001', 'Class 10', '2023-2024'),
+('C002', 'Class 12', '2023-2024');
+INSERT INTO stream_table (stream_id, class_id)
+VALUES 
+('S001', 'C001'),
+('S002', 'C002');
+INSERT INTO subject_table (subject_id, subject_name, class_id)
+VALUES 
+('SUB001', 'Mathematics', 'C001'),
+('SUB002', 'Science', 'C001'),
+('SUB003', 'English', 'C001'),
+('SUB004', 'History', 'C001'),
+('SUB005', 'Geography', 'C001'),
+('SUB006', 'Mathematics', 'C002'),
+('SUB007', 'Physics', 'C002'),
+('SUB008', 'Chemistry', 'C002'),
+('SUB009', 'Biology', 'C002'),
+('SUB010', 'English', 'C002');
+INSERT INTO stream_subjects_table (stream_id, subject_id)
+VALUES 
+('S001', 'SUB001'),
+('S001', 'SUB002'),
+('S001', 'SUB003'),
+('S001', 'SUB004'),
+('S001', 'SUB005'),
+('S002', 'SUB006'),
+('S002', 'SUB007'),
+('S002', 'SUB008'),
+('S002', 'SUB009'),
+('S002', 'SUB010');
+INSERT INTO student_table (student_id, student_name, photo_id, student_phone, parent_name, parent_phone, school_name, stream_id)
+VALUES 
+('ST001', 'Alice Brown', 'photo1.jpg', '1234567890', 'John Brown', '0987654321', 'High School A', 'S001'),
+('ST002', 'Bob Smith', 'photo2.jpg', '1234567891', 'Jane Smith', '0987654322', 'High School A', 'S001'),
+('ST003', 'Charlie Davis', 'photo3.jpg', '1234567892', 'David Davis', '0987654323', 'High School A', 'S001'),
+('ST004', 'Daisy Evans', 'photo4.jpg', '1234567893', 'Eve Evans', '0987654324', 'High School A', 'S001'),
+('ST005', 'Ethan Ford', 'photo5.jpg', '1234567894', 'Frank Ford', '0987654325', 'High School A', 'S001'),
+('ST006', 'Fiona Green', 'photo6.jpg', '1234567895', 'George Green', '0987654326', 'High School B', 'S002'),
+('ST007', 'George Harris', 'photo7.jpg', '1234567896', 'Helen Harris', '0987654327', 'High School B', 'S002'),
+('ST008', 'Hannah Jones', 'photo8.jpg', '1234567897', 'Ian Jones', '0987654328', 'High School B', 'S002'),
+('ST009', 'Isaac King', 'photo9.jpg', '1234567898', 'Jack King', '0987654329', 'High School B', 'S002'),
+('ST010', 'Julia Lewis', 'photo10.jpg', '1234567899', 'Karen Lewis', '0987654330', 'High School B', 'S002');
+INSERT INTO test_table (test_id, subject_id, max_mark, test_date)
+VALUES 
+('T001', 'SUB001', 100, '2024-01-15'),
+('T002', 'SUB002', 100, '2024-01-16'),
+('T003', 'SUB003', 100, '2024-01-17'),
+('T004', 'SUB004', 100, '2024-01-18'),
+('T005', 'SUB005', 100, '2024-01-19'),
+('T006', 'SUB006', 100, '2024-01-20'),
+('T007', 'SUB007', 100, '2024-01-21'),
+('T008', 'SUB008', 100, '2024-01-22'),
+('T009', 'SUB009', 100, '2024-01-23'),
+('T010', 'SUB010', 100, '2024-01-24');
+INSERT INTO test_score_table (test_score_id, score, student_id, test_id)
+VALUES 
+('TS001', 85, 'ST001', 'T001'),
+('TS002', 78, 'ST002', 'T001'),
+('TS003', 90, 'ST003', 'T001'),
+('TS004', 88, 'ST004', 'T001'),
+('TS005', 92, 'ST005', 'T001'),
+
+('TS006', 76, 'ST001', 'T002'),
+('TS007', 85, 'ST002', 'T002'),
+('TS008', 89, 'ST003', 'T002'),
+('TS009', 91, 'ST004', 'T002'),
+('TS010', 87, 'ST005', 'T002'),
+
+('TS011', 80, 'ST001', 'T003'),
+('TS012', 82, 'ST002', 'T003'),
+('TS013', 88, 'ST003', 'T003'),
+('TS014', 79, 'ST004', 'T003'),
+('TS015', 85, 'ST005', 'T003'),
+
+('TS016', 83, 'ST001', 'T004'),
+('TS017', 81, 'ST002', 'T004'),
+('TS018', 86, 'ST003', 'T004'),
+('TS019', 87, 'ST004', 'T004'),
+('TS020', 84, 'ST005', 'T004'),
+
+('TS021', 90, 'ST001', 'T005'),
+('TS022', 92, 'ST002', 'T005'),
+('TS023', 88, 'ST003', 'T005'),
+('TS024', 86, 'ST004', 'T005'),
+('TS025', 85, 'ST005', 'T005'),
+
+('TS026', 87, 'ST006', 'T006'),
+('TS027', 89, 'ST007', 'T006'),
+('TS028', 91, 'ST008', 'T006'),
+('TS029', 88, 'ST009', 'T006'),
+('TS030', 90, 'ST010', 'T006'),
+
+('TS031', 85, 'ST006', 'T007'),
+('TS032', 83, 'ST007', 'T007'),
+('TS033', 82, 'ST008', 'T007'),
+('TS034', 80, 'ST009', 'T007'),
+('TS035', 81, 'ST010', 'T007'),
+
+('TS036', 88, 'ST006', 'T008'),
+('TS037', 89, 'ST007', 'T008'),
+('TS038', 87, 'ST008', 'T008'),
+('TS039', 86, 'ST009', 'T008'),
+('TS040', 84, 'ST010', 'T008'),
+
+('TS041', 90, 'ST006', 'T009'),
+('TS042', 91, 'ST007', 'T009'),
+('TS043', 89, 'ST008', 'T009'),
+('TS044', 88, 'ST009', 'T009'),
+('TS045', 92, 'ST010', 'T009'),
+
+('TS046', 95, 'ST006', 'T010'),
+('TS047', 93, 'ST007', 'T010'),
+('TS048', 92, 'ST008', 'T010'),
+('TS049', 94, 'ST009', 'T010'),
+('TS050', 96, 'ST010', 'T010');

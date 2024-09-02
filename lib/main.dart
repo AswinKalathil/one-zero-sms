@@ -139,9 +139,7 @@ class _MyHomePageState extends State<MyHomePage> {
             padding: const EdgeInsets.only(right: 12.0),
             child: IconButton(
               icon: const Icon(Icons.add, color: Colors.white),
-              onPressed: () {
-                addNewStudent(context);
-              },
+              onPressed: () {},
             ),
           ),
           Padding(
