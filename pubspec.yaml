@@ -34,6 +34,8 @@ dependencies:
   sqflite: ^2.0.0+4
   path: ^1.8.3
   sqflite_common_ffi: ^2.1.0
+  
+  stroke_text: any
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -71,6 +73,14 @@ flutter:
     - assets/class-bg-1.png
 
     - assets/ml.jpg
+    - assets/one_zero-logo-1.png
+    - assets/one-zero-logo-2.png
+
+
+  fonts:
+    - family: Revue  # Give a name to your font
+      fonts:
+        - asset: assets\fonts\Revue Std Bold.otf
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

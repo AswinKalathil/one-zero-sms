@@ -6,6 +6,7 @@ import 'package:one_zero/results_page.dart';
 import 'package:one_zero/database_helper.dart';
 import 'package:one_zero/dataEntry.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:stroke_text/stroke_text.dart';
 
 void main() {
   // Initialize the FFI
@@ -132,8 +133,11 @@ class _MyHomePageState extends State<MyHomePage> {
       key: _scaffoldKey,
       appBar: AppBar(
         backgroundColor: Colors.blue,
-        title: const Text('One Zero SMS',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: StrokeText(
+          text: "ONE ZERO",
+          textStyle:
+              TextStyle(fontSize: 30, fontFamily: 'Revue', color: Colors.white),
+        ),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12.0),
@@ -246,7 +250,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
                   ListTile(
                     leading: const Icon(Icons.add_box),
-                    title: const Text('Add  Exam'),
+                    title: const Text('New Exam'),
                     onTap: () {
                       setState(() {
                         pageNumber = 6;
@@ -264,26 +268,13 @@ class _MyHomePageState extends State<MyHomePage> {
               child: switch (pageNumber) {
                 0 => _buildHome(),
                 1 => _buildClassRooms(),
-                2 => _buildEntrySection(
-                    ["ID", "Class Name", "Acadamic year", "Actions"],
-                    UniqueKey()),
+                2 => _buildEntrySection("class_table", UniqueKey()),
                 3 => _buildEntrySection(
-                    ["ID", "Stream Name", "Class ID", "Actions"], UniqueKey()),
-                4 => _buildEntrySection([
-                    "ID",
-                    "Student Name",
-                    "Photo ID",
-                    "Student Phone",
-                    "Parent Name",
-                    "Parent Phone",
-                    "School Name",
-                    "Stream ID",
-                    "Actions"
-                  ], UniqueKey()),
+                    "stream_table", UniqueKey()), // Stream Table
+
+                4 => _buildEntrySection("student_table", UniqueKey()),
                 5 => _buildClassPage(),
-                6 => _buildEntrySection(
-                    ["ID", "Subject Name", "Max Marks", "Test Date", "Actions"],
-                    UniqueKey()),
+                6 => _buildEntrySection("test_table", UniqueKey()),
 
                 // TODO: Handle this case.
                 int() => throw UnimplementedError(),
@@ -304,9 +295,15 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildEntrySection(List<String> headers, Key key) {
+  Widget _buildEntrySection(String tableName, Key key) {
+    if (tableName == 'test_table') {
+      return ExamEntry(
+        metadata: tableMetadataMap[tableName]!,
+        key: key,
+      );
+    }
     return DataEntryPage(
-      headers: headers,
+      metadata: tableMetadataMap[tableName]!,
       key: key,
     );
   }

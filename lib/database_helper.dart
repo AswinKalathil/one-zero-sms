@@ -1,4 +1,6 @@
 // import 'package:sqflite/sqflite.dart';
+import 'dart:ffi';
+
 import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
@@ -33,100 +35,65 @@ class DatabaseHelper {
     await db.execute('''
     
 CREATE TABLE class_table (
-  class_id VARCHAR(20) NOT NULL,
-  class_name VARCHAR(128) NOT NULL,
-  academic_year VARCHAR(20) NOT NULL,
-  PRIMARY KEY (class_id)
+  id INTEGER PRIMARY KEY AUTOINCREMENT,           
+  class_name TEXT NOT NULL,              
+  academic_year TEXT NOT NULL             
 );
 
-CREATE TABLE stream_table 
-(
-  stream_id varchar(20) NOT NULL,
-  class_id varchar(20),
-  PRIMARY KEY (stream_id),
-  FOREIGN key (class_id) REFERENCES class_table(class_id)
+CREATE TABLE stream_table (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,   
+  class_id TEXT,                          
+  FOREIGN KEY (class_id) REFERENCES class_table(id)
 );
 
-CREATE TABLE subject_table 
-(
-  subject_id varchar(20) NOT NULL,
-  subject_name varchar(128) NOT NULL,
-  class_id varchar(20),
-  PRIMARY KEY (subject_id),
-  FOREIGN key (class_id) REFERENCES class_table(class_id)
-  
-);
-CREATE TABLE stream_subjects_table  (
-  stream_id varchar(20),
-  subject_id varchar(20),
-  PRIMARY KEY (stream_id, subject_id),
-  FOREIGN KEY (stream_id) REFERENCES stream_table(stream_id),
-  FOREIGN KEY (subject_id) REFERENCES subject_table(subject_id)
+CREATE TABLE subject_table (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,   
+  subject_name TEXT NOT NULL,            
+  class_id TEXT,
+  FOREIGN KEY (class_id) REFERENCES class_table(id)
 );
 
-CREATE TABLE student_table 
-(
-  student_id varchar(20) NOT NULL,
-  student_name varchar(255) NOT NULL,
-  photo_id varchar(128),
-  student_phone varchar(20),
-  parent_name varchar(255),
-  parent_phone varchar(20),
-  school_name varchar(255),
-  stream_id varchar(20) NOT NULL,
-  primary KEY (student_id),
-  FOREIGN key (stream_id) REFERENCES stream_table(stream_id)
+CREATE TABLE stream_subjects_table (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,   
+  stream_id INTEGER,
+  subject_id INTEGER,
+  FOREIGN KEY (stream_id) REFERENCES stream_table(id),
+  FOREIGN KEY (subject_id) REFERENCES subject_table(id)
 );
-CREATE TABLE test_table 
-(
-  test_id varchar(20) NOT NULL,
-  subject_id varchar(20),
-  max_mark int,
+
+CREATE TABLE student_table (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,  
+  student_name TEXT NOT NULL,
+  photo_id TEXT,
+  student_phone TEXT,
+  parent_name TEXT,
+  parent_phone TEXT,
+  school_name TEXT,
+  stream_id INTEGER NOT NULL,
+  FOREIGN KEY (stream_id) REFERENCES stream_table(id)
+);
+
+CREATE TABLE test_table (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,   
+  subject_id INTEGER,
+  topic TEXT,
+  max_mark INTEGER,
   test_date DATETIME NOT NULL,
-  PRIMARY KEY (test_id),
-  FOREIGN key (subject_id) REFERENCES subject_table(subject_id)
+  FOREIGN KEY (subject_id) REFERENCES subject_table(id)
 );
-CREATE TABLE test_score_table 
-(
-  test_score_id varchar(20) NOT NULL,
-	score int ,
-  student_id varchar(20),
-  test_id varchar(20),
-  PRIMARY key (test_score_id),
-  FOREIGN key (student_id) REFERENCES student_table(student_id),
-  FOREIGN KEY (test_id) REFERENCES test_table(test_id)
+
+CREATE TABLE test_score_table (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,   
+  score INTEGER,
+  student_id INTEGER,
+  test_id INTEGER,
+  FOREIGN KEY (student_id) REFERENCES student_table(id),
+  FOREIGN KEY (test_id) REFERENCES test_table(id)
 );
- 
-CREATE VIEW latest_scores_view AS
-WITH LatestTests AS (
-  SELECT
-    t.subject_id,
-    t.test_id
-  FROM test_table  t
-  JOIN (
-    SELECT
-      subject_id,
-      MAX(test_date) AS latest_date
-    FROM test_table 
-    GROUP BY subject_id
-  ) lt
-  ON t.subject_id = lt.subject_id
-  AND t.test_date = lt.latest_date
-)
-SELECT
-  s.student_id,
-  s.student_name,
-  sub.subject_name,
-  lt.test_id,
-  ts.score
-FROM LatestTests lt
-JOIN subject_table  sub ON lt.subject_id = sub.subject_id
-JOIN test_score_table  ts ON lt.test_id = ts.test_id
-JOIN student_table  s ON ts.student_id = s.student_id;
- 
+
 CREATE VIEW student_grade_view AS
 SELECT 
-  s.student_id,
+  s.id AS student_id,
   s.student_name,
   COALESCE(s.photo_id, 'default_photo.png') AS photo_path,
   c.class_name,
@@ -136,13 +103,39 @@ SELECT
   t.max_mark,
   t.test_date
 FROM student_table s
-LEFT JOIN stream_table st ON s.stream_id = st.stream_id
-LEFT JOIN class_table c ON st.class_id = c.class_id
-LEFT JOIN test_score_table ts ON s.student_id = ts.student_id
-LEFT JOIN test_table t ON ts.test_id = t.test_id
-LEFT JOIN subject_table sub ON t.subject_id = sub.subject_id;
+LEFT JOIN stream_table st ON s.stream_id = st.id
+LEFT JOIN class_table c ON st.class_id = c.id
+LEFT JOIN test_score_table ts ON s.id = ts.student_id
+LEFT JOIN test_table t ON ts.test_id = t.id
+LEFT JOIN subject_table sub ON t.subject_id = sub.id;
 
- 
+-- Insert into class_table
+INSERT INTO class_table (id, class_name, academic_year)
+VALUES (1000, 'Class A', '2024-2025');
+
+-- Insert into stream_table
+INSERT INTO stream_table (id, class_id)
+VALUES (2000, 1000);
+
+-- Insert into subject_table
+INSERT INTO subject_table (id, subject_name, class_id)
+VALUES (3000, 'Mathematics', 1000);
+
+-- Insert into stream_subjects_table
+INSERT INTO stream_subjects_table (id, stream_id, subject_id)
+VALUES (4000, 2000, 3000);
+
+-- Insert into student_table
+INSERT INTO student_table (id, student_name, photo_id, student_phone, parent_name, parent_phone, school_name, stream_id)
+VALUES (5000, 'John Doe', 'photo_1.png', '1234567890', 'Jane Doe', '0987654321', 'Sample School', 2000);
+
+-- Insert into test_table
+INSERT INTO test_table (id, subject_id, max_mark, test_date)
+VALUES (6000, 3000, 100, '2024-09-01');
+
+-- Insert into test_score_table
+INSERT INTO test_score_table (id, score, student_id, test_id)
+VALUES (7000, 85, 5000, 6000);
 
     ''');
   }
@@ -158,86 +151,148 @@ LEFT JOIN subject_table sub ON t.subject_id = sub.subject_id;
     return await db.query(tableName);
   }
 
-  Future<String?> getStudentId(String studentName) async {
+  Future<int?> getStudentId(String studentName) async {
     final db = await database;
-    String query = '''
-  SELECT student_id FROM student_table WHERE student_name = ?;
-  ''';
-    List<Map<String, dynamic>> result = await db.rawQuery(query, [studentName]);
 
-    if (result.isEmpty) {
-      return null; // No student found
+    // Check if studentName is null or empty
+    if (studentName.isEmpty) {
+      throw ArgumentError("Student name cannot be empty");
     }
 
-    return result[0]['student_id'] as String?;
+    String query = '''
+    SELECT id FROM student_table WHERE student_name = ?;
+  ''';
+
+    try {
+      // Execute the query and get the result
+      List<Map<String, dynamic>> result =
+          await db.rawQuery(query, [studentName]);
+
+      // Check if the result is empty and return null if no student is found
+      if (result.isEmpty) {
+        return null;
+      }
+
+      // Return the student ID
+      return result[0]['id'] as int?;
+    } catch (e) {
+      // Handle any exceptions that occur
+      print("Error occurred while fetching student ID: $e");
+      throw Exception("Failed to retrieve student ID. Please try again later.");
+    }
   }
 
   Future<List<Map<String, dynamic>>> getStudentsOfSubject(
       String subjectName) async {
     final db = await database;
 
-    print("Class Name: $subjectName");
+    try {
+      print("Subject Name: $subjectName");
 
-    final queryResults = await db.rawQuery(
-        'SELECT subject_id FROM subject_table WHERE subject_name = ?;',
-        [subjectName]);
-    print("1st Query Results: ${queryResults[0]['subject_id']}");
-    String subjectId = queryResults[0]['subject_id'] as String;
+      // Query to get the subject ID
+      final queryResults = await db.rawQuery(
+          'SELECT id FROM subject_table WHERE subject_name = ?;',
+          [subjectName]);
 
-    String query = '''
-   SELECT DISTINCT 
-    s.student_id, 
-    s.student_name, 
-    s.photo_id
-FROM 
-    student_table s
-JOIN 
-    stream_table st ON s.stream_id = st.stream_id
-JOIN 
-    stream_subjects_table ss ON st.stream_id = ss.stream_id
-JOIN 
-    subject_table sub ON ss.subject_id = sub.subject_id
-WHERE 
-    sub.subject_id = ?;
+      // Check if the query returned any results
+      if (queryResults.isEmpty) {
+        print("No subject found with name: $subjectName");
+        return []; // Return an empty list if no subject is found
+      }
 
+      // Get the subject ID from the result
+      int subjectId = queryResults[0]['id'] as int;
+      print("Subject ID: $subjectId");
 
-  ''';
-    final result = await db.rawQuery(query, [subjectId]);
-    return result;
+      // Query to get students of the subject
+      String query = '''
+      SELECT DISTINCT 
+        s.id, 
+        s.student_name, 
+        s.photo_id
+      FROM 
+        student_table s
+      JOIN 
+        stream_table st ON s.stream_id = st.id
+      JOIN 
+        stream_subjects_table ss ON st.id = ss.stream_id
+      JOIN 
+        subject_table sub ON ss.subject_id = sub.id
+      WHERE 
+        sub.id = ?;
+    ''';
+
+      final result = await db.rawQuery(query, [subjectId]);
+      return result;
+    } catch (e) {
+      // Handle any exceptions that occur
+      print("Error occurred: $e");
+      return []; // Return an empty list or handle the error as needed
+    }
   }
 
   Future<List<Map<String, dynamic>>> getStudentsOfClass(
       String className) async {
     print("Class Name: $className");
     final db = await database;
+
+    // Query to get the class ID
     final queryResults = await db.rawQuery(
-        'SELECT class_id FROM class_table WHERE class_name = ?;', [className]);
-    print("1st Query Results: ${queryResults[0]['class_id']}");
-    String classId = queryResults[0]['class_id'] as String;
-    String query = ''' SELECT 
-    s.student_id,
-    s.student_name,
-    s.photo_id
-  FROM 
-    student_table s
-  INNER JOIN 
-    stream_table st ON s.stream_id = st.stream_id
-  INNER JOIN 
-    class_table c ON st.class_id = c.class_id
-  WHERE 
-    c.class_id = ?;''';
+        'SELECT id FROM class_table WHERE class_name = ?;', [className]);
+
+    // Check if the query returned any results
+    if (queryResults.isEmpty) {
+      print("No class found with name: $className !");
+      return []; // Return an empty list if no class is found
+    }
+
+    // Get the class ID from the result
+    int classId = queryResults[0]['id'] as int;
+    print("Class ID: $classId");
+
+    // Query to get students of the class
+    String query = '''
+    SELECT 
+      s.id,
+      s.student_name,
+      s.photo_id
+    FROM 
+      student_table s
+    INNER JOIN 
+      stream_table st ON s.stream_id = st.id
+    INNER JOIN 
+      class_table c ON st.class_id = c.id
+    WHERE 
+      c.id = ?;
+  ''';
+
+    // Execute the query
     final result = await db.rawQuery(query, [classId]);
     print("Result: $result");
+
     return result;
   }
 
-  Future<List<Map<String, dynamic>>> getGradeCard(String studentId) async {
+  Future<List<Map<String, dynamic>>> getGradeCard(String studentName) async {
     final db = await database;
-
-    // Check if studentId is correctly passed and is not null
-    if (studentId.isEmpty) {
-      throw ArgumentError("Student ID cannot be empty");
+    print("student id for grade card $studentName");
+    // Check if studentId is correctly passed and is not empty
+    if (studentName.isEmpty) {
+      throw ArgumentError("Student Name cannot be empty");
     }
+    final queryResults = await db.rawQuery(
+        'SELECT id FROM student_table WHERE student_name = ?;', [studentName]);
+
+    // Check if the query returned any results
+    if (queryResults.isEmpty) {
+      print("No student Name found with name: $studentName !");
+      return []; // Return an empty list if no class is found
+    }
+
+    // Get the class ID from the result
+    int studentId = queryResults[0]['id'] as int;
+    print("Class ID: $studentId");
+
     String query = '''
     SELECT 
       s.student_name,
@@ -249,22 +304,60 @@ WHERE
       t.max_mark,
       t.test_date
     FROM student_table s
-    LEFT JOIN stream_table st ON s.stream_id = st.stream_id
-    LEFT JOIN class_table c ON st.class_id = c.class_id
-    LEFT JOIN test_score_table ts ON s.student_id = ts.student_id
-    LEFT JOIN test_table t ON ts.test_id = t.test_id
-    LEFT JOIN subject_table sub ON t.subject_id = sub.subject_id
-    WHERE s.student_id = ?;
+    LEFT JOIN stream_table st ON s.stream_id = st.id
+    LEFT JOIN class_table c ON st.class_id = c.id
+    LEFT JOIN test_score_table ts ON s.id = ts.student_id
+    LEFT JOIN test_table t ON ts.test_id = t.id
+    LEFT JOIN subject_table sub ON t.subject_id = sub.id
+    WHERE s.id = ?;
   ''';
 
-    // List<Map<String, dynamic>> result = await db.rawQuery(query);
-    List<Map<String, dynamic>> result = await db.rawQuery(query, [studentId]);
-    if (result.isEmpty) {
-      throw ArgumentError("No student found with the given ID");
+    try {
+      // Execute the query and get the result
+      List<Map<String, dynamic>> result = await db.rawQuery(query, [studentId]);
+
+      // Check if the result is empty
+      if (result.isEmpty) {
+        throw ArgumentError("No student found with the given ID");
+      }
+
+      return result;
+    } catch (e) {
+      // Handle any exceptions that occur
+      print("Error occurred while fetching grade card: $e");
+      throw Exception(
+          "Failed to retrieve grade card data. Please try again later.");
     }
-    return result;
   }
-}
+
+  // Future<int> getMaxId(String tableName) async {
+  //   final db = await database;
+  //   String query = '''SELECT MAX(id) FROM ?;''';
+  //   List<Map<String, dynamic>> result = await db.rawQuery(query, [tableName]);
+  //   print("Result: $result");
+  //   return result[0]['id'] as int;
+  // }
+  Future<int> getMaxId(String tableName) async {
+    final db = await database;
+
+    // Ensure that tableName is a valid identifier to prevent SQL injection.
+    // Alternatively, validate and sanitize the table name before using it.
+
+    // Correct query with direct table name insertion.
+    String query = 'SELECT MAX(id) AS max_id FROM $tableName;';
+
+    // Execute the query
+    List<Map<String, dynamic>> result = await db.rawQuery(query);
+    print(result);
+    // Check if the result is not empty and contains the 'max_id' key
+    if (result.isNotEmpty && result[0]['max_id'] != null) {
+      // Return the maximum ID as an integer
+      return result[0]['max_id'] as int;
+    } else {
+      // Return 0 or handle cases where no result is found
+      return 0; // or throw an exception based on your use case
+    }
+  }
 
   // Example CRUD operations
 //   Future<int> insertStudent(Map<String, dynamic> student) async {
@@ -287,4 +380,4 @@ WHERE
 //     final db = await database;
 //     return await db.delete('students', where: 'id = ?', whereArgs: [id]);
 //   }
-// }
+}
