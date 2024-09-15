@@ -234,14 +234,11 @@ class _GradeCardState extends State<GradeCard> {
 
     List<Map<String, dynamic>> results =
         await dbHelper.getGradeCard(widget.studentName);
-
+    if (results.isEmpty) {
+      throw Exception("No data found for student name: ${widget.studentName}");
+    }
     if (results.isNotEmpty) {
       setState(() {
-        if (results.isEmpty) {
-          throw Exception(
-              "No data found for student name: ${widget.studentName}");
-        }
-
         // Extract basic information from the first entry
         studentName = results.first['student_name'] as String;
         className = results.first['class_name'] as String;
@@ -250,7 +247,7 @@ class _GradeCardState extends State<GradeCard> {
         // Construct the list of subjects
         subjects = results.map((row) {
           final subjectName = row['subject_name'] as String;
-          final latestScore = row['latest_score'] as int;
+          final latestScore = row['latest_score'];
           final maxMark = row['max_mark'] as int;
 
           return {
