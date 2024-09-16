@@ -34,9 +34,21 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'One-Zero SMS',
       theme: ThemeData(
-          primarySwatch: Colors.blue,
-          brightness: isDarkMode ? Brightness.dark : Brightness.light,
-          canvasColor: isDarkMode ? Colors.grey[850] : Colors.grey[200]),
+        primarySwatch: Colors.cyan,
+        primaryColor: isDarkMode
+            ? Color.fromARGB(255, 22, 96, 54)
+            : Color.fromARGB(255, 45, 205, 114),
+        secondaryHeaderColor: isDarkMode
+            ? Color.fromRGBO(238, 108, 77, 1)
+            : Color.fromRGBO(238, 108, 77, 1),
+        brightness: isDarkMode ? Brightness.dark : Brightness.light,
+        canvasColor: isDarkMode ? Colors.grey[850] : Colors.grey[200],
+        primaryTextTheme: TextTheme(
+          bodyMedium: TextStyle(
+            color: isDarkMode ? Colors.white : Colors.black,
+          ),
+        ),
+      ),
       home: MyHomePage(
         onThemeChanged: (bool value) {
           setState(() {
@@ -63,6 +75,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   int pageNumber = 0;
   int classCount = 0;
+  bool expandMenu = false;
   final DatabaseHelper dbHelper = DatabaseHelper();
   List<Map<String, dynamic>> classes = [];
   List<List<String>> selectedSubjects = [];
@@ -87,11 +100,24 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
-        backgroundColor: Colors.blue,
-        title: const StrokeText(
+        leading: IconButton(
+          icon: const Icon(Icons.menu),
+          onPressed: () {
+            setState(() {
+              super.setState(() {
+                expandMenu = !expandMenu;
+              });
+            });
+          },
+        ),
+        backgroundColor: Theme.of(context).primaryColor,
+        title: StrokeText(
           text: "ONE ZERO",
-          textStyle:
-              TextStyle(fontSize: 30, fontFamily: 'Revue', color: Colors.white),
+          textStyle: TextStyle(
+            fontSize: 30,
+            fontFamily: 'Revue',
+            color: Colors.white,
+          ),
         ),
         actions: [
           Padding(
@@ -118,123 +144,98 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
       body: Row(
         children: [
-          Expanded(
-            flex: 2,
-            child: Material(
-              elevation: 5,
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.home),
-                    title: const Text('Home'),
-                    onTap: () {
-                      setState(() {
-                        pageNumber = 0;
-                      });
-                    },
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.rectangle_outlined),
-                    title: const Text('Class Rooms'),
-                    onTap: () {
-                      setState(() {
-                        pageNumber = 1;
-                      });
-                    },
-                  ),
-                  ExpansionTile(
-                    leading: const Icon(Icons.add_box),
-                    title: const Text('Add New'),
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.only(left: 10.0),
-                        child: ListTile(
-                          leading: const Icon(Icons.add_box_outlined),
-                          title: const Text('Class'),
-                          onTap: () {
-                            setState(() {
-                              pageNumber = 1;
-                            });
-                            setState(() {
-                              pageNumber = 2;
-                            });
-                          },
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 10.0),
-                        child: ListTile(
-                          leading: const Icon(Icons.add_box_outlined),
-                          title: const Text('Stream'),
-                          onTap: () {
-                            setState(() {
-                              pageNumber = 3;
-                            });
-                            // createStreamPopup(context);
-                          },
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 10.0),
-                        child: ListTile(
-                          leading: const Icon(Icons.add_box_outlined),
-                          title: const Text('Student'),
-                          onTap: () {
-                            setState(() {
-                              pageNumber = 1;
-                            });
-                            setState(() {
-                              pageNumber = 4;
-                              print(4);
-                            });
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.receipt_long_outlined),
-                    title: const Text('Results'),
-                    onTap: () {
-                      setState(() {
-                        pageNumber = 5;
-                      });
-                    },
-                  ),
+          Container(
+            color: Theme.of(context).primaryColor,
+            width: expandMenu ? 200 : 60,
+            child: ListView(
+              children: [
+                CustomDrawerItem(
+                  icon: Icons.home_outlined,
+                  selectedIcon: Icons.home,
+                  label: 'Home',
+                  page: 0,
+                  selectedPage: pageNumber,
+                  onTap: () {
+                    setState(() {
+                      pageNumber = 0;
+                    });
+                  },
+                  isMenuExpanded: expandMenu,
+                ),
+                CustomDrawerItem(
+                  icon: Icons.rectangle_outlined,
+                  selectedIcon: Icons.rectangle_sharp,
+                  label: 'Class Rooms',
+                  page: 1,
+                  selectedPage: pageNumber,
+                  onTap: () {
+                    setState(() {
+                      pageNumber = 1;
+                    });
+                  },
+                  isMenuExpanded: expandMenu,
+                ),
+                CustomDrawerItem(
+                  icon: Icons.group_add_outlined,
+                  selectedIcon: Icons.group_add_rounded,
+                  label: 'Add Students',
+                  page: 4,
+                  selectedPage: pageNumber,
+                  onTap: () {
+                    setState(() {
+                      pageNumber = 4;
+                    });
+                  },
+                  isMenuExpanded: expandMenu,
+                ),
 
-                  ListTile(
-                    leading: const Icon(Icons.add_box),
-                    title: const Text('New Exam'),
-                    onTap: () {
-                      setState(() {
-                        pageNumber = 6;
-                      });
-                    },
-                  ),
+                CustomDrawerItem(
+                  icon: Icons.analytics_outlined,
+                  selectedIcon: Icons.analytics,
+                  label: 'Reports',
+                  page: 5,
+                  selectedPage: pageNumber,
+                  onTap: () {
+                    setState(() {
+                      pageNumber = 5;
+                    });
+                  },
+                  isMenuExpanded: expandMenu,
+                ),
+                CustomDrawerItem(
+                  icon: Icons.add_box_outlined,
+                  selectedIcon: Icons.add_box,
+                  label: 'Exam Entry',
+                  page: 6,
+                  selectedPage: pageNumber,
+                  onTap: () {
+                    setState(() {
+                      pageNumber = 6;
+                    });
+                  },
+                  isMenuExpanded: expandMenu,
+                ),
 
-                  // Add more ListTile widgets for other menu items
-                ],
-              ),
+                // Add more ListTile widgets for other menu items
+              ],
             ),
           ),
           Expanded(
-              flex: 8,
               child: switch (pageNumber) {
-                0 => _buildHome(),
-                1 => _buildClassRooms(),
-                2 => _buildEntrySection("class_table", UniqueKey()),
-                3 => _buildEntrySection(
-                    "stream_table", UniqueKey()), // Stream Table
+            0 => _buildHome(),
+            1 => _buildClassRooms(),
+            2 => _buildEntrySection("class_table", UniqueKey()),
+            3 =>
+              _buildEntrySection("stream_table", UniqueKey()), // Stream Table
 
-                4 => _buildEntrySection("student_table", UniqueKey()),
-                5 => _buildClassPage(),
-                6 => _addNewExam(context, setState),
-                // 6 => _buildEntrySection("test_table", UniqueKey()),
+            4 => _buildEntrySection("student_table", UniqueKey()),
+            5 => _buildClassPage(),
+            6 => _addNewExam(context, setState),
+            // 6 => _buildEntrySection("test_table", UniqueKey()),
 
-                // TODO: Handle this case.
-                int() => throw UnimplementedError(),
-              }),
+            // TODO: Handle this case.
+            int() => throw UnimplementedError(),
+          }),
         ],
       ),
     );
@@ -382,7 +383,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 height: 500,
                 width: 450,
                 decoration: BoxDecoration(
-                  color: Colors.blue[50],
+                  color: Theme.of(context).canvasColor,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 padding: const EdgeInsets.all(20),

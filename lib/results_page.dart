@@ -75,6 +75,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                       contentPadding: const EdgeInsets.all(15.0),
                     ),
                     onSubmitted: (value) async {
+                      value = value.trim();
                       if (value.isNotEmpty) {
                         print("Searching for $value");
                         if (_selectedcriteria == 'Student') {
@@ -158,8 +159,12 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                             key: UniqueKey(), students: _studentsOfClassList),
                       ),
                     2 => const Text("Subject Result"),
-                    5 => StudentsListView(
-                        key: UniqueKey(), students: _studentsOfSubjectList),
+                    5 => SizedBox(
+                        width: 500,
+                        height: 800,
+                        child: StudentsListView(
+                            key: UniqueKey(), students: _studentsOfSubjectList),
+                      ),
                     _ => const Text("Invalid"),
                   }
                 ],

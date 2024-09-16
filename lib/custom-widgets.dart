@@ -1,5 +1,109 @@
 import 'package:flutter/material.dart';
 
+// ignore: must_be_immutable
+class CustomDrawerItem extends StatefulWidget {
+  final IconData icon;
+  final IconData selectedIcon;
+  final String label;
+  final int page;
+  final int selectedPage;
+  final Function onTap;
+  bool isMenuExpanded;
+
+  CustomDrawerItem({
+    Key? key,
+    required this.icon,
+    required this.selectedIcon,
+    required this.label,
+    required this.page,
+    required this.selectedPage,
+    required this.onTap,
+    required this.isMenuExpanded,
+  }) : super(key: key);
+
+  @override
+  _CustomDrawerItemState createState() => _CustomDrawerItemState();
+}
+
+class _CustomDrawerItemState extends State<CustomDrawerItem> {
+  bool isHovered = false;
+  final GlobalKey<TooltipState> tooltipkey = GlobalKey<TooltipState>();
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (event) => setState(() {
+        isHovered = true;
+      }),
+      onExit: (event) => setState(() {
+        isHovered = false;
+      }),
+      child: Tooltip(
+        key: tooltipkey,
+        showDuration: const Duration(seconds: 1),
+        message: widget.isMenuExpanded ? "" : widget.label,
+        height: 20.0,
+        padding: EdgeInsets.all(5.0),
+        margin: EdgeInsets.only(left: 60.0),
+        verticalOffset: 10,
+        preferBelow: false,
+        enableFeedback: true,
+        child: GestureDetector(
+          onTap: () => widget.onTap(),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.0),
+            width: widget.isMenuExpanded ? 200.0 : 50.0,
+            height: 50.0,
+            margin: EdgeInsets.symmetric(horizontal: 5, vertical: 2.5),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(4),
+              color: widget.selectedPage == widget.page
+                  ? Colors.white
+                      .withOpacity(0.2) // Highlight background if selected
+                  : isHovered
+                      ? Colors.white
+                          .withOpacity(0.1) // Background color on hover
+                      : Colors.transparent, // Default background
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Icon(
+                  widget.selectedPage == widget.page
+                      ? widget.selectedIcon
+                      : widget.icon,
+                  color: widget.selectedPage == widget.page
+                      ? Colors.white // Change to highlight color if selected
+                      : isHovered
+                          ? Colors.white // Change icon color on hover
+                          : Color.fromRGBO(
+                              255, 255, 255, .7), // Default icon color
+                ),
+                widget.isMenuExpanded
+                    ? Padding(
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: Text(
+                          widget.label,
+                          style: TextStyle(
+                            color: widget.selectedPage == widget.page
+                                ? Colors
+                                    .white // Change to highlight color if selected
+                                : isHovered
+                                    ? Colors.white // Change text color on hover
+                                    : Color.fromRGBO(255, 255, 255,
+                                        .7), // Default text color
+                          ),
+                        ),
+                      )
+                    : Container(),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class autoFill extends StatefulWidget {
   bool needBorder = true;
   TextEditingController controller = TextEditingController();

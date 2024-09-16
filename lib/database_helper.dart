@@ -146,7 +146,7 @@ class DatabaseHelper {
     }
 
     String query = '''
-    SELECT id FROM student_table WHERE student_name = ?;
+    SELECT id FROM student_table WHERE   LOWER(student_name) = LOWER(?);;
   ''';
 
     try {
@@ -183,7 +183,7 @@ class DatabaseHelper {
     JOIN 
       class_table c ON st.class_id = c.id
     WHERE 
-      c.class_name = ?;
+     LOWER(c.class_name) = LOWER('?');
   ''';
 
     try {
@@ -307,7 +307,8 @@ class DatabaseHelper {
       throw ArgumentError("Student Name cannot be empty");
     }
     final queryResults = await db.rawQuery(
-        'SELECT id FROM student_table WHERE student_name = ?;', [studentName]);
+        'SELECT id FROM student_table WHERE LOWER(student_name) = LOWER(?);',
+        [studentName]);
 
     // Check if the query returned any results
     if (queryResults.isEmpty) {

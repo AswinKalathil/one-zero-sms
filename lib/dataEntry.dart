@@ -36,7 +36,6 @@ class _DataEntryPageState extends State<DataEntryPage> {
     maxId = await dbHelper.getMaxId(widget.metadata.tableName);
 
     setState(() {
-      print("MAX ID: $maxId");
       maxId = maxId;
     });
   }
@@ -66,10 +65,7 @@ class _DataEntryPageState extends State<DataEntryPage> {
 
   Future<void> _onSubmit() async {
     DatabaseHelper dbHelper = DatabaseHelper();
-    // List<Map<String, dynamic>> classDataList = [];
-    // List<Map<String, dynamic>> subjectDataList = [];
-    // Map<String, dynamic> classData = {};
-    // Map<String, dynamic> subjectData = {};
+
     int insertionSuccess = 0;
     for (var row in rowTextEditingControllers) {
       if (row.values.any((controller) => controller.text.isEmpty)) {
@@ -84,7 +80,8 @@ class _DataEntryPageState extends State<DataEntryPage> {
     }
 
     List<Map<String, String>> data = rowTextEditingControllers.map((row) {
-      return row.map((key, controller) => MapEntry(key, controller.text));
+      return row
+          .map((key, controller) => MapEntry(key, controller.text.trim()));
     }).toList();
     print(data);
     // Insert data to the database
@@ -255,7 +252,8 @@ class _DataEntryPageState extends State<DataEntryPage> {
                   ),
                   headingRowColor:
                       WidgetStateProperty.resolveWith<Color>((states) {
-                    return Colors.blue.shade100; // Header background color
+                    return Theme.of(context)
+                        .primaryColor; // Header background color
                   }),
                   columns: headers.map((header) {
                     return DataColumn(
@@ -402,7 +400,7 @@ class _DataEntryPageState extends State<DataEntryPage> {
   Widget _buildHeaderCell(String title) {
     return Center(
       child: Container(
-        color: Colors.blue.shade100, // Header background color
+        // Header background color
         padding: const EdgeInsets.all(8.0),
         child: Text(
           title,
@@ -493,14 +491,13 @@ class _ExamEntryState extends State<ExamEntry> {
 
     headers = ['ID', 'Student Name', 'Score'];
     columnLengths = [100, 300, 100];
-
-    rowTextEditingControllers.addAll(List.generate(headers.length, (index) {
+    fetchStudents(widget.test_id);
+    rowTextEditingControllers = List.generate(studentList.length, (index) {
       return TextEditingController();
-    }));
-    focusNodes.addAll(List.generate(headers.length, (index) {
+    });
+    focusNodes.addAll(List.generate(studentList.length, (index) {
       return FocusNode();
     }));
-    fetchStudents(widget.test_id);
 
     // _addNewRows();
   }
@@ -546,7 +543,7 @@ class _ExamEntryState extends State<ExamEntry> {
               // Save the data
 
               var data = rowTextEditingControllers.map((controller) {
-                return controller.text;
+                return controller.text.trim();
               }).toList();
               DatabaseHelper dbHelper = DatabaseHelper();
 
