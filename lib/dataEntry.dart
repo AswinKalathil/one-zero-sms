@@ -152,7 +152,7 @@ class _DataEntryPageState extends State<DataEntryPage> {
     } else if (widget.metadata.tableName == 'student_table') {
       print("Student table data $data");
       for (var row in data) {
-        int straemId = await dbHelper.getStreamId(row['Stream name']!);
+        int straemId = await dbHelper.getStreamId(row['Stream Name']!);
         if (straemId == 0) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -166,7 +166,7 @@ class _DataEntryPageState extends State<DataEntryPage> {
           'id': row['ID']!,
           'student_name': row['Student Name']!,
           'stream_id': straemId,
-          'photo_id': row['Photo path']!,
+          'photo_id': row['Photo Path']!,
           'student_phone': row['Student Phone']!,
           'parent_name': row['Parent Name']!,
           'parent_phone': row['Parent Phone']!,
@@ -311,7 +311,9 @@ class _DataEntryPageState extends State<DataEntryPage> {
                                       color: Colors.black)),
                             ),
                           );
-                        } else if (header == 'Stream Name') {
+                        } else if (header == 'Stream Name' &&
+                            widget.metadata.tableName == 'student_table') {
+                          initializeStreamNames();
                           return DataCell(
                             Container(
                                 width: double.infinity,

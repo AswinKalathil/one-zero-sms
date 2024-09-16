@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:one_zero/constants.dart';
 import 'package:one_zero/custom-widgets.dart';
 import 'package:one_zero/results_page.dart';
@@ -454,6 +455,9 @@ class _MyHomePageState extends State<MyHomePage> {
                           padding: const EdgeInsets.symmetric(vertical: 10),
                           width: 200,
                           child: TextField(
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly
+                            ],
                             focusNode: focusNodes[3],
                             controller: maxiMarkController,
                             decoration: const InputDecoration(

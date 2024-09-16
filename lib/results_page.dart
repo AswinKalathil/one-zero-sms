@@ -143,20 +143,27 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
           flex: 8, // 80% of the width
           child: Container(
             margin: const EdgeInsets.all(10),
-            child: Column(
-              children: [
-                switch (resultBoardIndex) {
-                  0 => const Text("Student Result"),
-                  3 => GradeCard(key: UniqueKey(), studentName: _studentName),
-                  1 => const Text("Class Result"),
-                  4 => StudentsListView(
-                      key: UniqueKey(), students: _studentsOfClassList),
-                  2 => const Text("Subject Result"),
-                  5 => StudentsListView(
-                      key: UniqueKey(), students: _studentsOfSubjectList),
-                  _ => const Text("Invalid"),
-                }
-              ],
+            child: SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              child: Column(
+                children: [
+                  switch (resultBoardIndex) {
+                    0 => const Text("Student Result"),
+                    3 => GradeCard(key: UniqueKey(), studentName: _studentName),
+                    1 => const Text("Class Result"),
+                    4 => SizedBox(
+                        width: 500,
+                        height: 800,
+                        child: StudentsListView(
+                            key: UniqueKey(), students: _studentsOfClassList),
+                      ),
+                    2 => const Text("Subject Result"),
+                    5 => StudentsListView(
+                        key: UniqueKey(), students: _studentsOfSubjectList),
+                    _ => const Text("Invalid"),
+                  }
+                ],
+              ),
             ),
           ),
         ),
@@ -238,6 +245,7 @@ class _GradeCardState extends State<GradeCard> {
       throw Exception("No data found for student name: ${widget.studentName}");
     }
     if (results.isNotEmpty) {
+      print(results);
       setState(() {
         // Extract basic information from the first entry
         studentName = results.first['student_name'] as String;
@@ -247,14 +255,17 @@ class _GradeCardState extends State<GradeCard> {
         // Construct the list of subjects
         subjects = results.map((row) {
           final subjectName = row['subject_name'] as String;
-          final latestScore = row['latest_score'];
+          final latestScore = row['latest_score'] as int;
           final maxMark = row['max_mark'] as int;
-
+          // final latestScore = 66;
+          DateTime date = DateTime.parse(row['test_date'] as String);
           return {
             'subject': subjectName,
             'maxMarks': maxMark.toString(),
             'marks': latestScore.toString(),
             'grade': _calculateGrade(latestScore, maxMark),
+            'date':
+                "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}",
           };
         }).toList();
       });
@@ -275,122 +286,155 @@ class _GradeCardState extends State<GradeCard> {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: AspectRatio(
-        aspectRatio: 297 / 210, // A4 aspect ratio (210mm x 297mm)
-        child: Container(
-          padding: const EdgeInsets.all(16.0),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.black, width: 2),
-            borderRadius: BorderRadius.circular(8.0),
-            color: Colors.white,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          studentName,
-                          style: const TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          'Class: $className',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                        Text(
-                          'Month: $currentMonth',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Spacer(),
-                  SizedBox(
-                      width: 100,
-                      height: 130,
-                      child: Image.asset(
-                        photoUrl,
-                        fit: BoxFit.fitHeight,
-                        errorBuilder: (BuildContext context, Object error,
-                            StackTrace? stackTrace) {
-                          return Image.asset('assets/ml.jpg');
-                        },
-                      )),
-                ],
-              ),
-              const SizedBox(height: 16.0),
-              const Text(
-                'Grades',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8.0),
-              Expanded(
-                child: Table(
-                  border: TableBorder.all(color: Colors.black),
-                  columnWidths: {
-                    0: const FlexColumnWidth(2),
-                    1: const FlexColumnWidth(1),
-                    2: const FlexColumnWidth(1),
-                  },
+      child: SizedBox(
+        width: 500,
+        child: AspectRatio(
+          aspectRatio: 210 / 297, // A4 aspect ratio (210mm x 297mm)
+          child: Container(
+            padding: const EdgeInsets.all(16.0),
+            decoration: BoxDecoration(
+              border: Border.all(color: Colors.black, width: 2),
+              borderRadius: BorderRadius.circular(8.0),
+              color: Colors.white,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const TableRow(
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.all(6.0),
-                          child: Text(
-                            'Subject',
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.all(6.0),
-                          child: Text(
-                            'Obtained Marks',
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                        Padding(
-                          padding: EdgeInsets.all(6.0),
-                          child: Text(
-                            'Grade',
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ),
-                    ...subjects.map(
-                      (subject) => TableRow(
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.all(6.0),
-                            child: Text(subject['subject'] ?? ''),
+                          Text(
+                            studentName,
+                            style: const TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(6.0),
-                            child: Text(
-                                "  ${subject['marks']} / ${subject['maxMarks']}" ??
-                                    ''),
+                          Text(
+                            'Class: $className',
+                            style: const TextStyle(fontSize: 16),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(6.0),
-                            child: Text(subject['grade'] ?? ''),
+                          Text(
+                            'Date: ${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().day.toString().padLeft(2, '0')}',
+                            style: const TextStyle(fontSize: 16),
                           ),
                         ],
                       ),
                     ),
+                    const Spacer(),
+                    SizedBox(
+                        width: 100,
+                        height: 130,
+                        child: Image.asset(
+                          photoUrl,
+                          fit: BoxFit.fitHeight,
+                          errorBuilder: (BuildContext context, Object error,
+                              StackTrace? stackTrace) {
+                            return Image.asset('assets/ml.jpg');
+                          },
+                        )),
                   ],
                 ),
-              ),
-            ],
+                const SizedBox(height: 16.0),
+                const Text(
+                  'Grades',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8.0),
+                Expanded(
+                  child: Table(
+                    border: TableBorder.all(color: Colors.black),
+                    columnWidths: {
+                      0: const FlexColumnWidth(3),
+                      1: const FlexColumnWidth(2),
+                      2: const FlexColumnWidth(1),
+                      3: const FlexColumnWidth(1),
+                    },
+                    children: [
+                      const TableRow(
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.all(6.0),
+                            child: Center(
+                              child: Text(
+                                'Subject',
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(6.0),
+                            child: Center(
+                              child: Text(
+                                'Marks',
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(6.0),
+                            child: Center(
+                              child: Text(
+                                'Grade',
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(6.0),
+                            child: Center(
+                              child: Text(
+                                'Date',
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      ...subjects.map(
+                        (subject) => TableRow(
+                          children: [
+                            Container(
+                              height: 30,
+                              padding: const EdgeInsets.all(3.0),
+                              child: FittedBox(
+                                  child: Text(subject['subject'] ?? '')),
+                            ),
+                            Container(
+                              height: 30,
+                              padding: const EdgeInsets.all(3.0),
+                              child: FittedBox(
+                                child: Text(
+                                    "  ${subject['marks']} / ${subject['maxMarks']}" ??
+                                        ''),
+                              ),
+                            ),
+                            Container(
+                              height: 30,
+                              padding: const EdgeInsets.all(3.0),
+                              child: FittedBox(
+                                  child: Text(subject['grade'] ?? '')),
+                            ),
+                            Container(
+                              height: 30,
+                              padding: const EdgeInsets.all(3.0),
+                              child:
+                                  FittedBox(child: Text(subject['date'] ?? '')),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
