@@ -1,9 +1,10 @@
 import 'dart:ffi';
 
 import 'package:flutter/material.dart';
+import 'package:one_zero/constants.dart';
 
 import 'package:one_zero/database_helper.dart';
-
+import 'package:stroke_text/stroke_text.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart'; // Assuming your DatabaseHelper is in this file
 
 class ClassDetailPage extends StatefulWidget {
@@ -149,16 +150,22 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               child: Column(
                 children: [
                   switch (resultBoardIndex) {
-                    0 => const Text("Student Result"),
+                    0 => Container(
+                        child: getLogo(60),
+                      ),
                     3 => GradeCard(key: UniqueKey(), studentName: _studentName),
-                    1 => const Text("Class Result"),
+                    1 => Container(
+                        child: getLogo(60),
+                      ),
                     4 => SizedBox(
                         width: 500,
                         height: 800,
                         child: StudentsListView(
                             key: UniqueKey(), students: _studentsOfClassList),
                       ),
-                    2 => const Text("Subject Result"),
+                    2 => Container(
+                        child: getLogo(60),
+                      ),
                     5 => SizedBox(
                         width: 500,
                         height: 800,
@@ -250,7 +257,7 @@ class _GradeCardState extends State<GradeCard> {
       throw Exception("No data found for student name: ${widget.studentName}");
     }
     if (results.isNotEmpty) {
-      print(results);
+      print("Results recicved from db: $results");
       setState(() {
         // Extract basic information from the first entry
         studentName = results.first['student_name'] as String;
@@ -259,7 +266,7 @@ class _GradeCardState extends State<GradeCard> {
 
         // Construct the list of subjects
         subjects = results.map((row) {
-          final subjectName = row['subject_name'] as String;
+          final subjectName = row['subject_name']! as String;
           final latestScore = row['latest_score'] as int;
           final maxMark = row['max_mark'] as int;
           // final latestScore = 66;
@@ -351,11 +358,11 @@ class _GradeCardState extends State<GradeCard> {
                 Expanded(
                   child: Table(
                     border: TableBorder.all(color: Colors.black),
-                    columnWidths: {
-                      0: const FlexColumnWidth(3),
-                      1: const FlexColumnWidth(2),
-                      2: const FlexColumnWidth(1),
-                      3: const FlexColumnWidth(1),
+                    columnWidths: const {
+                      0: FlexColumnWidth(3),
+                      1: FlexColumnWidth(2),
+                      2: FlexColumnWidth(1),
+                      3: FlexColumnWidth(1),
                     },
                     children: [
                       const TableRow(
@@ -407,28 +414,28 @@ class _GradeCardState extends State<GradeCard> {
                           children: [
                             Container(
                               height: 30,
-                              padding: const EdgeInsets.all(3.0),
+                              padding: const EdgeInsets.all(5.5),
                               child: FittedBox(
                                   child: Text(subject['subject'] ?? '')),
                             ),
                             Container(
                               height: 30,
-                              padding: const EdgeInsets.all(3.0),
+                              padding: const EdgeInsets.all(5.5),
                               child: FittedBox(
                                 child: Text(
                                     "  ${subject['marks']} / ${subject['maxMarks']}" ??
-                                        ''),
+                                        '-'),
                               ),
                             ),
                             Container(
                               height: 30,
-                              padding: const EdgeInsets.all(3.0),
+                              padding: const EdgeInsets.all(5.5),
                               child: FittedBox(
                                   child: Text(subject['grade'] ?? '')),
                             ),
                             Container(
                               height: 30,
-                              padding: const EdgeInsets.all(3.0),
+                              padding: const EdgeInsets.all(5.5),
                               child:
                                   FittedBox(child: Text(subject['date'] ?? '')),
                             ),

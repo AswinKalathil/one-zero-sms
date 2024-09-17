@@ -56,6 +56,11 @@ class _CustomDrawerItemState extends State<CustomDrawerItem> {
             margin: EdgeInsets.symmetric(horizontal: 5, vertical: 2.5),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(4),
+              border: Border.all(
+                color: widget.selectedPage == widget.page
+                    ? Colors.white.withOpacity(0.2)
+                    : Colors.transparent,
+              ),
               color: widget.selectedPage == widget.page
                   ? Colors.white
                       .withOpacity(0.2) // Highlight background if selected
@@ -145,6 +150,9 @@ class _autoFillState extends State<autoFill> {
       fieldViewBuilder:
           (context, subjectNameController, focusNode, onEditingComplete) {
         return TextField(
+          enabled: widget.labelText == 'Subject' && widget.optionsList.isEmpty
+              ? false
+              : true,
           controller: subjectNameController,
           focusNode: focusNode,
           decoration: InputDecoration(

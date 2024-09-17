@@ -214,151 +214,155 @@ class _DataEntryPageState extends State<DataEntryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(8.0),
-      ),
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                const SizedBox(
-                  width: 300,
-                  child: Text(
-                    'Student Data Entry',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              const SizedBox(
+                width: 300,
+                child: Text(
+                  'Enter New Class Details',
+                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                 ),
-                const SizedBox(width: 20),
-                ElevatedButton(
-                  onPressed: _onSubmit,
-                  child: const Text('Submit'),
-                ),
-              ],
-            ),
+              ),
+              ElevatedButton(
+                onPressed: _addNewRow,
+                child: const Text('Add Row'),
+              ),
+              const SizedBox(width: 20),
+              ElevatedButton(
+                onPressed: _onSubmit,
+                child: const Text('Submit'),
+              ),
+            ],
           ),
           const SizedBox(height: 20),
-          Divider(
-            color: Theme.of(context).canvasColor, // Line color
-            thickness: 2, // Line thickness
-          ),
-          const SizedBox(height: 20),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: SizedBox(
-              height: 500,
+          SizedBox(
+            height: 500,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.vertical,
               child: SingleChildScrollView(
-                scrollDirection: Axis.vertical,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    columnSpacing: 16.0, // Space betweSen columns
-                    border: const TableBorder(
-                      verticalInside: BorderSide(color: Colors.grey, width: 1),
-                    ),
-                    headingRowColor:
-                        WidgetStateProperty.resolveWith<Color>((states) {
-                      return Theme.of(context)
-                          .primaryColor; // Header background color
-                    }),
-                    columns: headers.map((header) {
-                      return DataColumn(
-                        label: _buildHeaderCell(header),
-                      );
-                    }).toList(),
-                    rows: List<DataRow>.generate(
-                      rowTextEditingControllers.length,
-                      (rowIndex) => DataRow(
-                        color: WidgetStateProperty.resolveWith<Color>((states) {
-                          return (Theme.of(context).brightness ==
-                                  Brightness.light)
-                              ? (rowIndex % 2 == 0
-                                  ? Colors.grey.shade200
-                                  : Colors.white)
-                              : (rowIndex % 2 == 0
-                                  ? Colors.grey.shade600
-                                  : Colors.grey.shade700);
-                        }),
-                        cells: headers.map((header) {
-                          if (header == 'Actions') {
-                            return DataCell(
-                              IconButton(
-                                icon: const Icon(Icons.delete,
-                                    color: Color.fromARGB(255, 241, 167, 161)),
-                                onPressed: () {
-                                  setState(() {
-                                    rowTextEditingControllers
-                                        .removeAt(rowIndex);
-                                    focusNodes.removeAt(rowIndex);
-                                  });
-                                },
-                              ),
-                            );
-                          } else if (header == 'Save') {
-                            return DataCell(
-                              IconButton(
-                                icon: const Icon(Icons.save,
-                                    color: Color.fromARGB(255, 241, 167, 161)),
-                                onPressed: () {
-                                  setState(() {
-                                    rowTextEditingControllers
-                                        .removeAt(rowIndex);
-                                    focusNodes.removeAt(rowIndex);
-                                  });
-                                },
-                              ),
-                            );
-                          } else if (header == 'ID') {
-                            int rowId = maxId + rowIndex + 1;
-                            rowTextEditingControllers[rowIndex][header]!.text =
-                                rowId.toString();
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columnSpacing: 16.0, // Space betweSen columns
+                  border: const TableBorder(
+                    verticalInside: BorderSide(color: Colors.grey, width: 1),
+                  ),
+                  headingRowColor:
+                      WidgetStateProperty.resolveWith<Color>((states) {
+                    return Theme.of(context)
+                        .primaryColor; // Header background color
+                  }),
+                  columns: headers.map((header) {
+                    return DataColumn(
+                      label: _buildHeaderCell(header),
+                    );
+                  }).toList(),
+                  rows: List<DataRow>.generate(
+                    rowTextEditingControllers.length,
+                    (rowIndex) => DataRow(
+                      color: WidgetStateProperty.resolveWith<Color>((states) {
+                        return (Theme.of(context).brightness ==
+                                Brightness.light)
+                            ? (rowIndex % 2 == 0
+                                ? Colors.grey.shade200
+                                : Colors.white)
+                            : (rowIndex % 2 == 0
+                                ? Colors.grey.shade600
+                                : Colors.grey.shade700);
+                      }),
+                      cells: headers.map((header) {
+                        if (header == 'Actions') {
+                          return DataCell(
+                            IconButton(
+                              icon: const Icon(Icons.delete,
+                                  color: Color.fromARGB(255, 241, 167, 161)),
+                              onPressed: () {
+                                setState(() {
+                                  rowTextEditingControllers.removeAt(rowIndex);
+                                  focusNodes.removeAt(rowIndex);
+                                });
+                              },
+                            ),
+                          );
+                        } else if (header == 'Save') {
+                          return DataCell(
+                            IconButton(
+                              icon: const Icon(Icons.save,
+                                  color: Color.fromARGB(255, 241, 167, 161)),
+                              onPressed: () {
+                                setState(() {
+                                  rowTextEditingControllers.removeAt(rowIndex);
+                                  focusNodes.removeAt(rowIndex);
+                                });
+                              },
+                            ),
+                          );
+                        } else if (header == 'ID') {
+                          int rowId = maxId + rowIndex + 1;
+                          rowTextEditingControllers[rowIndex][header]!.text =
+                              rowId.toString();
 
-                            return DataCell(
-                              Container(
+                          return DataCell(
+                            Container(
+                              width: double.infinity,
+                              child: Text(rowId.toString(),
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black)),
+                            ),
+                          );
+                        } else if (header == 'Stream Name' &&
+                            widget.metadata.tableName == 'student_table') {
+                          return DataCell(
+                            Container(
                                 width: double.infinity,
-                                child: Text(rowId.toString(),
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black)),
+                                child: autoFill(
+                                  controller:
+                                      rowTextEditingControllers[rowIndex]
+                                          [header] as TextEditingController,
+                                  optionsList: STREAM_NAMES,
+                                  labelText: '',
+                                  needBorder: false,
+                                  nextFocusNode: focusNodes[rowIndex]
+                                      [headers.indexOf(header) + 1],
+                                )),
+                          );
+                        } else if (header == 'Subjects') {
+                          return DataCell(
+                            Container(
+                              width: double.infinity,
+                              child: TextField(
+                                controller: rowTextEditingControllers[rowIndex]
+                                    [header],
+                                focusNode: focusNodes[rowIndex][1],
+                                decoration: const InputDecoration(
+                                  border: InputBorder.none,
+                                ),
+                                maxLines: 1,
+                                onSubmitted: (value) {
+                                  _handleKeyEvent(
+                                      focusNodes[rowIndex][1], null);
+                                },
                               ),
-                            );
-                          } else if (header == 'Stream Name' &&
-                              widget.metadata.tableName == 'student_table') {
-                            return DataCell(
-                              Container(
-                                  width: double.infinity,
-                                  child: autoFill(
-                                    controller:
-                                        rowTextEditingControllers[rowIndex]
-                                            [header] as TextEditingController,
-                                    optionsList: STREAM_NAMES,
-                                    labelText: '',
-                                    needBorder: false,
-                                    nextFocusNode: focusNodes[rowIndex]
-                                        [headers.indexOf(header) + 1],
-                                  )),
-                            );
-                          } else {
-                            int cellIndex = headers.indexOf(header);
-                            return _buildDataCell(
-                              rowTextEditingControllers[rowIndex][header]!,
-                              focusNodes[rowIndex][cellIndex],
-                              cellIndex < focusNodes[rowIndex].length - 1
-                                  ? (cellIndex == 1
-                                      ? focusNodes[rowIndex][3]
-                                      : focusNodes[rowIndex][cellIndex + 1])
-                                  : null,
-                              columnLengths[cellIndex],
-                            );
-                          }
-                        }).toList(),
-                      ),
+                            ),
+                          );
+                        } else {
+                          int cellIndex = headers.indexOf(header);
+                          return _buildDataCell(
+                            rowTextEditingControllers[rowIndex][header]!,
+                            focusNodes[rowIndex][cellIndex],
+                            cellIndex < focusNodes[rowIndex].length - 1
+                                ? focusNodes[rowIndex][cellIndex + 1]
+                                : null,
+                            columnLengths[cellIndex],
+                          );
+                        }
+                      }).toList(),
                     ),
                   ),
                 ),
@@ -534,78 +538,41 @@ class _ExamEntryState extends State<ExamEntry> {
 
   @override
   Widget build(BuildContext context) {
-    return rowTextEditingControllers.isNotEmpty
-        ? buildDataTable() // Function that contains your DataTable widget
-        : const Center(child: CircularProgressIndicator());
-  }
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('${testDetails['subject_name']} - Exam Entry'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.save),
+            onPressed: () {
+              // Save the data
 
-  Widget buildDataTable() {
-    return Container(
-      margin: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 16.0, top: 16.0),
-            child: SizedBox(
-              width: 300,
-              child: Text(
-                "${testDetails['subject_name']}  Test",
-                style:
-                    const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Container(
-                    width: 400,
-                    child: Text(
-                        "${testDetails['test_date'].toString().substring(0, 10)}")),
-                ElevatedButton(
-                  onPressed: () {
-                    var data = rowTextEditingControllers.map((controller) {
-                      return controller.text.trim();
-                    }).toList();
-                    DatabaseHelper dbHelper = DatabaseHelper();
+              var data = rowTextEditingControllers.map((controller) {
+                return controller.text.trim();
+              }).toList();
+              DatabaseHelper dbHelper = DatabaseHelper();
 
-                    for (int i = 0; i < studentList.length; i++) {
-                      dbHelper.insertToTable('test_score_table', {
-                        'student_id': studentList[i]['student_id'],
-                        'score': data[i].toString(),
-                        'test_id': widget.test_id
-                      });
-                    }
+              for (int i = 0; i < studentList.length; i++) {
+                dbHelper.insertToTable('test_score_table', {
+                  'student_id': studentList[i]['student_id'],
+                  'score': data[i].toString(),
+                  'test_id': widget.test_id
+                });
+              }
 
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Data submitted successfully!'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  },
-                  child: const Text('Submit'),
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Data submitted successfully!'),
+                  backgroundColor: Colors.green,
                 ),
-              ],
-            ),
+              );
+            },
           ),
-          const SizedBox(height: 20),
-          Divider(
-            color: Theme.of(context).canvasColor, // Line color
-            thickness: 2, // Line thickness
-          ),
-          const SizedBox(height: 20),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        ],
+      ),
+      body: studentList.length > 0
+          ? Padding(
+              padding: const EdgeInsets.all(16.0),
               child: SingleChildScrollView(
                 scrollDirection: Axis.vertical,
                 child: DataTable(
@@ -615,7 +582,7 @@ class _ExamEntryState extends State<ExamEntry> {
                   ),
                   headingRowColor:
                       WidgetStateProperty.resolveWith<Color>((states) {
-                    return Theme.of(context).primaryColor;
+                    return Colors.blue.shade100;
                   }),
                   columns: headers.map((header) {
                     return DataColumn(
@@ -670,10 +637,11 @@ class _ExamEntryState extends State<ExamEntry> {
                   ),
                 ),
               ),
+            )
+          : Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: getLogo(50),
             ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -685,7 +653,7 @@ class _ExamEntryState extends State<ExamEntry> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Start New Acadamic Year'),
+          title: Text('Start New Acadamic Year'),
           content: TextField(
             controller: _textFieldController,
           ),
@@ -694,14 +662,14 @@ class _ExamEntryState extends State<ExamEntry> {
               onPressed: () {
                 Navigator.of(context).pop(null); // Dismiss without input
               },
-              child: const Text('Cancel'),
+              child: Text('Cancel'),
             ),
             TextButton(
               onPressed: () {
                 Navigator.of(context)
                     .pop(_textFieldController.text); // Return input
               },
-              child: const Text('Submit'),
+              child: Text('Submit'),
             ),
           ],
         );

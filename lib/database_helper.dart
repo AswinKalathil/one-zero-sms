@@ -1,6 +1,3 @@
-// import 'package:sqflite/sqflite.dart';
-import 'dart:ffi';
-
 import 'package:one_zero/constants.dart';
 import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -34,7 +31,6 @@ class DatabaseHelper {
 
   Future<void> _onCreate(Database db, int version) async {
     await db.execute(cretateQuery);
-    // await db.execute(insertQuery);
   }
 
   Future<int> insertToTable(
@@ -45,6 +41,20 @@ class DatabaseHelper {
     } catch (e) {
       print("Error occurred while inserting data: $e");
       return 0;
+    }
+  }
+
+  Future<Map<String, dynamic>> getTestDetails(int testId) async {
+    final db = await database;
+    try {
+      String query =
+          '''  Select s.subject_name,tt.test_date from test_table tt JOIN subject_table s ON tt.subject_id = s.id  where tt.id = ?''';
+      final List<Map<String, dynamic>> result =
+          await db.rawQuery(query, [testId]);
+      return result[0];
+    } catch (e) {
+      print("Error occurred while fetching test details: $e");
+      return {};
     }
   }
 
@@ -99,20 +109,9 @@ class DatabaseHelper {
     }
   }
 
-  Future<Map<String, dynamic>> addNewTest(Map<String, dynamic> newTest) async {
-    final db = await database;
-    Map<String, dynamic> test = {
-      'subject_id': newTest['subject_id'],
-      'topic': newTest['topic'],
-      'max_mark': newTest['max_mark'],
-      'test_date': newTest['test_date']
-    };
-    return test;
-  }
-
   Future<List<Map<String, dynamic>>> getStudentIdsAndNamesByTestId(
       int testId) async {
-    print("test id in getStudentIdsAndNamesByTestId function $testId");
+    // print("test id in getStudentIdsAndNamesByTestId function $testId");
     final db = await database;
 
     // Get the subject_id from the test_id
@@ -123,7 +122,7 @@ class DatabaseHelper {
     if (subjectIdResult.isEmpty) return [];
 
     final subjectId = subjectIdResult.first['subject_id'];
-    print("subject id in getStudentIdsAndNamesByTestId function $subjectId");
+    // print("subject id in getStudentIdsAndNamesByTestId function $subjectId");
 
     // Get students related to that subject
     final List<Map<String, dynamic>> studentResult = await db.rawQuery('''
@@ -132,8 +131,8 @@ class DatabaseHelper {
       INNER JOIN stream_subjects_table ss ON s.stream_id = ss.stream_id
       WHERE ss.subject_id = ?
     ''', [subjectId]);
-    print(
-        "students list result in getStudentIdsAndNamesByTestId function $studentResult");
+    // print(
+    //     "students list result in getStudentIdsAndNamesByTestId function $studentResult");
     return studentResult;
   }
 
@@ -183,7 +182,7 @@ class DatabaseHelper {
     JOIN 
       class_table c ON st.class_id = c.id
     WHERE 
-     LOWER(c.class_name) = LOWER('?');
+     LOWER(c.class_name) = LOWER(?);
   ''';
 
     try {
@@ -264,11 +263,12 @@ class DatabaseHelper {
 
     // Query to get the class ID
     final queryResults = await db.rawQuery(
-        'SELECT id FROM class_table WHERE class_name = ?;', [className]);
+        'SELECT id FROM class_table WHERE LOWER(class_name) = LOWER(?);',
+        [className]);
 
     // Check if the query returned any results
     if (queryResults.isEmpty) {
-      print("No class found with name: $className !");
+      print("No class found with name: $className!");
       return []; // Return an empty list if no class is found
     }
 
@@ -306,19 +306,19 @@ class DatabaseHelper {
     if (studentName.isEmpty) {
       throw ArgumentError("Student Name cannot be empty");
     }
-    final queryResults = await db.rawQuery(
+    final sudentIdResults = await db.rawQuery(
         'SELECT id FROM student_table WHERE LOWER(student_name) = LOWER(?);',
         [studentName]);
 
     // Check if the query returned any results
-    if (queryResults.isEmpty) {
+    if (sudentIdResults.isEmpty) {
       print("No student Name found with name: $studentName !");
       return []; // Return an empty list if no class is found
     }
 
     // Get the class ID from the result
-    int studentId = queryResults[0]['id'] as int;
-    print("Class ID: $studentId");
+    int studentId = sudentIdResults[0]['id'] as int;
+    print("student id $studentId");
 
     String query = '''
     SELECT 
@@ -357,29 +357,14 @@ class DatabaseHelper {
     }
   }
 
-  // Future<int> getMaxId(String tableName) async {
-  //   final db = await database;
-  //   String query = '''SELECT MAX(id) FROM ?;''';
-  //   List<Map<String, dynamic>> result = await db.rawQuery(query, [tableName]);
-  //   print("Result: $result");
-  //   return result[0]['id'] as int;
-  // }
   Future<int> getMaxId(String tableName) async {
     final db = await database;
 
-    // Ensure that tableName is a valid identifier to prevent SQL injection.
-    // Alternatively, validate and sanitize the table name before using it.
-
-    // Correct query with direct table name insertion.
     String query = 'SELECT MAX(id) AS max_id FROM $tableName;';
 
-    // Execute the query
     List<Map<String, dynamic>> result = await db.rawQuery(query);
-    print("getmaxid function $result");
-    // Check if the result is not empty and contains the 'max_id' key
+
     if (result.isNotEmpty && result[0]['max_id'] != null) {
-      // Return the maximum ID as an integer
-      print("max id fetch sucessfull for $tableName ");
       return result[0]['max_id'] as int;
     } else {
       int maxId = 0;
@@ -401,9 +386,15 @@ class DatabaseHelper {
       } else {
         maxId = 0;
       }
-      print("max id fetch failed for $tableName \n returning $maxId");
+
       return maxId;
     }
+  }
+
+  Future<int> getMaxIdTX(Transaction txn, String tableName) async {
+    final List<Map<String, dynamic>> result =
+        await txn.rawQuery('SELECT MAX(id) as maxId FROM $tableName');
+    return result.first['maxId'] ?? 0; // Returns 0 if there are no rows
   }
 
   Future<int> getSubjectId(String subjectName) async {
@@ -468,6 +459,104 @@ class DatabaseHelper {
       print("Error occurred while fetching stream ID: $e");
       throw Exception("Failed to retrieve stream ID. Please try again later.");
     }
+  }
+
+  Future<int> insertDynamicData(
+      List<Map<String, dynamic>> classDataList,
+      List<Map<String, dynamic>> subjectDataList,
+      List<Map<String, dynamic>> streamDataList,
+      List<Map<String, dynamic>> streamSubjectDataList) async {
+    try {
+      Database db = await database;
+      await db.transaction((txn) async {
+        Map<int, int> classIdMap = {}; // Maps class_id to generated id
+        Map<int, int> subjectIdMap = {}; // Maps subject_id to generated id
+        Map<int, int> streamIdMap = {}; // Maps stream_id to generated id
+
+        // Insert classes and store their IDs
+        for (var classData in classDataList) {
+          int classId = (await getMaxIdTX(txn, 'class_table')) + 1;
+          await txn.insert('class_table', {
+            'id': classId,
+            'class_name': classData['class_name'],
+            'academic_year': classData['academic_year'],
+          });
+          classIdMap[classData['class_id']] = classId;
+        }
+
+        // Insert subjects and store their IDs
+        for (var subjectData in subjectDataList) {
+          int classId = classIdMap[subjectData['class_id']] ?? 0;
+          int subjectId = (await getMaxIdTX(txn, 'subject_table')) + 1;
+          await txn.insert('subject_table', {
+            'id': subjectId,
+            'subject_name': subjectData['subject_name'],
+            'class_id': classId,
+          });
+          subjectIdMap[subjectData['subject_id']] = subjectId;
+        }
+
+        // Insert streams and store their IDs
+        for (var streamData in streamDataList) {
+          int classId = classIdMap[streamData['class_id']] ?? 0;
+          int streamId = (await getMaxIdTX(txn, 'stream_table')) + 1;
+          await txn.insert('stream_table', {
+            'id': streamId,
+            'stream_name': streamData['stream_name'],
+            'class_id': classId,
+          });
+          streamIdMap[streamData['stream_id']] = streamId;
+        }
+
+        // Insert stream-subject mappings
+        for (var streamSubjectData in streamSubjectDataList) {
+          int streamId = streamIdMap[streamSubjectData['stream_id']] ?? 0;
+          int subjectId = subjectIdMap[streamSubjectData['subject_id']] ?? 0;
+          int streamSubjectId =
+              (await getMaxIdTX(txn, 'stream_subjects_table')) + 1;
+          await txn.insert('stream_subjects_table', {
+            'id': streamSubjectId,
+            'stream_id': streamId,
+            'subject_id': subjectId,
+          });
+        }
+      });
+
+      print("Data successfully inserted into all tables.");
+      return 1;
+    } catch (e) {
+      print("Transaction failed: $e");
+      return 0;
+    }
+  }
+
+  Future<int> startNewYear(String academicYear) async {
+    List<Map<String, dynamic>> classDataList = [
+      {'class_id': 1, 'class_name': 'Class A', 'academic_year': academicYear},
+      {'class_id': 2, 'class_name': 'Class B', 'academic_year': academicYear},
+    ];
+
+    List<Map<String, dynamic>> subjectDataList = [
+      {'subject_id': 1, 'subject_name': 'Math', 'class_id': 1},
+      {'subject_id': 2, 'subject_name': 'Science', 'class_id': 1},
+      {'subject_id': 3, 'subject_name': 'English', 'class_id': 2},
+      {'subject_id': 4, 'subject_name': 'History', 'class_id': 2},
+    ];
+
+    List<Map<String, dynamic>> streamDataList = [
+      {'stream_id': 1, 'stream_name': 'Science Stream', 'class_id': 1},
+      {'stream_id': 2, 'stream_name': 'Arts Stream', 'class_id': 2},
+    ];
+
+    List<Map<String, dynamic>> streamSubjectDataList = [
+      {'stream_id': 1, 'subject_id': 1},
+      {'stream_id': 1, 'subject_id': 2},
+      {'stream_id': 2, 'subject_id': 3},
+      {'stream_id': 2, 'subject_id': 4},
+    ];
+
+    return await insertDynamicData(
+        classDataList, subjectDataList, streamDataList, streamSubjectDataList);
   }
 
   // Example CRUD operations
