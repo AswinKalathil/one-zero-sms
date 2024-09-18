@@ -15,6 +15,8 @@ final List<Color> cardBackgroundColors = [
 
 Column getLogo(double fontSize) {
   return Column(
+    mainAxisAlignment: MainAxisAlignment.center,
+    crossAxisAlignment: CrossAxisAlignment.center,
     children: [
       StrokeText(
         strokeColor: Color.fromRGBO(0, 0, 0, 0.05),

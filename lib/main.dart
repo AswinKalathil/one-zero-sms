@@ -9,8 +9,9 @@ import 'package:one_zero/database_helper.dart';
 import 'package:one_zero/dataEntry.dart';
 import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:window_manager/window_manager.dart';
 
-void main() {
+void main() async {
   // Initialize the FFI
   sqfliteFfiInit();
 

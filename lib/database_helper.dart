@@ -216,7 +216,7 @@ class DatabaseHelper {
 
       // Query to get the subject ID
       final queryResults = await db.rawQuery(
-          'SELECT id FROM subject_table WHERE subject_name = ?;',
+          'SELECT id FROM subject_table WHERE LOWER(subject_name) = (?);',
           [subjectName]);
 
       // Check if the query returned any results
@@ -234,7 +234,8 @@ class DatabaseHelper {
       SELECT DISTINCT 
         s.id, 
         s.student_name, 
-        s.photo_id
+        s.photo_id,
+        st.stream_name
       FROM 
         student_table s
       JOIN 
@@ -244,11 +245,47 @@ class DatabaseHelper {
       JOIN 
         subject_table sub ON ss.subject_id = sub.id
       WHERE 
-        sub.id = ?;
+        sub.id =?;
     ''';
 
       final result = await db.rawQuery(query, [subjectId]);
       return result;
+    } catch (e) {
+      // Handle any exceptions that occur
+      print("Error occurred: $e");
+      return []; // Return an empty list or handle the error as needed
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getStudentsOfName(
+      String studentName) async {
+    final db = await database;
+
+    try {
+      print("Student Name: $studentName");
+
+      // Query to get the student ID
+      final queryResults = await db.rawQuery(''' SELECT 
+      s.id,
+      s.student_name,
+      s.photo_id,
+      st.stream_name
+    FROM 
+      student_table s
+    INNER JOIN 
+      stream_table st ON s.stream_id = st.id
+    INNER JOIN 
+      class_table c ON st.class_id = c.id
+    WHERE 
+       LOWER(s.student_name) LIKE LOWER(?);''', ['%$studentName%']);
+
+      // Check if the query returned any results
+      if (queryResults.isEmpty) {
+        print("No student found with name: $studentName");
+        return []; // Return an empty list if no student is found
+      }
+
+      return queryResults;
     } catch (e) {
       // Handle any exceptions that occur
       print("Error occurred: $e");
@@ -281,7 +318,8 @@ class DatabaseHelper {
     SELECT 
       s.id,
       s.student_name,
-      s.photo_id
+      s.photo_id,
+      st.stream_name
     FROM 
       student_table s
     INNER JOIN 

@@ -18,13 +18,22 @@ class ClassDetailPage extends StatefulWidget {
 }
 
 class _ClassDetailPageState extends State<ClassDetailPage> {
-  String? _selectedcriteria;
+  String? _selectedcriteria = 'Student';
+  List<String> _criteriaOptions = ['Student', 'Class', 'Subject'];
+  // Default criteria
 
   int? _studentId;
   String _studentName = '';
+  String _studentNameForGrade = '';
+  String searchText = '';
+
+  String _selecteddClass = '';
+  String _selectedSubject = '';
+  List<Map<String, dynamic>> _studentsOfNameList = [];
   List<Map<String, dynamic>> _studentsOfClassList = [];
   List<Map<String, dynamic>> _studentsOfSubjectList = [];
   int resultBoardIndex = 0;
+  bool showGradeCard = false;
   @override
   void initState() {
     // TODO: implement initState
@@ -38,12 +47,17 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       switch (criteria) {
         case 'Student':
           resultBoardIndex = 0;
+          showGradeCard = false;
           break;
         case 'Class':
           resultBoardIndex = 1;
+          showGradeCard = false;
+
           break;
         case 'Subject':
           resultBoardIndex = 2;
+          showGradeCard = false;
+
           break;
       }
     });
@@ -56,169 +70,229 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     return Row(
       children: [
         Expanded(
-          flex: 2, // 30% of the width
-          child: Material(
-            elevation: 2,
-            child: ListView(
+          flex: 4,
+          child: Container(
+            margin: const EdgeInsets.all(10),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Search by $_selectedcriteria',
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      contentPadding: const EdgeInsets.all(15.0),
+                FractionallySizedBox(
+                  widthFactor: .75,
+                  child: Container(
+                    margin: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8.0),
+                      color: Theme.of(context).cardColor,
                     ),
-                    onSubmitted: (value) async {
-                      value = value.trim();
-                      if (value.isNotEmpty) {
-                        print("Searching for $value");
-                        if (_selectedcriteria == 'Student') {
-                          _studentName = value;
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: TextField(
+                            decoration: InputDecoration(
+                              hintText: 'Search by $_selectedcriteria',
+                              prefixIcon: const Icon(Icons.search),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                                borderSide: BorderSide.none,
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey[200],
+                              contentPadding: const EdgeInsets.all(15.0),
+                            ),
+                            onSubmitted: (value) async {
+                              value = value.trim();
+                              if (value.isNotEmpty) {
+                                List<Map<String, dynamic>> fetchedStudentsList =
+                                    [];
+                                if (_selectedcriteria == 'Student') {
+                                  fetchedStudentsList =
+                                      await dbHelper.getStudentsOfName(value);
+                                } else if (_selectedcriteria == 'Class') {
+                                  fetchedStudentsList =
+                                      await dbHelper.getStudentsOfClass(value);
+                                } else if (_selectedcriteria == 'Subject') {
+                                  fetchedStudentsList = await dbHelper
+                                      .getStudentsOfSubject(value);
+                                }
 
-                          setState(() {
-                            _studentName = value;
-                            resultBoardIndex = 3;
-                          });
-                        } else if (_selectedcriteria == 'Class') {
-                          var fetchedStudentsList =
-                              await dbHelper.getStudentsOfClass(value);
-                          setState(() {
-                            _studentsOfClassList = fetchedStudentsList;
-                            resultBoardIndex = 4;
-                          });
-                        } else if (_selectedcriteria == 'Subject') {
-                          var fetchedStudentsList =
-                              await dbHelper.getStudentsOfSubject(value);
-                          setState(() {
-                            _studentsOfSubjectList = fetchedStudentsList;
-                            print("Students of Subject: $fetchedStudentsList");
-                            resultBoardIndex = 5;
-                          });
-                        }
-                      }
-                    },
+                                setState(() {
+                                  searchText = value;
+                                  _studentsOfNameList =
+                                      _selectedcriteria == 'Student'
+                                          ? fetchedStudentsList
+                                          : _studentsOfNameList;
+                                  _studentsOfClassList =
+                                      _selectedcriteria == 'Class'
+                                          ? fetchedStudentsList
+                                          : _studentsOfClassList;
+                                  _studentsOfSubjectList =
+                                      _selectedcriteria == 'Subject'
+                                          ? fetchedStudentsList
+                                          : _studentsOfSubjectList;
+                                  resultBoardIndex =
+                                      _selectedcriteria == 'Student'
+                                          ? 3
+                                          : _selectedcriteria == 'Class'
+                                              ? 4
+                                              : 5;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(10.0),
+                          child: FractionallySizedBox(
+                              widthFactor: .5, child: _criteriaDropdown()),
+                        )
+                      ],
+                    ),
                   ),
                 ),
-                ListTile(
-                  title: const Text("Class"),
-                  leading: Checkbox(
-                    value: _selectedcriteria == 'Class',
-                    onChanged: (bool? value) {
-                      _onSelected('Class');
-                    },
-                  ),
-                  onTap: () => _onSelected('Class'),
+                Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: switch (resultBoardIndex) {
+                    3 => Text("Search results with  '$searchText'",
+                        style: const TextStyle(
+                            fontSize: 24, fontWeight: FontWeight.bold)),
+                    4 => Text("$searchText Students",
+                        style: const TextStyle(
+                            fontSize: 24, fontWeight: FontWeight.bold)),
+                    5 => Text("Students of $searchText",
+                        style: const TextStyle(
+                            fontSize: 24, fontWeight: FontWeight.bold)),
+                    _ => const Text("Search something"),
+                  },
                 ),
-                ListTile(
-                  title: const Text("Subject"),
-                  leading: Checkbox(
-                    value: _selectedcriteria == "Subject",
-                    onChanged: (bool? value) {
-                      _onSelected("Subject");
-                    },
-                  ),
-                  onTap: () => _onSelected("Subject"),
+                Expanded(
+                  flex: 1,
+                  child: switch (resultBoardIndex) {
+                    3 => studentsListView(_studentsOfNameList),
+                    4 => studentsListView(_studentsOfClassList),
+                    5 => studentsListView(_studentsOfSubjectList),
+                    _ => Container(child: getLogo(30)),
+                  },
                 ),
-                ListTile(
-                  title: const Text("Student"),
-                  leading: Checkbox(
-                    value: _selectedcriteria == "Student",
-                    onChanged: (bool? value) {
-                      _onSelected("Student");
-                    },
-                  ),
-                  onTap: () => _onSelected("Student"),
-                ),
-                const SizedBox(height: 20),
               ],
             ),
           ),
         ),
         Expanded(
-          flex: 8, // 80% of the width
+          flex: 6,
           child: Container(
             margin: const EdgeInsets.all(10),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: Column(
-                children: [
-                  switch (resultBoardIndex) {
-                    0 => Container(
-                        child: getLogo(60),
+            child: showGradeCard
+                ? Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment
+                        .start, // Aligns children to the start (left)
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: GradeCard(
+                          key: UniqueKey(),
+                          studentName: _studentNameForGrade,
+                        ),
                       ),
-                    3 => GradeCard(key: UniqueKey(), studentName: _studentName),
-                    1 => Container(
-                        child: getLogo(60),
+                      Expanded(
+                        flex: 1,
+                        child: Container(),
                       ),
-                    4 => SizedBox(
-                        width: 500,
-                        height: 800,
-                        child: StudentsListView(
-                            key: UniqueKey(), students: _studentsOfClassList),
-                      ),
-                    2 => Container(
-                        child: getLogo(60),
-                      ),
-                    5 => SizedBox(
-                        width: 500,
-                        height: 800,
-                        child: StudentsListView(
-                            key: UniqueKey(), students: _studentsOfSubjectList),
-                      ),
-                    _ => const Text("Invalid"),
-                  }
-                ],
-              ),
-            ),
+                    ],
+                  )
+                : Center(
+                    child: getLogo(30),
+                  ),
           ),
         ),
       ],
     );
   }
-}
 
-class StudentsListView extends StatelessWidget {
-  final List<Map<String, dynamic>> students;
+  Widget _criteriaDropdown() {
+    return DropdownButton<String>(
+      value: _selectedcriteria,
+      items: _criteriaOptions.map((String criteria) {
+        return DropdownMenuItem<String>(
+          value: criteria,
+          child: Text(criteria),
+        );
+      }).toList(),
+      onChanged: (String? newValue) {
+        if (newValue != null) {
+          setState(() {
+            _selectedcriteria = newValue;
+          });
+        }
+      },
+      isExpanded: true,
+      hint: Text('Select Criteria'),
+    );
+  }
 
-  StudentsListView({required Key key, required this.students})
-      : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
+  Widget studentsListView(List<Map<String, dynamic>> students) {
+    return SizedBox(
+      width: double.infinity,
       child: ListView.builder(
+        scrollDirection: Axis.vertical,
         itemCount: students.length,
         itemBuilder: (context, index) {
           final student = students[index];
-          return Container(
-            margin: const EdgeInsets.all(8.0),
-            width: 200,
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey),
-              borderRadius: BorderRadius.circular(8.0),
-            ),
-            child: ListTile(
-              leading: CircleAvatar(
-                backgroundImage: AssetImage(
-                  student['photo_id'] ?? 'assets/ml.jpg',
-                ),
-                onBackgroundImageError: (_, __) {
-                  // Handle any image loading error
-                },
+          return GestureDetector(
+            child: Container(
+              margin: const EdgeInsets.all(4.0),
+              height: 60,
+              padding: const EdgeInsets.all(5.0),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                borderRadius: BorderRadius.circular(8.0),
+                color: Theme.of(context).cardColor,
               ),
-              title: Text(student['student_name']),
-              onTap: () {
-                // Handle tile tap
-                print('Tapped on ${student['student_name']}');
-              },
+              child: Row(
+                children: [
+                  Container(
+                    width: 50,
+                    height: 50,
+
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle, // Make the container circular
+                      border: Border.all(color: Colors.grey),
+                    ),
+                    clipBehavior: Clip
+                        .hardEdge, // Ensures the image is clipped to the circular shape
+                    child: Image.asset(
+                      student['photo_path'] as String? ?? 'assets/ml.jpg',
+                      fit: BoxFit.cover, // Fills the circular container
+                      errorBuilder: (BuildContext context, Object error,
+                          StackTrace? stackTrace) {
+                        return Image.asset('assets/ml.jpg', fit: BoxFit.cover);
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(student['student_name'] as String,
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
+                        Text(student['stream_name'] as String),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
+            onTap: () {
+              setState(() {
+                _studentNameForGrade = student['student_name'] as String;
+                showGradeCard = true;
+              });
+            },
           );
         },
       ),
@@ -297,156 +371,161 @@ class _GradeCardState extends State<GradeCard> {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: SizedBox(
-        width: 500,
-        child: AspectRatio(
-          aspectRatio: 210 / 297, // A4 aspect ratio (210mm x 297mm)
-          child: Container(
-            padding: const EdgeInsets.all(16.0),
-            decoration: BoxDecoration(
-              border: Border.all(color: Colors.black, width: 2),
-              borderRadius: BorderRadius.circular(8.0),
-              color: Colors.white,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+    return SizedBox(
+      child: AspectRatio(
+        aspectRatio: 210 / 297, // A4 aspect ratio (210mm x 297mm)
+        child: Container(
+          padding: const EdgeInsets.all(30.0),
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.grey.withOpacity(0.3)),
+            borderRadius: BorderRadius.circular(8.0),
+            color: Theme.of(context).cardColor,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          studentName,
+                          style: const TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          'Class: $className',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                        Text(
+                          'Date: ${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().day.toString().padLeft(2, '0')}',
+                          style: const TextStyle(fontSize: 16),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Spacer(),
+                  SizedBox(
+                    width: 100,
+                    height: 130,
+                    child: Image.asset(
+                      photoUrl,
+                      fit: BoxFit.fitHeight, // Fills the circular container
+                      errorBuilder: (BuildContext context, Object error,
+                          StackTrace? stackTrace) {
+                        return Image.asset('assets/ml.jpg', fit: BoxFit.cover);
+                      },
+                    ),
+                  )
+                  // child: Image.asset(
+                  //   photoUrl,
+                  //   fit: BoxFit.fitHeight,
+                  //   errorBuilder: (_, __, ___) {
+                  //     return Image.asset('assets/ml.jpg');
+                  //   },
+                  // )),
+                ],
+              ),
+              const SizedBox(height: 16.0),
+              const Text(
+                'Grades',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8.0),
+              Expanded(
+                child: Table(
+                  border: TableBorder.all(color: Colors.grey),
+                  columnWidths: const {
+                    0: FlexColumnWidth(3),
+                    1: FlexColumnWidth(2),
+                    2: FlexColumnWidth(1),
+                    3: FlexColumnWidth(1),
+                  },
                   children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                    const TableRow(
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.all(6.0),
+                          child: Center(
+                            child: Text(
+                              'Subject',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.all(6.0),
+                          child: Center(
+                            child: Text(
+                              'Marks',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.all(6.0),
+                          child: Center(
+                            child: Text(
+                              'Grade',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.all(6.0),
+                          child: Center(
+                            child: Text(
+                              'Date',
+                              style: TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    ...subjects.map(
+                      (subject) => TableRow(
                         children: [
-                          Text(
-                            studentName,
-                            style: const TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold),
+                          Container(
+                            height: 30,
+                            padding: const EdgeInsets.all(5.5),
+                            child: FittedBox(
+                                child: Text(subject['subject'] ?? '')),
                           ),
-                          Text(
-                            'Class: $className',
-                            style: const TextStyle(fontSize: 16),
+                          Container(
+                            height: 30,
+                            padding: const EdgeInsets.all(5.5),
+                            child: FittedBox(
+                              child: Text(
+                                  "  ${subject['marks']} / ${subject['maxMarks']}" ??
+                                      '-'),
+                            ),
                           ),
-                          Text(
-                            'Date: ${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().day.toString().padLeft(2, '0')}',
-                            style: const TextStyle(fontSize: 16),
+                          Container(
+                            height: 30,
+                            padding: const EdgeInsets.all(5.5),
+                            child:
+                                FittedBox(child: Text(subject['grade'] ?? '')),
+                          ),
+                          Container(
+                            height: 30,
+                            padding: const EdgeInsets.all(5.5),
+                            child:
+                                FittedBox(child: Text(subject['date'] ?? '')),
                           ),
                         ],
                       ),
                     ),
-                    const Spacer(),
-                    SizedBox(
-                        width: 100,
-                        height: 130,
-                        child: Image.asset(
-                          photoUrl,
-                          fit: BoxFit.fitHeight,
-                          errorBuilder: (BuildContext context, Object error,
-                              StackTrace? stackTrace) {
-                            return Image.asset('assets/ml.jpg');
-                          },
-                        )),
                   ],
                 ),
-                const SizedBox(height: 16.0),
-                const Text(
-                  'Grades',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8.0),
-                Expanded(
-                  child: Table(
-                    border: TableBorder.all(color: Colors.black),
-                    columnWidths: const {
-                      0: FlexColumnWidth(3),
-                      1: FlexColumnWidth(2),
-                      2: FlexColumnWidth(1),
-                      3: FlexColumnWidth(1),
-                    },
-                    children: [
-                      const TableRow(
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.all(6.0),
-                            child: Center(
-                              child: Text(
-                                'Subject',
-                                style: TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.all(6.0),
-                            child: Center(
-                              child: Text(
-                                'Marks',
-                                style: TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.all(6.0),
-                            child: Center(
-                              child: Text(
-                                'Grade',
-                                style: TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.all(6.0),
-                            child: Center(
-                              child: Text(
-                                'Date',
-                                style: TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      ...subjects.map(
-                        (subject) => TableRow(
-                          children: [
-                            Container(
-                              height: 30,
-                              padding: const EdgeInsets.all(5.5),
-                              child: FittedBox(
-                                  child: Text(subject['subject'] ?? '')),
-                            ),
-                            Container(
-                              height: 30,
-                              padding: const EdgeInsets.all(5.5),
-                              child: FittedBox(
-                                child: Text(
-                                    "  ${subject['marks']} / ${subject['maxMarks']}" ??
-                                        '-'),
-                              ),
-                            ),
-                            Container(
-                              height: 30,
-                              padding: const EdgeInsets.all(5.5),
-                              child: FittedBox(
-                                  child: Text(subject['grade'] ?? '')),
-                            ),
-                            Container(
-                              height: 30,
-                              padding: const EdgeInsets.all(5.5),
-                              child:
-                                  FittedBox(child: Text(subject['date'] ?? '')),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
