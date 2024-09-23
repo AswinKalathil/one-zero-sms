@@ -1,17 +1,16 @@
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
 import 'package:one_zero/constants.dart';
-
 import 'package:one_zero/database_helper.dart';
-import 'package:stroke_text/stroke_text.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart'; // Assuming your DatabaseHelper is in this file
 
 class ClassDetailPage extends StatefulWidget {
   final String className;
   final int classIndex;
+  final bool isDedicatedPage;
 
-  ClassDetailPage({required this.className, required this.classIndex});
+  ClassDetailPage(
+      {required this.className,
+      required this.classIndex,
+      required this.isDedicatedPage});
 
   @override
   State<ClassDetailPage> createState() => _ClassDetailPageState();
@@ -19,7 +18,7 @@ class ClassDetailPage extends StatefulWidget {
 
 class _ClassDetailPageState extends State<ClassDetailPage> {
   String? _selectedcriteria = 'Student';
-  List<String> _criteriaOptions = ['Student', 'Class', 'Subject'];
+  List<String> _criteriaOptions = [];
   // Default criteria
 
   int? _studentId;
@@ -40,6 +39,13 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     // TODO: implement initState
     super.initState();
     _selectedcriteria = 'Student';
+    _criteriaOptions = widget.isDedicatedPage
+        ? ['Student', 'Subject']
+        : ['Student', 'Class', 'Subject'];
+    if (widget.isDedicatedPage) {
+      resultBoardIndex = 4;
+      onSubmittedSerch('class');
+    }
   }
 
   void _onSelected(String criteria) {
@@ -67,8 +73,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   DatabaseHelper _dbHelper = DatabaseHelper();
   void onSubmittedSerch(String value) async {
     value = value.trim();
+    List<Map<String, dynamic>> fetchedStudentsList = [];
+
     if (value.isNotEmpty) {
-      List<Map<String, dynamic>> fetchedStudentsList = [];
       if (_selectedcriteria == 'Student') {
         fetchedStudentsList = await _dbHelper.getStudentsOfName(value);
       } else if (_selectedcriteria == 'Class') {
@@ -92,6 +99,15 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 : 5;
       });
     }
+
+    if (widget.isDedicatedPage && value == 'class') {
+      value = widget.className;
+      fetchedStudentsList = await _dbHelper.getStudentsOfClass(value);
+      _studentsOfClassList = fetchedStudentsList;
+      resultBoardIndex = 4;
+      searchText = value;
+      setState(() {});
+    }
   }
 
   @override
@@ -103,6 +119,11 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         height: 2000,
         child: Column(
           children: [
+            widget.isDedicatedPage
+                ? Container(
+                    child: Text(widget.className),
+                  )
+                : Container(),
             Container(
               height: MediaQuery.of(context).size.height * .9,
               child: Row(
@@ -167,10 +188,12 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                       mainAxisAlignment:
                                           MainAxisAlignment.start,
                                       children: [
-                                        SizedBox(
-                                          width: 200,
-                                          child: _criteriaDropdown(),
-                                        ),
+                                        !widget.isDedicatedPage
+                                            ? SizedBox(
+                                                width: 200,
+                                                child: _criteriaDropdown(),
+                                              )
+                                            : const SizedBox(),
                                         Padding(
                                           padding: const EdgeInsets.all(8.0),
                                           child: ElevatedButton(
@@ -405,6 +428,7 @@ class _GradeCardState extends State<GradeCard> {
     if (resultsfromDb.isEmpty) {
       throw Exception("No data found for student name: ${widget.studentName}");
     }
+    print("Results received from db: $resultsfromDb");
     List<Map<String, dynamic>> results = getLatestScores(resultsfromDb);
 
     if (results.isNotEmpty) {
@@ -426,7 +450,7 @@ class _GradeCardState extends State<GradeCard> {
           final subjectName = row['subject_name'] as String? ?? '-';
 
           // Handle latestScore with type checks
-          final latestScore = (row['score'] != null && row['score'] != -1)
+          final latestScore = (row['score'] != null && row['score'] != '-')
               ? (row['score'] is int
                   ? row['score']
                   : int.tryParse(row['score'] as String) ?? 0)
@@ -447,8 +471,8 @@ class _GradeCardState extends State<GradeCard> {
           return {
             'subject': subjectName,
             'maxMarks': maxMark.toString(),
-            'marks': latestScore.toString(),
-            'grade': _calculateGrade(latestScore is String ? -1 : latestScore,
+            'marks': latestScore == '-' ? '-' : latestScore.toString(),
+            'grade': _calculateGrade(latestScore == '-' ? -1 : latestScore,
                 maxMark is String ? -1 : maxMark),
             'date':
                 "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}",
@@ -469,7 +493,7 @@ class _GradeCardState extends State<GradeCard> {
       String gender = test['gender'];
       String className = test['class_name'];
       String academicYear = test['academic_year'];
-
+      int testId = test['test_id'] ?? 0;
       // Handle score as an int, either from int or parsed from string
       int? score = test['score'] is int
           ? test['score']
@@ -487,14 +511,13 @@ class _GradeCardState extends State<GradeCard> {
       subjectsSet.add(subject);
 
       // Check for valid test entry
-      if (testDate != null && score != null) {
+      if (testDate != null && maxMark != null) {
         var existingEntry = latestScores[subject];
 
         // Update the entry only if it doesn't exist or if the current testDate is more recent
         if (existingEntry == null ||
             existingEntry['test_date'] == null ||
-            testDate.isAfter(
-                DateTime.parse(existingEntry['test_date'] as String))) {
+            testId > existingEntry['test_id']) {
           latestScores[subject] = {
             'student_name': studentName,
             'photo_path': photoPath,
@@ -504,8 +527,8 @@ class _GradeCardState extends State<GradeCard> {
             'subject_name': subject,
             'score': score, // Keep score as int
             'max_mark': maxMark, // Keep max_mark as int or null
-            'test_date':
-                testDate.toIso8601String(), // Store as String for output
+            'test_date': testDate.toIso8601String(),
+            'test_id': testId // Store as String for output
           };
         }
       }
@@ -521,8 +544,8 @@ class _GradeCardState extends State<GradeCard> {
           'class_name': 'N/A', // Placeholder for no test conducted
           'academic_year': 'N/A', // Placeholder for no test conducted
           'subject_name': subject,
-          'score': -1, // Indicate no test conducted
-          'max_mark': -1, // Indicate no test conducted
+          'score': '-', // Indicate no test conducted
+          'max_mark': '-', // Indicate no test conducted
           'test_date': null // No date available
         };
       }

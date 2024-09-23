@@ -474,7 +474,7 @@ class _ExamEntryState extends State<ExamEntry> {
     print("Test id $testId");
     studentList = await dbHelper.getStudentIdsAndNamesByTestId(testId);
     testDetails = await dbHelper.getTestDetails(testId);
-    print(studentList.length);
+    print(" Students length ${studentList.length}");
 
     setState(() {
       rowTextEditingControllers = List.generate(studentList.length, (index) {
@@ -505,7 +505,11 @@ class _ExamEntryState extends State<ExamEntry> {
       margin: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(8.0),
+        borderRadius: BorderRadius.circular(4.0),
+        border: Border.all(
+          color: Colors.grey.withOpacity(0.5),
+          width: .5,
+        ),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
@@ -566,7 +570,7 @@ class _ExamEntryState extends State<ExamEntry> {
           const SizedBox(height: 20),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              padding: const EdgeInsets.symmetric(horizontal: 50),
               child: SingleChildScrollView(
                 scrollDirection: Axis.vertical,
                 child: DataTable(

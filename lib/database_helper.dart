@@ -372,7 +372,8 @@ class DatabaseHelper {
       sub.subject_name,
       COALESCE(ts.score, 0) AS latest_score,
       t.max_mark,
-      t.test_date
+      t.test_date,
+      t.id as test_id
     FROM student_table s
     LEFT JOIN stream_table st ON s.stream_id = st.id
     LEFT JOIN class_table c ON st.class_id = c.id
@@ -391,7 +392,8 @@ class DatabaseHelper {
     sub.subject_name,
     COALESCE(ts.score, '-') AS score,
     t.max_mark,
-    t.test_date
+    t.test_date,
+    t.id as test_id
 FROM 
     student_table s
 LEFT JOIN 
@@ -426,6 +428,52 @@ WHERE
 ORDER BY 
     sub.subject_name;
 ''';
+
+    query = ''' SELECT 
+    s.student_name,
+    s.photo_id AS photo_path,
+    s.gender,
+    c.class_name,
+    c.academic_year,
+    sub.subject_name,
+    COALESCE(ts.score, '-') AS score,
+    t.max_mark,
+    t.test_date,
+    t.id AS test_id
+FROM 
+    student_table s
+LEFT JOIN 
+    stream_table st ON s.stream_id = st.id
+LEFT JOIN 
+    class_table c ON st.class_id = c.id
+LEFT JOIN 
+    stream_subjects_table ss ON st.id = ss.stream_id
+LEFT JOIN 
+    subject_table sub ON ss.subject_id = sub.id
+LEFT JOIN 
+    test_table t ON sub.id = t.subject_id
+LEFT JOIN 
+    test_score_table ts ON t.id = ts.test_id AND ts.student_id = s.id
+LEFT JOIN (
+    SELECT 
+        ts.student_id,
+        t.subject_id,
+        t.id AS test_id,
+        MAX(t.test_date) AS latest_test_date
+    FROM 
+        test_table t
+    JOIN 
+        test_score_table ts ON t.id = ts.test_id
+    WHERE 
+        ts.student_id = 4001
+    GROUP BY 
+        ts.student_id, t.subject_id, t.id
+) latest_test ON latest_test.subject_id = t.subject_id 
+              AND latest_test.latest_test_date = t.test_date
+WHERE 
+    s.id = ?
+ORDER BY 
+    sub.subject_name; ''';
 
     try {
       // Execute the query and get the result

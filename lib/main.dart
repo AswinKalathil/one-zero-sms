@@ -79,6 +79,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   DatabaseHelper _dbHelper = DatabaseHelper();
   int _pageNumber = 0;
+  int _selectdClass = 0;
   int _classCount = 0;
   bool _expandMenu = false;
   bool _isClassTablesInitialized = false;
@@ -87,10 +88,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
-    super.initState();
-
     _loadClasess();
     synchTestHistory();
+    super.initState();
   }
 
   void _loadClasess() async {
@@ -100,10 +100,13 @@ class _MyHomePageState extends State<MyHomePage> {
       _classes;
       _classCount = _classes.length;
     });
+    print("class count: $_classCount");
   }
 
   @override
   Widget build(BuildContext context) {
+    if (!_isClassTablesInitialized) _loadClasess();
+
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
@@ -300,10 +303,9 @@ class _MyHomePageState extends State<MyHomePage> {
               child: switch (_pageNumber) {
             0 => _buildHome(context),
             1 => _buildClassRooms(context),
-            // Stream Table
-
+            2 => _buildClassPage(index: _selectdClass, isDedicatedPage: true),
             4 => _buildEntrySection("student_table", UniqueKey()),
-            5 => _buildClassPage(),
+            5 => _buildClassPage(isDedicatedPage: false),
             6 => _addNewExam(context, setState),
             // 6 => _buildEntrySection("test_table", UniqueKey()),
 
@@ -358,11 +360,12 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildClassPage([int index = 0]) {
+  Widget _buildClassPage({int index = 0, bool isDedicatedPage = true}) {
     return (_isClassTablesInitialized)
         ? ClassDetailPage(
             className: _classes[index]['class_name'],
             classIndex: index,
+            isDedicatedPage: isDedicatedPage,
           )
         : Container(
             child: Center(
@@ -385,7 +388,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildClassRooms(BuildContext context) {
-    _loadClasess();
     int crossAxisCount = (MediaQuery.of(context).size.width / 350).floor();
     return _isClassTablesInitialized
         ? Container(
@@ -409,7 +411,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   child: InkWell(
                     onTap: () {
                       setState(() {
-                        _pageNumber = 5;
+                        _selectdClass = index;
+                        _pageNumber = 2;
                       });
                     },
                     child: Column(
@@ -498,16 +501,6 @@ class _MyHomePageState extends State<MyHomePage> {
           );
   }
 
-  String FormatTwoLine(String text) {
-    int lastSpaceIndex = text.lastIndexOf(' ');
-    if (lastSpaceIndex == -1) {
-      return text; // No space found, return the original text
-    }
-    return text.substring(0, lastSpaceIndex) +
-        '\n' +
-        text.substring(lastSpaceIndex + 1);
-  }
-
   DateTime _selectedDate = DateTime.now(); // Set today's date as the default
 
   _pickDate(BuildContext context) async {
@@ -548,7 +541,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return Container(
       width: 600,
       height: 310,
-      margin: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+      margin: const EdgeInsets.only(left: 10, bottom: 10),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
@@ -716,57 +709,27 @@ class _MyHomePageState extends State<MyHomePage> {
     List<String>? subjectsOfClass = [];
     return (_isClassTablesInitialized)
         ? SingleChildScrollView(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Container(
-                  margin: EdgeInsets.all(5),
-                  child: SizedBox(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              margin: const EdgeInsets.only(
-                                  left: 10, right: 10, top: 10),
-                              padding: const EdgeInsets.all(20),
-                              width: 600,
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).cardColor,
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(
-                                  color: Colors.grey.withOpacity(.5),
-                                  width: .5,
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Text(
-                                    'Add New Exam',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Spacer(),
-                                  ElevatedButton(
-                                    focusNode: focusNodes[4],
-                                    onPressed: () {
-                                      saveExam();
-                                    },
-                                    child: const Text('  Save  '),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Container(
-                                margin: const EdgeInsets.only(
-                                    left: 10, right: 10, bottom: 10),
+            child: Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 100.0, vertical: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    margin: EdgeInsets.all(5),
+                    child: SizedBox(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                margin:
+                                    const EdgeInsets.only(left: 10, top: 10),
                                 padding: const EdgeInsets.all(20),
-                                height: 310,
                                 width: 600,
                                 decoration: BoxDecoration(
                                   color: Theme.of(context).cardColor,
@@ -777,93 +740,170 @@ class _MyHomePageState extends State<MyHomePage> {
                                   ),
                                 ),
                                 child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  mainAxisAlignment: MainAxisAlignment.start,
                                   children: [
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 5),
-                                          height: 70,
-                                          width: 200,
-                                          child: autoFill(
-                                            key: ValueKey(_classes.hashCode),
-                                            labelText: 'Class Name',
-                                            controller: _classNameController,
-                                            focusNode: focusNodes[0],
-                                            nextFocusNode: focusNodes[1],
-                                            optionsList: _classes
-                                                .map((e) =>
-                                                    e['class_name'].toString())
-                                                .toList(),
-                                            onSubmitCallback: (value) async {
-                                              if (value.isNotEmpty) {
-                                                subjectsOfClass =
-                                                    await _dbHelper
-                                                        .getClassSubjects(
-                                                            value);
+                                    Text(
+                                      'Add New Exam',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Spacer(),
+                                    ElevatedButton(
+                                      focusNode: focusNodes[4],
+                                      onPressed: () {
+                                        saveExam();
+                                      },
+                                      child: const Text('  Save  '),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                  margin: const EdgeInsets.only(
+                                      left: 10, bottom: 10),
+                                  padding: const EdgeInsets.all(20),
+                                  height: 310,
+                                  width: 600,
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context).cardColor,
+                                    borderRadius: BorderRadius.circular(4),
+                                    border: Border.all(
+                                      color: Colors.grey.withOpacity(.5),
+                                      width: .5,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 5),
+                                            height: 70,
+                                            width: 200,
+                                            child: autoFill(
+                                              key: ValueKey(_classes.hashCode),
+                                              labelText: 'Class Name',
+                                              controller: _classNameController,
+                                              focusNode: focusNodes[0],
+                                              nextFocusNode: focusNodes[1],
+                                              optionsList: _classes
+                                                  .map((e) => e['class_name']
+                                                      .toString())
+                                                  .toList(),
+                                              onSubmitCallback: (value) async {
+                                                if (value.isNotEmpty) {
+                                                  subjectsOfClass =
+                                                      await _dbHelper
+                                                          .getClassSubjects(
+                                                              value);
 
-                                                _selectedClassid = _classes
-                                                    .firstWhere((element) =>
-                                                        element['class_name'] ==
-                                                        value)['id'];
-                                                // print(_classes);
-                                                // print("selected value: $value");
-                                                // print(
-                                                //     "selectedClassid: $_selectedClassid");
+                                                  _selectedClassid = _classes
+                                                      .firstWhere((element) =>
+                                                          element[
+                                                              'class_name'] ==
+                                                          value)['id'];
+                                                  // print(_classes);
+                                                  // print("selected value: $value");
+                                                  // print(
+                                                  //     "selectedClassid: $_selectedClassid");
 
-                                                if (subjectsOfClass == null) {
-                                                  ScaffoldMessenger.of(context)
-                                                      .showSnackBar(
-                                                    const SnackBar(
-                                                      content: Text(
-                                                          'Class not found in the database'),
-                                                      backgroundColor:
-                                                          Colors.red,
-                                                    ),
-                                                  );
-                                                } else {
-                                                  setState(() {
-                                                    _subjectForSuggestions =
-                                                        subjectsOfClass ?? [];
-                                                  });
+                                                  if (subjectsOfClass == null) {
+                                                    ScaffoldMessenger.of(
+                                                            context)
+                                                        .showSnackBar(
+                                                      const SnackBar(
+                                                        content: Text(
+                                                            'Class not found in the database'),
+                                                        backgroundColor:
+                                                            Colors.red,
+                                                      ),
+                                                    );
+                                                  } else {
+                                                    setState(() {
+                                                      _subjectForSuggestions =
+                                                          subjectsOfClass ?? [];
+                                                    });
+                                                  }
+
+                                                  return;
                                                 }
-
-                                                return;
-                                              }
-                                            },
+                                              },
+                                            ),
                                           ),
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 5),
-                                          height: 70,
-                                          width: 200,
-                                          child: autoFill(
-                                            key: ValueKey(_subjectForSuggestions
-                                                .hashCode),
-                                            labelText: 'Subject',
-                                            controller: _subjectNameController,
-                                            nextFocusNode: focusNodes[2],
-                                            optionsList: _subjectForSuggestions,
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 5),
+                                            height: 70,
+                                            width: 200,
+                                            child: autoFill(
+                                              key: ValueKey(
+                                                  _subjectForSuggestions
+                                                      .hashCode),
+                                              labelText: 'Subject',
+                                              controller:
+                                                  _subjectNameController,
+                                              nextFocusNode: focusNodes[2],
+                                              optionsList:
+                                                  _subjectForSuggestions,
+                                            ),
                                           ),
-                                        ),
-                                        Container(
-                                          padding:
-                                              const EdgeInsets.only(bottom: 10),
-                                          width: 200,
-                                          child: TextField(
-                                              focusNode: focusNodes[2],
-                                              controller: _topicController,
-                                              //new decoration
+                                          Container(
+                                            padding: const EdgeInsets.only(
+                                                bottom: 10),
+                                            width: 200,
+                                            child: TextField(
+                                                focusNode: focusNodes[2],
+                                                controller: _topicController,
+                                                //new decoration
+                                                decoration: InputDecoration(
+                                                  label: const Text(
+                                                      ' Chapter/Topic'),
+                                                  filled: true,
+                                                  fillColor: Theme.of(context)
+                                                      .canvasColor,
+                                                  focusColor: Colors.grey,
+                                                  contentPadding:
+                                                      const EdgeInsets.all(
+                                                          15.0),
+                                                  border: OutlineInputBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            4.0),
+                                                    borderSide: BorderSide(
+                                                        color: Colors.grey
+                                                            .withOpacity(.2),
+                                                        width: 0.4),
+                                                  ),
+                                                ),
+                                                onSubmitted: (value) {
+                                                  setState(() {
+                                                    _changeExist = true;
+                                                  });
+                                                  focusNodes[3].requestFocus();
+                                                }),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                                vertical: 10),
+                                            width: 200,
+                                            child: TextField(
+                                              inputFormatters: [
+                                                FilteringTextInputFormatter
+                                                    .digitsOnly
+                                              ],
+                                              focusNode: focusNodes[3],
+                                              controller: _maxiMarkController,
                                               decoration: InputDecoration(
-                                                label: const Text(
-                                                    ' Chapter/Topic'),
+                                                label: const Text('Max Mark'),
                                                 filled: true,
                                                 fillColor: Theme.of(context)
                                                     .canvasColor,
@@ -881,129 +921,96 @@ class _MyHomePageState extends State<MyHomePage> {
                                                 ),
                                               ),
                                               onSubmitted: (value) {
+                                                focusNodes[4].requestFocus();
+
                                                 setState(() {
                                                   _changeExist = true;
                                                 });
-                                                focusNodes[3].requestFocus();
-                                              }),
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              vertical: 10),
-                                          width: 200,
-                                          child: TextField(
-                                            inputFormatters: [
-                                              FilteringTextInputFormatter
-                                                  .digitsOnly
-                                            ],
-                                            focusNode: focusNodes[3],
-                                            controller: _maxiMarkController,
-                                            decoration: InputDecoration(
-                                              label: const Text('Max Mark'),
-                                              filled: true,
-                                              fillColor:
-                                                  Theme.of(context).canvasColor,
-                                              focusColor: Colors.grey,
-                                              contentPadding:
-                                                  const EdgeInsets.all(15.0),
-                                              border: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(4.0),
-                                                borderSide: BorderSide(
-                                                    color: Colors.grey
-                                                        .withOpacity(.2),
-                                                    width: 0.4),
+                                              },
+                                            ),
+                                          ),
+                                          const Row(
+                                            children: [],
+                                          ),
+                                        ],
+                                      ),
+
+                                      //second column --------
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.end,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          GestureDetector(
+                                            onTap: () => _pickDate(context),
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.all(22.0),
+                                              child: Row(
+                                                children: [
+                                                  Text(
+                                                    "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}  ", // Default to today's date
+                                                    style: const TextStyle(
+                                                        fontSize: 16,
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                  ),
+                                                  const Icon(
+                                                      Icons.calendar_today),
+                                                ],
                                               ),
                                             ),
-                                            onSubmitted: (value) {
-                                              focusNodes[4].requestFocus();
-
-                                              setState(() {
-                                                _changeExist = true;
-                                              });
-                                            },
                                           ),
-                                        ),
-                                        const Row(
-                                          children: [],
-                                        ),
-                                      ],
-                                    ),
-
-                                    //second column --------
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.end,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        GestureDetector(
-                                          onTap: () => _pickDate(context),
-                                          child: Container(
-                                            padding: const EdgeInsets.all(22.0),
-                                            child: Row(
-                                              children: [
-                                                Text(
-                                                  "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}  ", // Default to today's date
-                                                  style: const TextStyle(
-                                                      fontSize: 16,
-                                                      fontWeight:
-                                                          FontWeight.bold),
-                                                ),
-                                                const Icon(
-                                                    Icons.calendar_today),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                )),
-                          ],
-                        ),
-                        Column(
-                          children: [
-                            Container(
-                              margin: const EdgeInsets.only(
-                                  left: 10, right: 10, top: 10),
-                              padding: const EdgeInsets.all(20),
-                              width: 600,
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).cardColor,
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(
-                                  color: Colors.grey.withOpacity(.5),
-                                  width: .5,
+                                        ],
+                                      ),
+                                    ],
+                                  )),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              Container(
+                                margin:
+                                    const EdgeInsets.only(left: 10, top: 10),
+                                padding: const EdgeInsets.all(20),
+                                width: 600,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).cardColor,
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(
+                                    color: Colors.grey.withOpacity(.5),
+                                    width: .5,
+                                  ),
+                                ),
+                                child: Text(
+                                  'Recent Tests ',
+                                  style: TextStyle(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                              child: Text(
-                                'Recent Tests ',
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            showTestHistory(),
-                          ],
-                        ),
-                      ],
+                              showTestHistory(),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                !_changeExist
-                    ? Align(
-                        alignment: Alignment.topLeft,
-                        child: Container(
-                          width: 730,
-                          height: _studentList.length * 50.0 + 300,
-                          child: ExamEntry(
-                              test_id: _testId, key: ValueKey(_testId)),
-                        ),
-                      )
-                    : SizedBox(height: 400, child: getLogo(40)),
-              ],
+                  !_changeExist
+                      ? Align(
+                          alignment: Alignment.topLeft,
+                          child: Container(
+                            width: 630,
+                            height: _studentList.length * 50.0 + 300,
+                            child: ExamEntry(
+                                test_id: _testId, key: ValueKey(_testId)),
+                          ),
+                        )
+                      : SizedBox(height: 400, child: getLogo(40)),
+                ],
+              ),
             ),
           )
         : Container(
