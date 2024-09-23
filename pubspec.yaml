@@ -36,7 +36,8 @@ dependencies:
   sqflite_common_ffi: ^2.1.0
   bitsdojo_window: ^0.1.2+1
   stroke_text: any
-  window_manager: ^0.4.2
+
+  intl: ^0.18.0
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -74,8 +75,10 @@ flutter:
   assets:
     - assets/class-bg-0.png
     - assets/class-bg-1.png
+    - assets/class-bg-2.png
 
     - assets/ml.jpg
+    - assets/fl.jpg
     - assets/one_zero-logo-1.png
     - assets/one-zero-logo-2.png
 

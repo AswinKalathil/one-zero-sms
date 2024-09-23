@@ -171,7 +171,7 @@ class DatabaseHelper {
     final db = await database;
     String query = '''
     SELECT 
-      sub.subject_name,
+      Distinct sub.id as subject_id,sub.subject_name,
       c.id AS class_id
     FROM 
       subject_table sub
@@ -192,7 +192,7 @@ class DatabaseHelper {
       // Check if the result is empty and return null if no subjects are found
       if (result.isEmpty) {
         print("No subjects found for class: $className");
-        return null;
+        return [];
       }
 
       // Return the list of subjects
@@ -234,6 +234,7 @@ class DatabaseHelper {
       SELECT DISTINCT 
         s.id, 
         s.student_name, 
+        s.gender,
         s.photo_id,
         st.stream_name
       FROM 
@@ -268,6 +269,7 @@ class DatabaseHelper {
       final queryResults = await db.rawQuery(''' SELECT 
       s.id,
       s.student_name,
+      s.gender,
       s.photo_id,
       st.stream_name
     FROM 
@@ -318,6 +320,8 @@ class DatabaseHelper {
     SELECT 
       s.id,
       s.student_name,
+      s.gender,
+
       s.photo_id,
       st.stream_name
     FROM 
@@ -361,7 +365,8 @@ class DatabaseHelper {
     String query = '''
     SELECT 
       s.student_name,
-      COALESCE(s.photo_id, 'default_photo.png') AS photo_path,
+      s.photo_id AS photo_path,
+      s.gender,
       c.class_name,
       c.academic_year,
       sub.subject_name,
@@ -376,6 +381,51 @@ class DatabaseHelper {
     LEFT JOIN subject_table sub ON t.subject_id = sub.id
     WHERE s.id = ?;
   ''';
+
+    query = '''SELECT 
+    s.student_name,
+    s.photo_id AS photo_path,
+    s.gender,
+    c.class_name,
+    c.academic_year,
+    sub.subject_name,
+    COALESCE(ts.score, '-') AS score,
+    t.max_mark,
+    t.test_date
+FROM 
+    student_table s
+LEFT JOIN 
+    stream_table st ON s.stream_id = st.id
+LEFT JOIN 
+    class_table c ON st.class_id = c.id
+LEFT JOIN 
+    stream_subjects_table ss ON st.id = ss.stream_id
+LEFT JOIN 
+    subject_table sub ON ss.subject_id = sub.id
+LEFT JOIN 
+    test_table t ON sub.id = t.subject_id
+LEFT JOIN 
+    test_score_table ts ON t.id = ts.test_id AND ts.student_id = s.id
+LEFT JOIN (
+    SELECT 
+        ts.student_id,
+        t.subject_id,
+        MAX(t.test_date) AS latest_test_date
+    FROM 
+        test_table t
+    JOIN 
+        test_score_table ts ON t.id = ts.test_id
+    WHERE 
+        ts.student_id = 4001
+    GROUP BY 
+        ts.student_id, t.subject_id
+) latest_test ON latest_test.subject_id = t.subject_id 
+              AND latest_test.latest_test_date = t.test_date
+WHERE 
+    s.id = ?
+ORDER BY 
+    sub.subject_name;
+''';
 
     try {
       // Execute the query and get the result
@@ -435,7 +485,7 @@ class DatabaseHelper {
     return result.first['maxId'] ?? 0; // Returns 0 if there are no rows
   }
 
-  Future<int> getSubjectId(String subjectName) async {
+  Future<int> getSubjectId(String subjectName, int classid) async {
     final db = await database;
 
     // Ensure that subjectName is not null or empty
@@ -445,13 +495,13 @@ class DatabaseHelper {
 
     // Query to get the subject ID
     String query = '''
-    SELECT id FROM subject_table WHERE subject_name = ?;
+    SELECT id FROM subject_table  WHERE subject_name = ? AND class_id = ?;
   ''';
 
     try {
       // Execute the query and get the result
       List<Map<String, dynamic>> result =
-          await db.rawQuery(query, [subjectName]);
+          await db.rawQuery(query, [subjectName, classid]);
 
       // Check if the result is empty and return null if no subject is found
       if (result.isEmpty) {
@@ -570,31 +620,198 @@ class DatabaseHelper {
 
   Future<int> startNewYear(String academicYear) async {
     List<Map<String, dynamic>> classDataList = [
-      {'class_id': 1, 'class_name': 'Class A', 'academic_year': academicYear},
-      {'class_id': 2, 'class_name': 'Class B', 'academic_year': academicYear},
+      {
+        'class_id': 1,
+        'class_name': 'Plus Two STATE',
+        'academic_year': academicYear
+      },
+      {
+        'class_id': 2,
+        'class_name': 'Plus Two CBSE',
+        'academic_year': academicYear
+      },
+      {
+        'class_id': 3,
+        'class_name': 'Plus One STATE',
+        'academic_year': academicYear
+      },
+      {
+        'class_id': 4,
+        'class_name': 'Plus One CBSE',
+        'academic_year': academicYear
+      },
+      {
+        'class_id': 5,
+        'class_name': '10th STATE',
+        'academic_year': academicYear
+      },
+      {'class_id': 6, 'class_name': '10th CBSE', 'academic_year': academicYear},
+      {'class_id': 7, 'class_name': '9th STATE', 'academic_year': academicYear},
+      {'class_id': 8, 'class_name': '9th CBSE', 'academic_year': academicYear},
+      {'class_id': 9, 'class_name': '8th STATE', 'academic_year': academicYear},
+      {'class_id': 10, 'class_name': '8th CBSE', 'academic_year': academicYear},
     ];
 
     List<Map<String, dynamic>> subjectDataList = [
-      {'subject_id': 1, 'subject_name': 'Math', 'class_id': 1},
-      {'subject_id': 2, 'subject_name': 'Science', 'class_id': 1},
-      {'subject_id': 3, 'subject_name': 'English', 'class_id': 2},
-      {'subject_id': 4, 'subject_name': 'History', 'class_id': 2},
+//plus two state
+
+      {'subject_id': 1, 'subject_name': 'Mathematics', 'class_id': 1},
+      {'subject_id': 2, 'subject_name': 'Physics', 'class_id': 1},
+      {'subject_id': 3, 'subject_name': 'Chemistry', 'class_id': 1},
+      {'subject_id': 4, 'subject_name': 'Botany', 'class_id': 1},
+      {'subject_id': 5, 'subject_name': 'Zoology', 'class_id': 1},
+
+// plus two cbse
+
+      {'subject_id': 6, 'subject_name': 'Mathematics', 'class_id': 2},
+      {'subject_id': 7, 'subject_name': 'Physics', 'class_id': 2},
+      {'subject_id': 8, 'subject_name': 'Chemistry', 'class_id': 2},
+      {'subject_id': 9, 'subject_name': 'Botany', 'class_id': 2},
+      {'subject_id': 10, 'subject_name': 'Zoology', 'class_id': 2},
+
+// plus one state
+
+      {'subject_id': 11, 'subject_name': 'Mathematics', 'class_id': 3},
+      {'subject_id': 12, 'subject_name': 'Physics', 'class_id': 3},
+      {'subject_id': 13, 'subject_name': 'Chemistry', 'class_id': 3},
+      {'subject_id': 14, 'subject_name': 'Botany', 'class_id': 3},
+      {'subject_id': 15, 'subject_name': 'Zoology', 'class_id': 3},
+
+// plus one cbse
+
+      {'subject_id': 16, 'subject_name': 'Mathematics', 'class_id': 4},
+      {'subject_id': 17, 'subject_name': 'Physics', 'class_id': 4},
+      {'subject_id': 18, 'subject_name': 'Chemistry', 'class_id': 4},
+      {'subject_id': 19, 'subject_name': 'Botany', 'class_id': 4},
+      {'subject_id': 20, 'subject_name': 'Zoology', 'class_id': 4},
+
+      // // 10th state
+      // {'subject_id': 22, 'subject_name': 'Mathematics', 'class_id': 4},
+      // {'subject_id': 23, 'subject_name': 'Physics', 'class_id': 4},
+      // {'subject_id': 24, 'subject_name': 'Chemistry', 'class_id': 4},
+      // {'subject_id': 25, 'subject_name': 'Botany', 'class_id': 4},
+      // {'subject_id': 26, 'subject_name': 'Zoology', 'class_id': 4},
+      // {'subject_id': 27, 'subject_name': 'English', 'class_id': 4},
+
+      // 10th cbse
+
+      // 9th state
+      // 9th cbse
+      // 8th state
+      // 8th cbse
     ];
 
     List<Map<String, dynamic>> streamDataList = [
-      {'stream_id': 1, 'stream_name': 'Science Stream', 'class_id': 1},
-      {'stream_id': 2, 'stream_name': 'Arts Stream', 'class_id': 2},
+      //12th
+      //state
+      {'stream_id': 1, 'stream_name': '12th Bio STATE', 'class_id': 1},
+      {'stream_id': 2, 'stream_name': '12th CS STATE', 'class_id': 1},
+      //cbse
+      {'stream_id': 3, 'stream_name': '12th Bio-Hindi CBSE', 'class_id': 2},
+      {'stream_id': 4, 'stream_name': '12th Bio-Math CBSE', 'class_id': 2},
+      {'stream_id': 5, 'stream_name': '12th CS CBSE', 'class_id': 2},
+      //11th
+      //state
+      {'stream_id': 6, 'stream_name': '11th Bio STATE', 'class_id': 3},
+      {'stream_id': 7, 'stream_name': '11th CS STATE', 'class_id': 3},
+      //cbse
+      {'stream_id': 8, 'stream_name': '11th Bio-Hindi CBSE', 'class_id': 4},
+      {'stream_id': 9, 'stream_name': '11th Bio-Math CBSE', 'class_id': 4},
+      {'stream_id': 10, 'stream_name': '11th CS CBSE', 'class_id': 4},
     ];
 
     List<Map<String, dynamic>> streamSubjectDataList = [
+      // 12th BIO STATE
       {'stream_id': 1, 'subject_id': 1},
       {'stream_id': 1, 'subject_id': 2},
+      {'stream_id': 1, 'subject_id': 3},
+      {'stream_id': 1, 'subject_id': 4},
+      {'stream_id': 1, 'subject_id': 5},
+
+      // 12th CS STATE
+      {'stream_id': 2, 'subject_id': 1},
+      {'stream_id': 2, 'subject_id': 2},
       {'stream_id': 2, 'subject_id': 3},
-      {'stream_id': 2, 'subject_id': 4},
+
+      //12th bio-hindi cbse
+      {'stream_id': 3, 'subject_id': 7},
+      {'stream_id': 3, 'subject_id': 8},
+      {'stream_id': 3, 'subject_id': 9},
+      {'stream_id': 3, 'subject_id': 10},
+
+      //12th bio-math cbse
+      {'stream_id': 4, 'subject_id': 6},
+      {'stream_id': 4, 'subject_id': 7},
+      {'stream_id': 4, 'subject_id': 8},
+      {'stream_id': 4, 'subject_id': 9},
+      {'stream_id': 4, 'subject_id': 10},
+
+      //12th cs cbse
+      {'stream_id': 5, 'subject_id': 6},
+      {'stream_id': 5, 'subject_id': 7},
+      {'stream_id': 5, 'subject_id': 8},
+
+      // 11th BIO STATE
+      {'stream_id': 6, 'subject_id': 11},
+      {'stream_id': 6, 'subject_id': 12},
+      {'stream_id': 6, 'subject_id': 13},
+      {'stream_id': 6, 'subject_id': 14},
+      {'stream_id': 6, 'subject_id': 15},
+
+      // 11th CS STATE
+      {'stream_id': 7, 'subject_id': 11},
+      {'stream_id': 7, 'subject_id': 12},
+      {'stream_id': 7, 'subject_id': 13},
+
+      //11th bio-hindi cbse
+      {'stream_id': 8, 'subject_id': 17},
+      {'stream_id': 8, 'subject_id': 18},
+      {'stream_id': 8, 'subject_id': 19},
+      {'stream_id': 8, 'subject_id': 20},
+
+      //11th bio-math cbse
+      {'stream_id': 9, 'subject_id': 16},
+      {'stream_id': 9, 'subject_id': 17},
+      {'stream_id': 9, 'subject_id': 18},
+      {'stream_id': 9, 'subject_id': 19},
+      {'stream_id': 9, 'subject_id': 20},
+
+      //11th cs cbse
+      {'stream_id': 10, 'subject_id': 16},
+      {'stream_id': 10, 'subject_id': 17},
+      {'stream_id': 10, 'subject_id': 18},
     ];
 
     return await insertDynamicData(
         classDataList, subjectDataList, streamDataList, streamSubjectDataList);
+  }
+
+  Future<List<Map<String, dynamic>>> getTestHistory() async {
+    final db = await database;
+    String query = '''SELECT DISTINCT
+    t.id AS test_id,
+    s.subject_name,
+    t.topic,
+    c.class_name,
+    t.test_date
+FROM 
+    test_table t
+JOIN 
+    subject_table s ON t.subject_id = s.id
+JOIN 
+    stream_subjects_table ss ON s.id = ss.subject_id
+JOIN 
+    stream_table st ON ss.stream_id = st.id
+JOIN 
+    class_table c ON st.class_id = c.id
+ORDER BY 
+    t.id DESC;  
+
+
+''';
+    List<Map<String, dynamic>> results = await db.rawQuery(query);
+
+    return results;
   }
 
   // Example CRUD operations

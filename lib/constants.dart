@@ -5,14 +5,16 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:stroke_text/stroke_text.dart';
 
 final List<Color> cardBackgroundColors = [
-  Color.fromARGB(255, 176, 213, 226), // Light Blue
-  Color.fromARGB(255, 50, 172, 113), // Light Green
-  Color.fromARGB(255, 255, 222, 137), // Light Yellow
-  Color(0xFFF08080), // Light Coral
+  // Color.fromARGB(255, 176, 213, 226), // Light Blue
+  // Color.fromARGB(255, 50, 172, 113), // Light Green
+  // Color.fromARGB(255, 255, 222, 137), // Light Yellow
+  // Color(0xFFF08080), // Light Coral
   Color.fromARGB(255, 194, 194, 231), // Light Lavender
-  Color(0xFFFFDAB9), // Light Peach
+  // Color(0xFFFFDAB9), // Light Peach
 ];
 
+//   ? Color.fromARGB(255, 2, 47, 22)
+// : Color.fromARGB(255, 45, 205, 114),
 Column getLogo(double fontSize) {
   return Column(
     mainAxisAlignment: MainAxisAlignment.center,
@@ -44,9 +46,9 @@ Column getLogo(double fontSize) {
   );
 }
 
-DatabaseHelper dbHelper = DatabaseHelper();
+DatabaseHelper dbHelperForConstants = DatabaseHelper();
 Future<List<String>> getStreamNames() async {
-  return await dbHelper.getStreamNames();
+  return await dbHelperForConstants.getStreamNames();
 }
 
 Future<void> initializeStreamNames() async {
@@ -92,11 +94,10 @@ Map<String, InputTableMetadata> tableMetadataMap = {
       "Student Name",
       "Stream Name",
       "School Name",
-      "Student Phone",
-      "Parent Name",
+      "Gender",
       "Parent Phone",
       "Photo Path",
-      "Actions"
+      "Remove"
     ],
     columnLengths: [
       50,
@@ -188,9 +189,8 @@ CREATE TABLE student_table (
   id INTEGER PRIMARY KEY ,  
   student_name TEXT NOT NULL,
   photo_id TEXT,
-  student_phone TEXT,
-  parent_name TEXT,
   parent_phone TEXT,
+  gender TEXT,
   school_name TEXT,
   stream_id INTEGER NOT NULL,
   FOREIGN KEY (stream_id) REFERENCES stream_table(id)

@@ -1,15 +1,13 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:one_zero/constants.dart';
 import 'package:one_zero/custom-widgets.dart';
-import 'package:one_zero/results_page.dart';
 import 'package:one_zero/database_helper.dart';
+import 'package:one_zero/results_page.dart';
 import 'package:one_zero/dataEntry.dart';
-import 'package:path/path.dart';
+import 'package:intl/intl.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:window_manager/window_manager.dart';
+import 'package:stroke_text/stroke_text.dart';
 
 void main() async {
   // Initialize the FFI
@@ -27,7 +25,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  bool isDarkMode = false;
+  bool _isDarkMode = false;
 
   @override
   Widget build(BuildContext context) {
@@ -35,29 +33,33 @@ class _MyAppState extends State<MyApp> {
       title: 'One-Zero SMS',
       theme: ThemeData(
         primarySwatch: Colors.green,
-        primaryColor: isDarkMode
-            ? Color.fromARGB(255, 2, 47, 22)
-            : Color.fromARGB(255, 45, 205, 114),
-        secondaryHeaderColor: isDarkMode
+        primaryColor: _isDarkMode
+            ? Color.fromRGBO(23, 33, 43, 1)
+            : Color.fromRGBO(35, 144, 198, 1),
+        secondaryHeaderColor: _isDarkMode
             ? Color.fromRGBO(238, 108, 77, 1)
             : Color.fromRGBO(238, 108, 77, 1),
-        scaffoldBackgroundColor:
-            isDarkMode ? Colors.grey[850] : Colors.grey[200],
-        brightness: isDarkMode ? Brightness.dark : Brightness.light,
-        canvasColor: isDarkMode ? Colors.grey[850] : Colors.grey[200],
+        scaffoldBackgroundColor: _isDarkMode
+            ? Color.fromRGBO(14, 22, 33, 1)
+            : Color.fromRGBO(240, 240, 240, 1),
+        brightness: _isDarkMode ? Brightness.dark : Brightness.light,
+        canvasColor: _isDarkMode
+            ? Color.fromRGBO(36, 47, 61, 1)
+            : Color.fromRGBO(241, 241, 241, 1),
+        cardColor: _isDarkMode ? Color.fromRGBO(43, 82, 120, 1) : Colors.white,
         primaryTextTheme: TextTheme(
           bodyMedium: TextStyle(
-            color: isDarkMode ? Colors.white : Colors.black,
+            color: _isDarkMode ? Colors.white : Colors.black,
           ),
         ),
       ),
       home: MyHomePage(
         onThemeChanged: (bool value) {
           setState(() {
-            isDarkMode = value;
+            _isDarkMode = value;
           });
         },
-        isDarkMode: isDarkMode,
+        isDarkMode: _isDarkMode,
       ),
     );
   }
@@ -75,26 +77,28 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-  int pageNumber = 0;
-  int classCount = 0;
-  bool expandMenu = false;
-  final DatabaseHelper dbHelper = DatabaseHelper();
-  List<Map<String, dynamic>> classes = [];
-  List<List<String>> selectedSubjects = [];
+  DatabaseHelper _dbHelper = DatabaseHelper();
+  int _pageNumber = 0;
+  int _classCount = 0;
+  bool _expandMenu = false;
+  bool _isClassTablesInitialized = false;
+
+  List<Map<String, dynamic>> _classes = [];
 
   @override
   void initState() {
     super.initState();
 
     _loadClasess();
+    synchTestHistory();
   }
 
   void _loadClasess() async {
-    classes = await dbHelper.getClasses('class_table');
-
+    _classes = await _dbHelper.getClasses('class_table');
+    _isClassTablesInitialized = _classCount == 0 ? false : true;
     setState(() {
-      classes;
-      classCount = classes.length;
+      _classes;
+      _classCount = _classes.length;
     });
   }
 
@@ -104,13 +108,13 @@ class _MyHomePageState extends State<MyHomePage> {
       key: _scaffoldKey,
       appBar: AppBar(
         leading: IconButton(
-          icon: expandMenu
+          icon: _expandMenu
               ? Icon(Icons.menu_open, color: Colors.white)
               : Icon(Icons.menu, color: Colors.white),
           onPressed: () {
             setState(() {
               super.setState(() {
-                expandMenu = !expandMenu;
+                _expandMenu = !_expandMenu;
               });
             });
           },
@@ -122,9 +126,9 @@ class _MyHomePageState extends State<MyHomePage> {
             child: IconButton(
               icon: const Icon(Icons.add, color: Colors.white),
               onPressed: () async {
-                TextEditingController _textFieldController =
+                TextEditingController textFieldController =
                     TextEditingController();
-                _textFieldController.text =
+                textFieldController.text =
                     "${DateTime.now().year}-${DateTime.now().year + 1}";
                 await showDialog<String>(
                   context: context,
@@ -132,7 +136,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     return AlertDialog(
                       title: Text('Start New Acadamic Year'),
                       content: TextField(
-                        controller: _textFieldController,
+                        controller: textFieldController,
                       ),
                       actions: <Widget>[
                         TextButton(
@@ -144,8 +148,8 @@ class _MyHomePageState extends State<MyHomePage> {
                         ),
                         TextButton(
                           onPressed: () async {
-                            if (await dbHelper
-                                    .startNewYear(_textFieldController.text) ==
+                            if (await _dbHelper
+                                    .startNewYear(textFieldController.text) ==
                                 1) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
@@ -164,7 +168,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             }
 
                             Navigator.of(context)
-                                .pop(_textFieldController.text); // Return input
+                                .pop(textFieldController.text); // Return input
                           },
                           child: Text('Submit'),
                         ),
@@ -181,7 +185,7 @@ class _MyHomePageState extends State<MyHomePage> {
         children: [
           Container(
             color: Theme.of(context).primaryColor,
-            width: expandMenu ? 200 : 60,
+            width: _expandMenu ? 200 : 60,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -192,67 +196,67 @@ class _MyHomePageState extends State<MyHomePage> {
                       selectedIcon: Icons.home,
                       label: 'Home',
                       page: 0,
-                      selectedPage: pageNumber,
+                      selectedPage: _pageNumber,
                       onTap: () {
                         setState(() {
-                          pageNumber = 0;
+                          _pageNumber = 0;
                         });
                       },
-                      isMenuExpanded: expandMenu,
+                      isMenuExpanded: _expandMenu,
                     ),
                     CustomDrawerItem(
                       icon: Icons.rectangle_outlined,
                       selectedIcon: Icons.rectangle_outlined,
                       label: 'Class Rooms',
                       page: 1,
-                      selectedPage: pageNumber,
+                      selectedPage: _pageNumber,
                       onTap: () {
                         setState(() {
                           _loadClasess();
-                          pageNumber = 1;
+                          _pageNumber = 1;
                         });
                       },
-                      isMenuExpanded: expandMenu,
+                      isMenuExpanded: _expandMenu,
                     ),
                     CustomDrawerItem(
                       icon: Icons.group_add_outlined,
                       selectedIcon: Icons.group_add_rounded,
                       label: 'Add Students',
                       page: 4,
-                      selectedPage: pageNumber,
+                      selectedPage: _pageNumber,
                       onTap: () {
                         setState(() {
                           initializeStreamNames();
-                          pageNumber = 4;
+                          _pageNumber = 4;
                         });
                       },
-                      isMenuExpanded: expandMenu,
+                      isMenuExpanded: _expandMenu,
                     ),
                     CustomDrawerItem(
                       icon: Icons.analytics_outlined,
                       selectedIcon: Icons.analytics,
                       label: 'Reports',
                       page: 5,
-                      selectedPage: pageNumber,
+                      selectedPage: _pageNumber,
                       onTap: () {
                         setState(() {
-                          pageNumber = 5;
+                          _pageNumber = 5;
                         });
                       },
-                      isMenuExpanded: expandMenu,
+                      isMenuExpanded: _expandMenu,
                     ),
                     CustomDrawerItem(
                       icon: Icons.add_box_outlined,
                       selectedIcon: Icons.add_box,
                       label: 'Exam Entry',
                       page: 6,
-                      selectedPage: pageNumber,
+                      selectedPage: _pageNumber,
                       onTap: () {
                         setState(() {
-                          pageNumber = 6;
+                          _pageNumber = 6;
                         });
                       },
-                      isMenuExpanded: expandMenu,
+                      isMenuExpanded: _expandMenu,
                     ),
                   ],
                 ),
@@ -265,25 +269,25 @@ class _MyHomePageState extends State<MyHomePage> {
                         selectedIcon: Icons.wb_sunny,
                         label: widget.isDarkMode ? "Light" : "Dark",
                         page: -1,
-                        selectedPage: pageNumber,
+                        selectedPage: _pageNumber,
                         onTap: () {
                           setState(() {
                             widget.onThemeChanged(!widget.isDarkMode);
                           });
                         },
-                        isMenuExpanded: expandMenu),
+                        isMenuExpanded: _expandMenu),
                     CustomDrawerItem(
                       icon: Icons.settings_outlined,
                       selectedIcon: Icons.settings,
                       label: 'Settings',
                       page: 7,
-                      selectedPage: pageNumber,
+                      selectedPage: _pageNumber,
                       onTap: () {
                         setState(() {
-                          pageNumber = 0;
+                          _pageNumber = 0;
                         });
                       },
-                      isMenuExpanded: expandMenu,
+                      isMenuExpanded: _expandMenu,
                     ),
                   ],
                 ),
@@ -293,12 +297,10 @@ class _MyHomePageState extends State<MyHomePage> {
             // Add more ListTile widgets for other menu items
           ),
           Expanded(
-              child: switch (pageNumber) {
+              child: switch (_pageNumber) {
             0 => _buildHome(context),
             1 => _buildClassRooms(context),
-            2 => _buildEntrySection("class_table", UniqueKey()),
-            3 =>
-              _buildEntrySection("stream_table", UniqueKey()), // Stream Table
+            // Stream Table
 
             4 => _buildEntrySection("student_table", UniqueKey()),
             5 => _buildClassPage(),
@@ -314,110 +316,196 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildHome(BuildContext context) {
-    return Container(
-      color: Theme.of(context).canvasColor,
-      width: double.infinity,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.start,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Card()
-            // Number of cards in the grid)
-          ],
+    return Center(
+      child: Container(
+        width: 500,
+        height: 500,
+        margin: EdgeInsets.all(20),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: GridView.builder(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3, // Number of cards in a row
+                    childAspectRatio:
+                        1, // Width/height ratio of the cards (1 for square)
+                    crossAxisSpacing: 20,
+                    mainAxisSpacing: 20,
+                  ),
+                  itemCount: 3,
+                  itemBuilder: (context, index) {
+                    return Align(
+                      alignment: Alignment.topLeft,
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        color: Colors.blueGrey,
+                        child: Center(
+                          child: Text('Home Page'),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildClassPage([int index = 0]) {
-    return ClassDetailPage(
-      className: classes[index]['class_name'],
-      classIndex: index,
-    );
+    return (_isClassTablesInitialized)
+        ? ClassDetailPage(
+            className: _classes[index]['class_name'],
+            classIndex: index,
+          )
+        : Container(
+            child: Center(
+              child: Text("No Class Data Found"),
+            ),
+          );
   }
 
   Widget _buildEntrySection(String tableName, Key key) {
-    return DataEntryPage(
-      metadata: tableMetadataMap[tableName]!,
-      key: key,
-    );
+    return (_isClassTablesInitialized)
+        ? DataEntryPage(
+            metadata: tableMetadataMap[tableName]!,
+            key: key,
+          )
+        : Container(
+            child: Center(
+              child: Text("No Class Data Found"),
+            ),
+          );
   }
 
   Widget _buildClassRooms(BuildContext context) {
     _loadClasess();
-    return Container(
-      color: Theme.of(context).canvasColor,
-      padding: const EdgeInsets.all(20.0),
-      child: GridView.builder(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4, // Number of columns in the grid
-          childAspectRatio: 3 / 2, // Width/height ratio of the cards
-          crossAxisSpacing: 20,
-          mainAxisSpacing: 20,
-        ),
-        itemCount: classCount, // Number of cards in the grid
-        itemBuilder: (context, index) {
-          return Card(
-            color: Theme.of(context).cardColor,
-            elevation: 5,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: InkWell(
-              onTap: () {
-                setState(() {
-                  pageNumber = 5;
-                });
-              },
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Stack(
+    int crossAxisCount = (MediaQuery.of(context).size.width / 350).floor();
+    return _isClassTablesInitialized
+        ? Container(
+            padding: const EdgeInsets.symmetric(horizontal: 150, vertical: 20),
+            child: GridView.builder(
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount:
+                    crossAxisCount, //responsive number of cards in a row
+                childAspectRatio: 3 / 2, // Width/height ratio of the cards
+                crossAxisSpacing: 20,
+                mainAxisSpacing: 20,
+              ),
+              itemCount: _classCount, // Number of cards in the grid
+              itemBuilder: (context, index) {
+                return Card(
+                  color: Theme.of(context).cardColor,
+                  elevation: 5,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        _pageNumber = 5;
+                      });
+                    },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Container(
-                          decoration: BoxDecoration(
-                            color: cardBackgroundColors[
-                                index % cardBackgroundColors.length],
-                            borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(4),
-                                topRight: Radius.circular(4),
-                                bottomLeft: Radius.circular(30)),
-                            image: DecorationImage(
-                              image: AssetImage(
-                                  'assets/class-bg-${index % 2}.png'),
-                              fit: BoxFit.cover,
-                            ),
+                        Expanded(
+                          child: Stack(
+                            children: [
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: cardBackgroundColors[
+                                      index % cardBackgroundColors.length],
+                                  borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(4),
+                                      topRight: Radius.circular(4),
+                                      bottomLeft: Radius.circular(30)),
+                                  image: DecorationImage(
+                                    image: AssetImage(
+                                        'assets/class-bg-${index % 3}.png'),
+                                    fit: BoxFit.cover,
+                                  ),
+                                ),
+                              ),
+                              Positioned(
+                                top: 10,
+                                left: 10,
+                                child: RichText(
+                                  text: TextSpan(
+                                    children: [
+                                      WidgetSpan(
+                                          child: StrokeText(
+                                        strokeColor:
+                                            Color.fromRGBO(255, 255, 255, .5),
+                                        strokeWidth: 1,
+                                        text: _classes[index]['class_name']
+                                            .substring(
+                                                0,
+                                                _classes[index]['class_name']
+                                                    .lastIndexOf(' ')),
+                                        textStyle: const TextStyle(
+                                          fontSize: 24,
+                                          fontWeight: FontWeight.bold,
+                                          fontFamily: 'Revue',
+                                          color:
+                                              Color.fromARGB(221, 59, 57, 57),
+                                        ),
+                                      )),
+                                      TextSpan(
+                                        text: '\n' +
+                                            _classes[index]['class_name']
+                                                .substring(_classes[index]
+                                                            ['class_name']
+                                                        .lastIndexOf(' ') +
+                                                    1),
+                                        style: const TextStyle(
+                                          fontSize:
+                                              16, // Smaller font size for the second line
+
+                                          fontFamily: 'Revue',
+                                          color:
+                                              Color.fromARGB(221, 59, 57, 57),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        Positioned(
-                          top: 10,
-                          left: 10,
-                          child: Text(
-                            classes[index]['class_name'],
-                            style: const TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors
-                                  .black87, // Ensure text is visible over the image
-                            ),
-                          ),
+                        const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: SizedBox(height: 5),
                         ),
                       ],
                     ),
                   ),
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: SizedBox(height: 5),
-                  ),
-                ],
-              ),
+                );
+              },
+            ),
+          )
+        : Container(
+            child: Center(
+              child: Text("No Class Data Found\n Please add class data"),
             ),
           );
-        },
-      ),
-    );
+  }
+
+  String FormatTwoLine(String text) {
+    int lastSpaceIndex = text.lastIndexOf(' ');
+    if (lastSpaceIndex == -1) {
+      return text; // No space found, return the original text
+    }
+    return text.substring(0, lastSpaceIndex) +
+        '\n' +
+        text.substring(lastSpaceIndex + 1);
   }
 
   DateTime _selectedDate = DateTime.now(); // Set today's date as the default
@@ -438,277 +526,490 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
-  TextEditingController classNameController = TextEditingController();
-  TextEditingController subjectNameController = TextEditingController();
-  TextEditingController topicController = TextEditingController();
-  TextEditingController maxiMarkController = TextEditingController();
-  TextEditingController testIdController = TextEditingController();
-  bool changeExist = true;
-  List<Map<String, dynamic>> studentList = [];
-  int testId = 0;
-  List<String> subjectForSuggestions = [];
-  int showAuto = 0;
-  Container _addNewExam(BuildContext context, Function parentSetState) {
+  TextEditingController _classNameController = TextEditingController();
+  TextEditingController _subjectNameController = TextEditingController();
+  TextEditingController _topicController = TextEditingController();
+  TextEditingController _maxiMarkController = TextEditingController();
+
+  bool _changeExist = true;
+  bool reset = false;
+  List<Map<String, dynamic>> _studentList = [];
+  int _testId = 0;
+  List<String> _subjectForSuggestions = [];
+  int _selectedClassid = 0;
+  List<Map<String, dynamic>> _testHistory = [];
+  void synchTestHistory() async {
+    _testHistory = await _dbHelper.getTestHistory();
+
+    setState(() {});
+  }
+
+  Widget showTestHistory() {
+    return Container(
+      width: 600,
+      height: 310,
+      margin: const EdgeInsets.only(left: 10, right: 10, bottom: 10),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: Colors.grey.withOpacity(.5),
+          width: .5,
+        ),
+      ),
+      child: ListView.builder(
+        itemCount: _testHistory.length,
+        itemBuilder: (context, index) {
+          return Container(
+            decoration: BoxDecoration(
+              border: Border(
+                  bottom: BorderSide(
+                      color: Colors.grey.withOpacity(1), width: 0.4)),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        _testHistory[index]['subject_name'] ?? "--",
+                        style: TextStyle(
+                            fontSize: 15, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          _testHistory[index]['topic'] ?? "_",
+                          style: TextStyle(
+                            fontSize: 12,
+                          ),
+                        )),
+                    Spacer(),
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                        DateFormat('yyyy-MM-dd – kk:mm').format(DateTime.parse(
+                                _testHistory[index]['test_date']
+                                    .replaceAll(' ', 'T'))) ??
+                            "--/--/--",
+                        style: TextStyle(
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Text(
+                        _testHistory[index]['class_name'] ?? "--",
+                        style: TextStyle(
+                          fontSize: 10,
+                        ),
+                      ),
+                    ),
+                    Spacer(),
+                    Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          "Test ID: ${_testHistory[index]['test_id']}" ?? "_",
+                          style: TextStyle(
+                            fontSize: 8,
+                          ),
+                        )),
+                  ],
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  saveExam() async {
+    if (_classNameController.text.isEmpty ||
+        _subjectNameController.text.isEmpty ||
+        _topicController.text.isEmpty ||
+        _maxiMarkController.text.isEmpty) {
+      // Show an error message if any field is empty
+
+      // print(
+      //     "classname: ${_classNameController.text} \nsubject: ${_subjectNameController.text}\n topic: ${_topicController.text}\n maxmark: ${_maxiMarkController.text}");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please fill in all the fields.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } else {
+      // All fields are filled, proceed with your logic
+
+      int maxtestId = await _dbHelper.getMaxId('test_table');
+
+      Map<String, dynamic> newTest = {
+        'testId': maxtestId + 1,
+        'date': _selectedDate.toString(),
+        'className': _classNameController.text,
+        'maxMark': _maxiMarkController.text,
+        'topic': _topicController.text,
+        'subject_name': _subjectNameController.text,
+      };
+      // print(
+      //     "class id at subject fetch: $_selectedClassid");
+      int subjectId = await _dbHelper.getSubjectId(
+          _subjectNameController.text, _selectedClassid);
+
+      if (subjectId == 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Subject not found in the database'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      Map<String, dynamic> test = {
+        'id': newTest['testId'],
+        'subject_id': subjectId,
+        'topic': newTest['topic'],
+        'max_mark': int.parse(newTest['maxMark']),
+        'test_date': newTest['date'],
+      };
+      print(test);
+      if (await _dbHelper.insertToTable('test_table', test) != 0) {
+        // Show a success message
+        synchTestHistory();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Test details saved successfully'),
+
+            // Use the default theme color
+          ),
+        );
+        _testId = maxtestId + 1;
+
+        _studentList = await _dbHelper.getStudentIdsAndNamesByTestId(_testId);
+
+        setState(() {
+          _changeExist = false;
+        });
+        print(
+            "studentList length: ${_studentList.length}  ,  ${!_changeExist}");
+      }
+
+      // Proceed with further processing, like saving data to a database or sending it to a server
+      // Example: saveDataToDatabase(studentName, stream, studentPhone, schoolName, parentName, parentPhone, photoPath);
+    }
+  }
+
+  Widget _addNewExam(BuildContext context, Function parentSetState) {
     List<FocusNode> focusNodes = List.generate(5, (_) => FocusNode());
 
     List<String>? subjectsOfClass = [];
-
-    maxiMarkController.text = '100';
-
-    return Container(
-      color: Theme.of(context).canvasColor,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Container(
-                  margin: const EdgeInsets.all(10),
-                  height: 310,
-                  width: 450,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  padding: const EdgeInsets.all(20),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(vertical: 5),
-                            height: 70,
-                            width: 200,
-                            child: autoFill(
-                              labelText: 'Class Name',
-                              controller: classNameController,
-                              focusNode: focusNodes[0],
-                              nextFocusNode: focusNodes[1],
-                              optionsList: classes
-                                  .map((e) => e['class_name'].toString())
-                                  .toList(),
-                              onSubmitCallback: (value) async {
-                                setState(() {
-                                  changeExist = true;
-                                });
-                                if (value.isNotEmpty) {
-                                  subjectsOfClass =
-                                      await dbHelper.getClassSubjects(value);
-
-                                  if (subjectsOfClass == null) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                            'Class not found in the database'),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                  } else {
-                                    setState(() {
-                                      subjectForSuggestions =
-                                          subjectsOfClass ?? [];
-                                    });
-                                  }
-
-                                  return;
-                                }
-                              },
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(vertical: 5),
-                            height: 70,
-                            width: 200,
-                            child: autoFill(
-                              key: ValueKey(subjectForSuggestions.hashCode),
-                              labelText: 'Subject',
-                              controller: subjectNameController,
-                              nextFocusNode: focusNodes[2],
-                              optionsList: subjectForSuggestions,
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            width: 200,
-                            child: TextField(
-                                focusNode: focusNodes[2],
-                                controller: topicController,
-                                decoration: const InputDecoration(
-                                    border: OutlineInputBorder(),
-                                    labelText: 'Chapter/Topic'),
-                                onSubmitted: (value) {
-                                  setState(() {
-                                    changeExist = true;
-                                  });
-                                  focusNodes[3].requestFocus();
-                                }),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            width: 200,
-                            child: TextField(
-                              inputFormatters: [
-                                FilteringTextInputFormatter.digitsOnly
-                              ],
-                              focusNode: focusNodes[3],
-                              controller: maxiMarkController,
-                              decoration: const InputDecoration(
-                                border: OutlineInputBorder(),
-                                labelText: 'Max Marks',
+    return (_isClassTablesInitialized)
+        ? SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Container(
+                  margin: EdgeInsets.all(5),
+                  child: SizedBox(
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              margin: const EdgeInsets.only(
+                                  left: 10, right: 10, top: 10),
+                              padding: const EdgeInsets.all(20),
+                              width: 600,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).cardColor,
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: Colors.grey.withOpacity(.5),
+                                  width: .5,
+                                ),
                               ),
-                              onSubmitted: (value) {
-                                setState(() {
-                                  changeExist = true;
-                                });
-
-                                focusNodes[4].requestFocus();
-                              },
-                            ),
-                          ),
-                          const Row(
-                            children: [],
-                          ),
-                        ],
-                      ),
-
-                      //second column --------
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          GestureDetector(
-                            onTap: () => _pickDate(context),
-                            child: Container(
-                              padding: const EdgeInsets.all(22.0),
                               child: Row(
                                 children: [
                                   Text(
-                                    "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}  ", // Default to today's date
-                                    style: const TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold),
+                                    'Add New Exam',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                  const Icon(Icons.calendar_today),
+                                  Spacer(),
+                                  ElevatedButton(
+                                    focusNode: focusNodes[4],
+                                    onPressed: () {
+                                      saveExam();
+                                    },
+                                    child: const Text('  Save  '),
+                                  ),
                                 ],
                               ),
                             ),
-                          ),
-                          const Spacer(),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: ElevatedButton(
-                                focusNode: focusNodes[4],
-                                onPressed: () async {
-                                  if (classNameController.text.isEmpty ||
-                                      subjectNameController.text.isEmpty ||
-                                      topicController.text.isEmpty ||
-                                      maxiMarkController.text.isEmpty) {
-                                    // Show an error message if any field is empty
+                            Container(
+                                margin: const EdgeInsets.only(
+                                    left: 10, right: 10, bottom: 10),
+                                padding: const EdgeInsets.all(20),
+                                height: 310,
+                                width: 600,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).cardColor,
+                                  borderRadius: BorderRadius.circular(4),
+                                  border: Border.all(
+                                    color: Colors.grey.withOpacity(.5),
+                                    width: .5,
+                                  ),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 5),
+                                          height: 70,
+                                          width: 200,
+                                          child: autoFill(
+                                            key: ValueKey(_classes.hashCode),
+                                            labelText: 'Class Name',
+                                            controller: _classNameController,
+                                            focusNode: focusNodes[0],
+                                            nextFocusNode: focusNodes[1],
+                                            optionsList: _classes
+                                                .map((e) =>
+                                                    e['class_name'].toString())
+                                                .toList(),
+                                            onSubmitCallback: (value) async {
+                                              if (value.isNotEmpty) {
+                                                subjectsOfClass =
+                                                    await _dbHelper
+                                                        .getClassSubjects(
+                                                            value);
 
-                                    print(
-                                        "classname: ${classNameController.text} \nsubject: ${subjectNameController.text}\n topic: ${topicController.text}\n maxmark: ${maxiMarkController.text}");
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                            'Please fill in all the fields.'),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                  } else {
-                                    testId = 0;
-                                    // All fields are filled, proceed with your logic
-                                    Future<int> tempInt =
-                                        dbHelper.getMaxId('test_table');
+                                                _selectedClassid = _classes
+                                                    .firstWhere((element) =>
+                                                        element['class_name'] ==
+                                                        value)['id'];
+                                                // print(_classes);
+                                                // print("selected value: $value");
+                                                // print(
+                                                //     "selectedClassid: $_selectedClassid");
 
-                                    int maxtestId = await tempInt;
+                                                if (subjectsOfClass == null) {
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text(
+                                                          'Class not found in the database'),
+                                                      backgroundColor:
+                                                          Colors.red,
+                                                    ),
+                                                  );
+                                                } else {
+                                                  setState(() {
+                                                    _subjectForSuggestions =
+                                                        subjectsOfClass ?? [];
+                                                  });
+                                                }
 
-                                    Map<String, dynamic> newTest = {
-                                      'date': _selectedDate.toString(),
-                                      'className': classNameController.text,
-                                      'maxMark': maxiMarkController.text,
-                                      'testId': maxtestId + 1,
-                                      'topic': topicController.text,
-                                      'subject_name':
-                                          subjectNameController.text,
-                                    };
-                                    int subjectId = await dbHelper.getSubjectId(
-                                        subjectNameController.text);
-
-                                    if (subjectId == 0) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                              'Subject not found in the database'),
-                                          backgroundColor: Colors.red,
+                                                return;
+                                              }
+                                            },
+                                          ),
                                         ),
-                                      );
-                                      return;
-                                    }
-                                    Map<String, dynamic> test = {
-                                      'id': newTest['test_id'],
-                                      'subject_id': subjectId,
-                                      'topic': newTest['topic'],
-                                      'max_mark': int.parse(newTest['maxMark']),
-                                      'test_date': newTest['date'],
-                                    };
-                                    if (await dbHelper.insertToTable(
-                                            'test_table', test) !=
-                                        0) {
-                                      // Show a success message
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                              'Test details saved successfully'),
-
-                                          // Use the default theme color
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 5),
+                                          height: 70,
+                                          width: 200,
+                                          child: autoFill(
+                                            key: ValueKey(_subjectForSuggestions
+                                                .hashCode),
+                                            labelText: 'Subject',
+                                            controller: _subjectNameController,
+                                            nextFocusNode: focusNodes[2],
+                                            optionsList: _subjectForSuggestions,
+                                          ),
                                         ),
-                                      );
-                                      testId = maxtestId + 1;
+                                        Container(
+                                          padding:
+                                              const EdgeInsets.only(bottom: 10),
+                                          width: 200,
+                                          child: TextField(
+                                              focusNode: focusNodes[2],
+                                              controller: _topicController,
+                                              //new decoration
+                                              decoration: InputDecoration(
+                                                label: const Text(
+                                                    ' Chapter/Topic'),
+                                                filled: true,
+                                                fillColor: Theme.of(context)
+                                                    .canvasColor,
+                                                focusColor: Colors.grey,
+                                                contentPadding:
+                                                    const EdgeInsets.all(15.0),
+                                                border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          4.0),
+                                                  borderSide: BorderSide(
+                                                      color: Colors.grey
+                                                          .withOpacity(.2),
+                                                      width: 0.4),
+                                                ),
+                                              ),
+                                              onSubmitted: (value) {
+                                                setState(() {
+                                                  _changeExist = true;
+                                                });
+                                                focusNodes[3].requestFocus();
+                                              }),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              vertical: 10),
+                                          width: 200,
+                                          child: TextField(
+                                            inputFormatters: [
+                                              FilteringTextInputFormatter
+                                                  .digitsOnly
+                                            ],
+                                            focusNode: focusNodes[3],
+                                            controller: _maxiMarkController,
+                                            decoration: InputDecoration(
+                                              label: const Text('Max Mark'),
+                                              filled: true,
+                                              fillColor:
+                                                  Theme.of(context).canvasColor,
+                                              focusColor: Colors.grey,
+                                              contentPadding:
+                                                  const EdgeInsets.all(15.0),
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(4.0),
+                                                borderSide: BorderSide(
+                                                    color: Colors.grey
+                                                        .withOpacity(.2),
+                                                    width: 0.4),
+                                              ),
+                                            ),
+                                            onSubmitted: (value) {
+                                              focusNodes[4].requestFocus();
 
-                                      studentList = await dbHelper
-                                          .getStudentIdsAndNamesByTestId(
-                                              testId);
-                                      print(
-                                          "studentList length: ${studentList.length}");
+                                              setState(() {
+                                                _changeExist = true;
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        const Row(
+                                          children: [],
+                                        ),
+                                      ],
+                                    ),
 
-                                      setState(() {
-                                        changeExist = false;
-                                        classNameController.clear();
-                                        subjectNameController.clear();
-                                        topicController.clear();
-                                        maxiMarkController.clear();
-                                      });
-                                    }
-
-                                    // Proceed with further processing, like saving data to a database or sending it to a server
-                                    // Example: saveDataToDatabase(studentName, stream, studentPhone, schoolName, parentName, parentPhone, photoPath);
-                                  }
-                                },
-                                child: const Text('  Save  ')),
-                          ),
-                        ],
-                      ),
-                    ],
-                  )),
-            ],
-          ),
-          studentList.isNotEmpty && !changeExist
-              ? Container(
-                  child: Expanded(
-                      child: ExamEntry(
-                          test_id: testId,
-                          ListOfStudents: studentList,
-                          key: UniqueKey())),
-                )
-              : getLogo(40)
-        ],
-      ),
-    );
+                                    //second column --------
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        GestureDetector(
+                                          onTap: () => _pickDate(context),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(22.0),
+                                            child: Row(
+                                              children: [
+                                                Text(
+                                                  "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}  ", // Default to today's date
+                                                  style: const TextStyle(
+                                                      fontSize: 16,
+                                                      fontWeight:
+                                                          FontWeight.bold),
+                                                ),
+                                                const Icon(
+                                                    Icons.calendar_today),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                )),
+                          ],
+                        ),
+                        Column(
+                          children: [
+                            Container(
+                              margin: const EdgeInsets.only(
+                                  left: 10, right: 10, top: 10),
+                              padding: const EdgeInsets.all(20),
+                              width: 600,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).cardColor,
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: Colors.grey.withOpacity(.5),
+                                  width: .5,
+                                ),
+                              ),
+                              child: Text(
+                                'Recent Tests ',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            showTestHistory(),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                !_changeExist
+                    ? Align(
+                        alignment: Alignment.topLeft,
+                        child: Container(
+                          width: 730,
+                          height: _studentList.length * 50.0 + 300,
+                          child: ExamEntry(
+                              test_id: _testId, key: ValueKey(_testId)),
+                        ),
+                      )
+                    : SizedBox(height: 400, child: getLogo(40)),
+              ],
+            ),
+          )
+        : Container(
+            child: Center(
+              child: Text("No Class Data Found"),
+            ),
+          );
   }
 }

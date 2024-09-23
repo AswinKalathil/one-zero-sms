@@ -48,7 +48,7 @@ class _DataEntryPageState extends State<DataEntryPage> {
       var nodes = <FocusNode>[];
 
       for (var header in headers) {
-        if (header != 'Actions') {
+        if (header != 'Remove') {
           controllers[header] = TextEditingController();
           nodes.add(FocusNode());
         }
@@ -116,37 +116,6 @@ class _DataEntryPageState extends State<DataEntryPage> {
       } else {
         insertionSuccess = 1;
       }
-    } else if (widget.metadata.tableName == 'stream_table') {
-      var check1 = 0;
-      var check2 = 0;
-      for (var row in data) {
-        // Insert data to the database
-        Map<String, dynamic> streamData = {
-          'id': row['ID']!,
-          'stream_name': row['Stream Name']!,
-          'class_id': row['Class ID']!,
-        };
-        check1 = await dbHelper.insertToTable('stream_table', streamData);
-        var subjects = row['Subjects']!.split(',');
-        for (var subject in subjects) {
-          int subjectidForStream = await dbHelper.getSubjectId(subject);
-          int idForSSTable = await dbHelper.getMaxId('stream_subjects_table');
-
-          Map<String, dynamic> subjectData = {
-            'id': idForSSTable + 1,
-            'stream_id': row['ID']!,
-            'subject_id': subjectidForStream,
-          };
-          print(subjectData);
-          check2 = await dbHelper.insertToTable(
-              'stream_subjects_table', subjectData);
-        }
-      }
-      if (check1 == 0 && check2 == 0) {
-        insertionSuccess = 0;
-      } else {
-        insertionSuccess = 1;
-      }
     } else if (widget.metadata.tableName == 'student_table') {
       print("Student table data $data");
       for (var row in data) {
@@ -165,8 +134,7 @@ class _DataEntryPageState extends State<DataEntryPage> {
           'student_name': row['Student Name']!,
           'stream_id': straemId,
           'photo_id': row['Photo Path']!,
-          'student_phone': row['Student Phone']!,
-          'parent_name': row['Parent Name']!,
+          'gender': (row['Gender']!),
           'parent_phone': row['Parent Phone']!,
           'school_name': row['School Name']!,
         };
@@ -215,11 +183,6 @@ class _DataEntryPageState extends State<DataEntryPage> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(8.0),
-      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -231,7 +194,7 @@ class _DataEntryPageState extends State<DataEntryPage> {
                 const SizedBox(
                   width: 300,
                   child: Text(
-                    'Student Data Entry',
+                    'Add New Students',
                     style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -286,11 +249,11 @@ class _DataEntryPageState extends State<DataEntryPage> {
                                   : Colors.grey.shade700);
                         }),
                         cells: headers.map((header) {
-                          if (header == 'Actions') {
+                          if (header == 'Remove') {
                             return DataCell(
                               IconButton(
-                                icon: const Icon(Icons.delete,
-                                    color: Color.fromARGB(255, 241, 167, 161)),
+                                icon: const Icon(Icons.close_rounded,
+                                    color: Colors.black),
                                 onPressed: () {
                                   setState(() {
                                     rowTextEditingControllers
@@ -304,7 +267,7 @@ class _DataEntryPageState extends State<DataEntryPage> {
                             return DataCell(
                               IconButton(
                                 icon: const Icon(Icons.save,
-                                    color: Color.fromARGB(255, 241, 167, 161)),
+                                    color: Color.fromRGBO(241, 167, 161, .5)),
                                 onPressed: () {
                                   setState(() {
                                     rowTextEditingControllers
@@ -324,8 +287,8 @@ class _DataEntryPageState extends State<DataEntryPage> {
                                 width: double.infinity,
                                 child: Text(rowId.toString(),
                                     style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black)),
+                                      fontWeight: FontWeight.bold,
+                                    )),
                               ),
                             );
                           } else if (header == 'Stream Name' &&
@@ -408,11 +371,11 @@ class _DataEntryPageState extends State<DataEntryPage> {
   Widget _buildHeaderCell(String title) {
     return Center(
       child: Container(
-        // Header background color
         padding: const EdgeInsets.all(8.0),
         child: Text(
           title,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style:
+              const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
       ),
     );
@@ -453,8 +416,7 @@ class StudentDataCell extends StatelessWidget {
           width: 50,
           child: Text(
             studentId.toString(),
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, color: Colors.black),
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         );
       case 'Score':
@@ -478,12 +440,10 @@ class StudentDataCell extends StatelessWidget {
 
 class ExamEntry extends StatefulWidget {
   final int test_id;
-  final List<Map<String, dynamic>> ListOfStudents;
 
   ExamEntry({
     Key? key,
     required this.test_id,
-    required this.ListOfStudents,
   }) : super(key: key);
 
   @override
@@ -498,9 +458,9 @@ class _ExamEntryState extends State<ExamEntry> {
   List<Map<String, dynamic>> studentList = [];
   Map<String, dynamic> testDetails = {};
   int maxId = 0;
+  DatabaseHelper dbHelper = DatabaseHelper();
   @override
   void initState() {
-    studentList = widget.ListOfStudents;
     headers = ['ID', 'Student Name', 'Score'];
     columnLengths = [100, 300, 100];
 
@@ -511,7 +471,8 @@ class _ExamEntryState extends State<ExamEntry> {
 
   void fetchStudents(int testId) async {
     DatabaseHelper dbHelper = DatabaseHelper();
-    studentList = widget.ListOfStudents;
+    print("Test id $testId");
+    studentList = await dbHelper.getStudentIdsAndNamesByTestId(testId);
     testDetails = await dbHelper.getTestDetails(testId);
     print(studentList.length);
 
