@@ -242,8 +242,8 @@ class _DataEntryPageState extends State<DataEntryPage> {
                           return (Theme.of(context).brightness ==
                                   Brightness.light)
                               ? (rowIndex % 2 == 0
-                                  ? Colors.grey.shade200
-                                  : Colors.white)
+                                  ? Colors.white
+                                  : Colors.grey.shade200)
                               : (rowIndex % 2 == 0
                                   ? Colors.grey.shade600
                                   : Colors.grey.shade700);

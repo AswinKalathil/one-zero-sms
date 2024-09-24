@@ -5,12 +5,12 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:stroke_text/stroke_text.dart';
 
 final List<Color> cardBackgroundColors = [
-  // Color.fromARGB(255, 176, 213, 226), // Light Blue
-  // Color.fromARGB(255, 50, 172, 113), // Light Green
-  // Color.fromARGB(255, 255, 222, 137), // Light Yellow
-  // Color(0xFFF08080), // Light Coral
+  Color.fromARGB(255, 176, 213, 226), // Light Blue
+  Color.fromARGB(255, 50, 172, 113), // Light Green
+  Color.fromARGB(255, 255, 222, 137), // Light Yellow
+  Color(0xFFF08080), // Light Coral
   Color.fromARGB(255, 194, 194, 231), // Light Lavender
-  // Color(0xFFFFDAB9), // Light Peach
+  Color(0xFFFFDAB9), // Light Peach
 ];
 
 //   ? Color.fromARGB(255, 2, 47, 22)

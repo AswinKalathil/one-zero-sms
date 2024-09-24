@@ -112,24 +112,33 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    DatabaseHelper dbHelper = DatabaseHelper();
-
     return SingleChildScrollView(
       child: Container(
         height: 2000,
         child: Column(
           children: [
             widget.isDedicatedPage
-                ? Container(
-                    child: Text(widget.className),
+                ? Align(
+                    alignment: Alignment.topLeft,
+                    child: Container(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Text(
+                          widget.className,
+                          style: TextStyle(fontFamily: 'revue', fontSize: 25),
+                        ),
+                      ),
+                    ),
                   )
                 : Container(),
             Container(
+              margin: EdgeInsets.symmetric(horizontal: 100),
               height: MediaQuery.of(context).size.height * .9,
               child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
-                    flex: 4,
+                    flex: 5,
                     child: Container(
                       margin: const EdgeInsets.all(10),
                       child: Column(
@@ -261,10 +270,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                     studentName: _studentNameForGrade,
                                   ),
                                 ),
-                                Expanded(
-                                  flex: 1,
-                                  child: Container(),
-                                ),
                               ],
                             )
                           : Center(
@@ -276,9 +281,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               ),
             ),
             Divider(),
-            Container(
-              height: 250,
-            ),
           ],
         ),
       ),
