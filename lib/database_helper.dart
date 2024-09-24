@@ -136,6 +136,37 @@ class DatabaseHelper {
     return studentResult;
   }
 
+  Future<List<Map<String, dynamic>>> getTestDataSheetForUpdate(
+      int testId) async {
+    // print("test id in getStudentIdsAndNamesByTestId function $testId");
+    final db = await database;
+
+    // Get the subject_id from the test_id
+    final List<Map<String, dynamic>> testDataSheet = await db.rawQuery('''
+      SELECT s.student_name, 
+       ts.student_id, 
+       ts.test_id, 
+       ts.id AS test_score_id, 
+       ts.score
+FROM (SELECT student_id, test_id, id, score 
+      FROM test_score_table 
+      WHERE test_id = ?) ts
+JOIN (SELECT id, student_name 
+      FROM student_table) s 
+  ON ts.student_id = s.id;
+
+    ''', [testId]);
+
+    print(testDataSheet);
+    return testDataSheet;
+  }
+
+  Future<int> updateTestScore(int id, Map<String, dynamic> testScore) async {
+    final db = await database;
+    return await db.update('test_score_table', testScore,
+        where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<int?> getStudentId(String studentName) async {
     final db = await database;
 

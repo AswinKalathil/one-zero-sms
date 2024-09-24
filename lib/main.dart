@@ -82,7 +82,7 @@ class _MyHomePageState extends State<MyHomePage> {
   int _pageNumber = 0;
   int _selectdClass = 0;
   int _classCount = 0;
-  bool _expandMenu = false;
+  bool _isMenuExpanded = false;
   bool _isClassTablesInitialized = false;
 
   List<Map<String, dynamic>> _classes = [];
@@ -112,13 +112,13 @@ class _MyHomePageState extends State<MyHomePage> {
       key: _scaffoldKey,
       appBar: AppBar(
         leading: IconButton(
-          icon: _expandMenu
+          icon: _isMenuExpanded
               ? Icon(Icons.menu_open, color: Colors.white)
               : Icon(Icons.menu, color: Colors.white),
           onPressed: () {
             setState(() {
               super.setState(() {
-                _expandMenu = !_expandMenu;
+                _isMenuExpanded = !_isMenuExpanded;
               });
             });
           },
@@ -189,7 +189,7 @@ class _MyHomePageState extends State<MyHomePage> {
         children: [
           Container(
             color: Theme.of(context).primaryColor,
-            width: _expandMenu ? 200 : 60,
+            width: _isMenuExpanded ? 200 : 60,
             child: Column(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -206,7 +206,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           _pageNumber = 0;
                         });
                       },
-                      isMenuExpanded: _expandMenu,
+                      isMenuExpanded: _isMenuExpanded,
                     ),
                     CustomDrawerItem(
                       icon: Icons.rectangle_outlined,
@@ -220,7 +220,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           _pageNumber = 1;
                         });
                       },
-                      isMenuExpanded: _expandMenu,
+                      isMenuExpanded: _isMenuExpanded,
                     ),
                     CustomDrawerItem(
                       icon: Icons.group_add_outlined,
@@ -234,7 +234,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           _pageNumber = 4;
                         });
                       },
-                      isMenuExpanded: _expandMenu,
+                      isMenuExpanded: _isMenuExpanded,
                     ),
                     CustomDrawerItem(
                       icon: Icons.analytics_outlined,
@@ -247,7 +247,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           _pageNumber = 5;
                         });
                       },
-                      isMenuExpanded: _expandMenu,
+                      isMenuExpanded: _isMenuExpanded,
                     ),
                     CustomDrawerItem(
                       icon: Icons.add_box_outlined,
@@ -260,7 +260,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           _pageNumber = 6;
                         });
                       },
-                      isMenuExpanded: _expandMenu,
+                      isMenuExpanded: _isMenuExpanded,
                     ),
                   ],
                 ),
@@ -279,7 +279,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             widget.onThemeChanged(!widget.isDarkMode);
                           });
                         },
-                        isMenuExpanded: _expandMenu),
+                        isMenuExpanded: _isMenuExpanded),
                     CustomDrawerItem(
                       icon: Icons.settings_outlined,
                       selectedIcon: Icons.settings,
@@ -291,7 +291,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           _pageNumber = 0;
                         });
                       },
-                      isMenuExpanded: _expandMenu,
+                      isMenuExpanded: _isMenuExpanded,
                     ),
                   ],
                 ),
@@ -310,6 +310,7 @@ class _MyHomePageState extends State<MyHomePage> {
             6 => ExamScoreSheet(
                 isClassTablesInitialized: _isClassTablesInitialized,
                 classes: _classes,
+                isMenuExpanded: _isMenuExpanded,
               ),
             // 6 => _addNewExam(context, setState),
 

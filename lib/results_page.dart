@@ -320,7 +320,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   }
 
   Widget studentsListView(List<Map<String, dynamic>> students) {
-    print(students);
     return SizedBox(
       width: double.infinity,
       child: ListView.builder(
@@ -430,7 +429,7 @@ class _GradeCardState extends State<GradeCard> {
     if (resultsfromDb.isEmpty) {
       throw Exception("No data found for student name: ${widget.studentName}");
     }
-    print("Results received from db: $resultsfromDb");
+    // print("Results received from db: $resultsfromDb");
     List<Map<String, dynamic>> results = getLatestScores(resultsfromDb);
 
     if (results.isNotEmpty) {
@@ -564,7 +563,7 @@ class _GradeCardState extends State<GradeCard> {
       return 'Absent';
     }
 
-    print('Score: $score, Max Mark: $maxMark');
+    // print('Score: $score, Max Mark: $maxMark');
 
     double percentage = (score / maxMark) * 100;
     if (percentage >= 90) return 'A+';

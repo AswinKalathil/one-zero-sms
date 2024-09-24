@@ -9,10 +9,12 @@ import 'package:one_zero/database_helper.dart';
 class ExamScoreSheet extends StatefulWidget {
   final bool isClassTablesInitialized;
   final List<Map<String, dynamic>> classes;
+  final bool isMenuExpanded;
   ExamScoreSheet(
       {super.key,
       required this.isClassTablesInitialized,
-      required this.classes});
+      required this.classes,
+      required this.isMenuExpanded});
 
   @override
   State<ExamScoreSheet> createState() => _ExamScoreSheetState();
@@ -49,8 +51,11 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
     return (widget.isClassTablesInitialized)
         ? SingleChildScrollView(
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 100.0, vertical: 20),
+              padding: EdgeInsets.symmetric(
+                  horizontal: widget.isMenuExpanded
+                      ? 50
+                      : MediaQuery.of(context).size.width * .075,
+                  vertical: 20),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,10 +71,10 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Container(
+                                width: MediaQuery.of(context).size.width * 0.38,
                                 margin:
                                     const EdgeInsets.only(left: 10, top: 10),
                                 padding: const EdgeInsets.all(20),
-                                width: 600,
                                 decoration: BoxDecoration(
                                   color: Theme.of(context).cardColor,
                                   borderRadius: BorderRadius.circular(4),
@@ -103,7 +108,8 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                       left: 10, bottom: 10),
                                   padding: const EdgeInsets.all(20),
                                   height: 310,
-                                  width: 600,
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.38,
                                   decoration: BoxDecoration(
                                     color: Theme.of(context).cardColor,
                                     borderRadius: BorderRadius.circular(4),
@@ -311,7 +317,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                 margin:
                                     const EdgeInsets.only(left: 10, top: 10),
                                 padding: const EdgeInsets.all(20),
-                                width: 600,
+                                width: MediaQuery.of(context).size.width * 0.38,
                                 decoration: BoxDecoration(
                                   color: Theme.of(context).cardColor,
                                   borderRadius: BorderRadius.circular(4),
@@ -339,7 +345,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                       ? Align(
                           alignment: Alignment.topLeft,
                           child: Container(
-                            width: 630,
+                            width: MediaQuery.of(context).size.width * 0.4,
                             height: _studentList.length * 50.0 + 300,
                             child: ExamEntry(
                                 test_id: _testId, key: ValueKey(_testId)),
@@ -381,7 +387,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
 
   Widget showTestHistory() {
     return Container(
-      width: 600,
+      width: MediaQuery.of(context).size.width * 0.38,
       height: 310,
       margin: const EdgeInsets.only(left: 10, bottom: 10),
       padding: const EdgeInsets.all(20),
@@ -535,16 +541,17 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
       };
       print(test);
       if (await _dbHelper.insertToTable('test_table', test) != 0) {
-        // Show a success message
         synchTestHistory();
-        // _studentList = await _dbHelper.getStudentIdsAndNamesByTestId(_testId);
-        // for (int i = 0; i < _studentList.length; i++) {
-        //   _dbHelper.insertToTable('test_score_table', {
-        //     'student_id': _studentList[i]['student_id'],
-        //     'score': '-',
-        //     'test_id': test['id'],
-        //   });
-        // }
+        _studentList =
+            await _dbHelper.getStudentIdsAndNamesByTestId(test['id']);
+        for (int i = 0; i < _studentList.length; i++) {
+          _dbHelper.insertToTable('test_score_table', {
+            'student_id': _studentList[i]['student_id'],
+            'test_id': test['id'],
+          });
+        }
+        // Show a success message
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Test details saved successfully'),
@@ -564,5 +571,255 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
       // Proceed with further processing, like saving data to a database or sending it to a server
       // Example: saveDataToDatabase(studentName, stream, studentPhone, schoolName, parentName, parentPhone, photoPath);
     }
+  }
+}
+
+class ExamEntry extends StatefulWidget {
+  final int test_id;
+
+  ExamEntry({
+    Key? key,
+    required this.test_id,
+  }) : super(key: key);
+
+  @override
+  _ExamEntryState createState() => _ExamEntryState();
+}
+
+class _ExamEntryState extends State<ExamEntry> {
+  late List<String> headers;
+  late List<double> columnLengths;
+  List<TextEditingController> rowTextEditingControllers = [];
+  List<FocusNode> focusNodes = [];
+  List<Map<String, dynamic>> _studentScoreList = [];
+  Map<String, dynamic> testDetails = {};
+  int maxId = 0;
+  DatabaseHelper dbHelper = DatabaseHelper();
+  @override
+  void initState() {
+    headers = ['ID', 'Student Name', 'Score'];
+    columnLengths = [100, 300, 100];
+
+    fetchStudents(widget.test_id);
+    super.initState();
+    // _addNewRows();
+  }
+
+  void fetchStudents(int testId) async {
+    DatabaseHelper dbHelper = DatabaseHelper();
+    print("Test id $testId");
+    // studentList = await dbHelper.getStudentIdsAndNamesByTestId(testId);
+
+    _studentScoreList = await dbHelper.getTestDataSheetForUpdate(testId);
+    testDetails = await dbHelper.getTestDetails(testId);
+    print(" Students length ${_studentScoreList.length}");
+
+    setState(() {
+      rowTextEditingControllers =
+          List.generate(_studentScoreList.length, (index) {
+        return TextEditingController();
+      });
+      focusNodes.addAll(List.generate(_studentScoreList.length, (index) {
+        return FocusNode();
+      }));
+
+      for (int i = 0; i < _studentScoreList.length; i++) {
+        rowTextEditingControllers[i].text =
+            _studentScoreList[i]['score']?.toString() ?? "";
+      }
+    });
+  }
+
+  void _moveFocusToNextRow(int currentRowIndex) {
+    if (currentRowIndex + 1 < focusNodes.length) {
+      FocusScope.of(context).requestFocus(focusNodes[currentRowIndex + 1]);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return rowTextEditingControllers.isNotEmpty
+        ? buildDataTable() // Function that contains your DataTable widget
+        : const Center(child: CircularProgressIndicator());
+  }
+
+  Widget buildDataTable() {
+    return Container(
+      margin: const EdgeInsets.all(16.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(4.0),
+        border: Border.all(
+          color: Colors.grey.withOpacity(0.5),
+          width: .5,
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(left: 16.0, top: 16.0),
+            child: SizedBox(
+              width: 300,
+              child: Text(
+                "${testDetails['subject_name']}  Test",
+                style:
+                    const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Container(
+                    width: 400,
+                    child: Text(
+                        "${testDetails['test_date'].toString().substring(0, 10)}")),
+                ElevatedButton(
+                  onPressed: () async {
+                    var data = rowTextEditingControllers.map((controller) {
+                      print("Data ${controller.text}");
+                      return controller.text.trim();
+                    }).toList();
+                    DatabaseHelper dbHelper = DatabaseHelper();
+
+                    for (int i = 0; i < _studentScoreList.length; i++) {
+                      print(
+                          "${_studentScoreList[i]['test_score_id']} :${data[i]} ");
+
+                      var changes = await dbHelper.updateTestScore(
+                          _studentScoreList[i]['test_score_id'], {
+                        'score': data[i].toString(),
+                      });
+                      print("Changes $changes");
+                    }
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Data submitted successfully!'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  },
+                  child: const Text('Submit'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 20),
+          Divider(
+            color: Theme.of(context).canvasColor, // Line color
+            thickness: 2, // Line thickness
+          ),
+          const SizedBox(height: 20),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 50),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.vertical,
+                child: DataTable(
+                  columnSpacing: 16.0,
+                  border: const TableBorder(
+                    verticalInside: BorderSide(color: Colors.grey, width: 1),
+                  ),
+                  headingRowColor:
+                      WidgetStateProperty.resolveWith<Color>((states) {
+                    return Theme.of(context).primaryColor;
+                  }),
+                  columns: headers.map((header) {
+                    return DataColumn(
+                      label: Center(
+                        child: Text(
+                          header,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  rows: List<DataRow>.generate(
+                    _studentScoreList.length,
+                    (rowIndex) {
+                      var student = _studentScoreList[rowIndex];
+                      var controller = rowTextEditingControllers[rowIndex];
+                      return DataRow(
+                        color:
+                            MaterialStateProperty.resolveWith<Color>((states) {
+                          return (Theme.of(context).brightness ==
+                                  Brightness.light)
+                              ? (rowIndex % 2 == 0
+                                  ? Colors.grey.shade200
+                                  : Colors.white)
+                              : (rowIndex % 2 == 0
+                                  ? Colors.grey.shade600
+                                  : Colors.grey.shade700);
+                        }),
+                        cells: headers.map((header) {
+                          var isScoreColumn = header == 'Score';
+
+                          return DataCell(
+                            StudentDataCell(
+                              columnName: header,
+                              studentName: header == 'Student Name'
+                                  ? student['student_name'] as String
+                                  : null,
+                              scoreController:
+                                  isScoreColumn ? controller : null,
+                              focusNode:
+                                  isScoreColumn ? focusNodes[rowIndex] : null,
+                              studentId: header == 'ID'
+                                  ? student['student_id'] as int
+                                  : 0,
+                              currentScore: student['score']?.toString() ?? "",
+                              onSubmitted: isScoreColumn
+                                  ? () => _moveFocusToNextRow(rowIndex)
+                                  : null,
+                            ),
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<String?> showNewAcadamicYearDialog(BuildContext context) async {
+    TextEditingController _textFieldController = TextEditingController();
+    _textFieldController.text =
+        "${DateTime.now().year}-${DateTime.now().year + 1}";
+    return await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Start New Acadamic Year'),
+          content: TextField(
+            controller: _textFieldController,
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(null); // Dismiss without input
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context)
+                    .pop(_textFieldController.text); // Return input
+              },
+              child: const Text('Submit'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
