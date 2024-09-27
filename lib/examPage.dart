@@ -55,7 +55,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                   horizontal: widget.isMenuExpanded
                       ? 50
                       : MediaQuery.of(context).size.width * .075,
-                  vertical: 20),
+                  vertical: 10),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -351,7 +351,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                 test_id: _testId, key: ValueKey(_testId)),
                           ),
                         )
-                      : SizedBox(height: 400, child: getLogo(40)),
+                      : SizedBox(),
                 ],
               ),
             ),
@@ -388,7 +388,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
   Widget showTestHistory() {
     return Container(
       width: MediaQuery.of(context).size.width * 0.38,
-      height: 310,
+      height: 240,
       margin: const EdgeInsets.only(left: 10, bottom: 10),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -734,7 +734,8 @@ class _ExamEntryState extends State<ExamEntry> {
                       label: Center(
                         child: Text(
                           header,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: const TextStyle(
+                              color: Colors.white, fontWeight: FontWeight.bold),
                         ),
                       ),
                     );

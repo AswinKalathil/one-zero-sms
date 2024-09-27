@@ -36,7 +36,8 @@ class _MyAppState extends State<MyApp> {
         primarySwatch: Colors.green,
         primaryColor: _isDarkMode
             ? Color.fromRGBO(23, 33, 43, 1)
-            : Color.fromRGBO(35, 144, 198, 1),
+            // : Color.fromRGBO(35, 144, 198, 1),
+            : Color.fromRGBO(53, 104, 84, 1),
         secondaryHeaderColor: _isDarkMode
             ? Color.fromRGBO(238, 108, 77, 1)
             : Color.fromRGBO(238, 108, 77, 1),
@@ -47,7 +48,7 @@ class _MyAppState extends State<MyApp> {
         canvasColor: _isDarkMode
             ? Color.fromRGBO(36, 47, 61, 1)
             : Color.fromRGBO(241, 241, 241, 1),
-        cardColor: _isDarkMode ? Color.fromRGBO(43, 82, 120, 1) : Colors.white,
+        cardColor: _isDarkMode ? Color.fromRGBO(24, 37, 51, 1) : Colors.white,
         primaryTextTheme: TextTheme(
           bodyMedium: TextStyle(
             color: _isDarkMode ? Colors.white : Colors.black,
@@ -84,17 +85,33 @@ class _MyHomePageState extends State<MyHomePage> {
   int _classCount = 0;
   bool _isMenuExpanded = false;
   bool _isClassTablesInitialized = false;
+  List<String> appBarTitle = [
+    'Class Rooms',
+    'Class Details',
+    'Add Students',
+    'Reports',
+    'Exam Entry',
+    'Settings'
+  ];
 
   List<Map<String, dynamic>> _classes = [];
 
   @override
   void initState() {
     _loadClasess();
+    _selectdAcadamicYear =
+        (_academicYears.isNotEmpty ? _academicYears.last : '2024-25')!;
 
     super.initState();
   }
 
   void _loadClasess() async {
+    _academicYears = await _dbHelper.getAcadamicYears();
+
+    if (_academicYears.isEmpty) {
+      return;
+    }
+
     _classes = await _dbHelper.getClasses('class_table');
     _isClassTablesInitialized = _classCount == 0 ? false : true;
     setState(() {
@@ -104,6 +121,9 @@ class _MyHomePageState extends State<MyHomePage> {
     print("class count: $_classCount");
   }
 
+  List<String> _academicYears = [];
+  String _selectdAcadamicYear = '';
+
   @override
   Widget build(BuildContext context) {
     if (!_isClassTablesInitialized) _loadClasess();
@@ -111,6 +131,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
+        toolbarHeight: 70,
         leading: IconButton(
           icon: _isMenuExpanded
               ? Icon(Icons.menu_open, color: Colors.white)
@@ -123,66 +144,140 @@ class _MyHomePageState extends State<MyHomePage> {
             });
           },
         ),
+        title: Text(appBarTitle[_pageNumber],
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontFamily: 'Revue',
+            )),
         backgroundColor: Theme.of(context).primaryColor,
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 12.0),
-            child: IconButton(
-              icon: const Icon(Icons.add, color: Colors.white),
-              onPressed: () async {
-                TextEditingController textFieldController =
-                    TextEditingController();
-                textFieldController.text =
-                    "${DateTime.now().year}-${DateTime.now().year + 1}";
-                await showDialog<String>(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: Text('Start New Acadamic Year'),
-                      content: TextField(
-                        controller: textFieldController,
-                      ),
-                      actions: <Widget>[
-                        TextButton(
-                          onPressed: () {
-                            Navigator.of(context)
-                                .pop(null); // Dismiss without input
-                          },
-                          child: Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () async {
-                            if (await _dbHelper
-                                    .startNewYear(textFieldController.text) ==
-                                1) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('New Acadamic Year Created'),
-                                  backgroundColor: Colors.green,
-                                ),
-                              );
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content:
-                                      Text('Error Creating New Acadamic Year'),
-                                  backgroundColor: Colors.red,
-                                ),
-                              );
-                            }
+          Container(
+              color: Theme.of(context).primaryColor,
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              width: 200,
+              height: 70,
+              child: DropdownButtonFormField(
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                    borderSide: BorderSide(
+                        color: Colors.grey.withOpacity(.4), width: 0.4),
+                  ),
+                  contentPadding: const EdgeInsets.all(15.0),
+                ),
+                value: _selectdAcadamicYear != null &&
+                        _academicYears.contains(_selectdAcadamicYear)
+                    ? _selectdAcadamicYear
+                    : null,
+                items: List.generate(
+                  _academicYears.length,
+                  (index) => DropdownMenuItem(
+                    child: Text(_academicYears[index],
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontFamily: 'Revue',
+                        )),
+                    value: _academicYears[index],
+                  ),
+                ),
+                dropdownColor: Theme.of(context).primaryColor,
+                onChanged: (value) {
+                  setState(() {
+                    _selectdAcadamicYear = value!;
+                    _dbHelper.setAcadamicYear(_selectdAcadamicYear);
+                    super.setState(() {
+                      _loadClasess();
+                      _pageNumber = 0;
+                    });
+                  });
+                },
+              )),
+          _pageNumber == 0
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: IconButton(
+                    icon: const Icon(Icons.new_label, color: Colors.white),
+                    tooltip: 'Start New Acadamic Year',
+                    onPressed: () async {
+                      TextEditingController textFieldController =
+                          TextEditingController();
+                      textFieldController.text =
+                          "${DateTime.now().year}-${(DateTime.now().year + 1).toString().substring(2)}";
+                      await showDialog<String>(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text('Start New Acadamic Year'),
+                            content: TextField(
+                              controller: textFieldController,
+                            ),
+                            actions: <Widget>[
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context)
+                                      .pop(null); // Dismiss without input
+                                },
+                                child: Text('Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  if (_academicYears
+                                      .contains(textFieldController.text)) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Acadamic Year Already Exists'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                    return;
+                                  }
+                                  if (await _dbHelper.startNewYear(
+                                          textFieldController.text) ==
+                                      1) {
+                                    print(_academicYears);
+                                    setState(() {
+                                      _academicYears
+                                          .add(textFieldController.text);
+                                      _academicYears =
+                                          _academicYears.toSet().toList();
 
-                            Navigator.of(context)
-                                .pop(textFieldController.text); // Return input
-                          },
-                          child: Text('Submit'),
-                        ),
-                      ],
-                    );
-                  },
-                );
-              },
-            ),
-          ),
+                                      _selectdAcadamicYear = textFieldController
+                                          .text; // Set new year as selected
+                                    });
+
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content:
+                                            Text('New Acadamic Year Created'),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Error Creating New Acadamic Year'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+
+                                  Navigator.of(context).pop(
+                                      textFieldController.text); // Return input
+                                },
+                                child: Text('Submit'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  ),
+                )
+              : SizedBox(),
         ],
       ),
       body: Row(
@@ -208,30 +303,30 @@ class _MyHomePageState extends State<MyHomePage> {
                       },
                       isMenuExpanded: _isMenuExpanded,
                     ),
-                    CustomDrawerItem(
-                      icon: Icons.rectangle_outlined,
-                      selectedIcon: Icons.rectangle_outlined,
-                      label: 'Class Rooms',
-                      page: 1,
-                      selectedPage: _pageNumber,
-                      onTap: () {
-                        setState(() {
-                          _loadClasess();
-                          _pageNumber = 1;
-                        });
-                      },
-                      isMenuExpanded: _isMenuExpanded,
-                    ),
+                    // CustomDrawerItem(
+                    //   icon: Icons.rectangle_outlined,
+                    //   selectedIcon: Icons.rectangle_outlined,
+                    //   label: 'Class Rooms',
+                    //   page: 1,
+                    //   selectedPage: _pageNumber,
+                    //   onTap: () {
+                    //     setState(() {
+                    //       _loadClasess();
+                    //       _pageNumber = 1;
+                    //     });
+                    //   },
+                    //   isMenuExpanded: _isMenuExpanded,
+                    // ),
                     CustomDrawerItem(
                       icon: Icons.group_add_outlined,
                       selectedIcon: Icons.group_add_rounded,
                       label: 'Add Students',
-                      page: 4,
+                      page: 2,
                       selectedPage: _pageNumber,
                       onTap: () {
                         setState(() {
                           initializeStreamNames();
-                          _pageNumber = 4;
+                          _pageNumber = 2;
                         });
                       },
                       isMenuExpanded: _isMenuExpanded,
@@ -240,11 +335,11 @@ class _MyHomePageState extends State<MyHomePage> {
                       icon: Icons.analytics_outlined,
                       selectedIcon: Icons.analytics,
                       label: 'Reports',
-                      page: 5,
+                      page: 3,
                       selectedPage: _pageNumber,
                       onTap: () {
                         setState(() {
-                          _pageNumber = 5;
+                          _pageNumber = 3;
                         });
                       },
                       isMenuExpanded: _isMenuExpanded,
@@ -253,11 +348,11 @@ class _MyHomePageState extends State<MyHomePage> {
                       icon: Icons.add_box_outlined,
                       selectedIcon: Icons.add_box,
                       label: 'Exam Entry',
-                      page: 6,
+                      page: 4,
                       selectedPage: _pageNumber,
                       onTap: () {
                         setState(() {
-                          _pageNumber = 6;
+                          _pageNumber = 4;
                         });
                       },
                       isMenuExpanded: _isMenuExpanded,
@@ -284,7 +379,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       icon: Icons.settings_outlined,
                       selectedIcon: Icons.settings,
                       label: 'Settings',
-                      page: 7,
+                      page: 5,
                       selectedPage: _pageNumber,
                       onTap: () {
                         setState(() {
@@ -302,12 +397,11 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           Expanded(
               child: switch (_pageNumber) {
-            0 => _buildHome(context),
-            1 => _buildClassRooms(context),
-            2 => _buildClassPage(index: _selectdClass, isDedicatedPage: true),
-            4 => _buildEntrySection("student_table", UniqueKey()),
-            5 => _buildClassPage(isDedicatedPage: false),
-            6 => ExamScoreSheet(
+            0 => _buildClassRooms(context),
+            1 => _buildClassPage(index: _selectdClass, isDedicatedPage: true),
+            2 => _buildEntrySection("student_table", UniqueKey()),
+            3 => _buildClassPage(isDedicatedPage: false),
+            4 => ExamScoreSheet(
                 isClassTablesInitialized: _isClassTablesInitialized,
                 classes: _classes,
                 isMenuExpanded: _isMenuExpanded,
@@ -322,6 +416,19 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  final List<String> _menuOptions = [
+    'Acadamics',
+    'Attendance',
+    'Finance',
+    'New Batch'
+  ];
+  final List<IconData> _menuIcons = [
+    Icons.school,
+    Icons.check_circle,
+    Icons.currency_rupee_rounded,
+    Icons.new_label
+  ];
+  String _appMode = 'Student';
   Widget _buildHome(BuildContext context) {
     return Center(
       child: Container(
@@ -335,23 +442,58 @@ class _MyHomePageState extends State<MyHomePage> {
             children: [
               Expanded(
                 child: GridView.builder(
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 3, // Number of cards in a row
                     childAspectRatio:
                         1, // Width/height ratio of the cards (1 for square)
                     crossAxisSpacing: 20,
                     mainAxisSpacing: 20,
                   ),
-                  itemCount: 3,
+                  itemCount: _menuOptions.length,
                   itemBuilder: (context, index) {
                     return Align(
                       alignment: Alignment.topLeft,
-                      child: Container(
-                        width: 100,
-                        height: 100,
-                        color: Colors.blueGrey,
-                        child: Center(
-                          child: Text('Home Page'),
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _appMode = _menuOptions[index];
+                            });
+                          },
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).cardColor,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: Colors.grey.withOpacity(.5),
+                                width: .5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withOpacity(.5),
+                                  blurRadius: 5,
+                                  offset: Offset(2, 2),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  _menuIcons[index],
+                                  size: 50,
+                                ),
+                                Center(
+                                  child: Text(
+                                    _menuOptions[index],
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     );
@@ -371,6 +513,7 @@ class _MyHomePageState extends State<MyHomePage> {
             className: _classes[index]['class_name'],
             classIndex: index,
             isDedicatedPage: isDedicatedPage,
+            key: ValueKey(isDedicatedPage.hashCode),
           )
         : Container(
             child: Center(
@@ -417,7 +560,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     onTap: () {
                       setState(() {
                         _selectdClass = index;
-                        _pageNumber = 2;
+                        _pageNumber = 1;
                       });
                     },
                     child: Column(
@@ -485,6 +628,23 @@ class _MyHomePageState extends State<MyHomePage> {
                                   ),
                                 ),
                               ),
+                              Positioned(
+                                  bottom: 10,
+                                  right: 60,
+                                  child: Padding(
+                                      padding: EdgeInsets.all(8),
+                                      child: StrokeText(
+                                        text: _selectdAcadamicYear,
+                                        strokeColor:
+                                            Color.fromRGBO(250, 250, 250, .2),
+                                        strokeWidth: .2,
+                                        textStyle: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: Colors.grey.shade700
+                                              .withOpacity(.2),
+                                        ),
+                                      )))
                             ],
                           ),
                         ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:one_zero/constants.dart';
 import 'package:one_zero/database_helper.dart';
+import 'package:one_zero/testAnalytics.dart';
 
 class ClassDetailPage extends StatefulWidget {
   final String className;
@@ -10,7 +11,8 @@ class ClassDetailPage extends StatefulWidget {
   ClassDetailPage(
       {required this.className,
       required this.classIndex,
-      required this.isDedicatedPage});
+      required this.isDedicatedPage,
+      Key? key});
 
   @override
   State<ClassDetailPage> createState() => _ClassDetailPageState();
@@ -21,14 +23,14 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   List<String> _criteriaOptions = [];
   // Default criteria
 
-  int? _studentId;
-  String _studentName = '';
+  List<String> subjects = ['Physics', 'Science', 'English', 'History'];
+
+  int _studentId = 0;
+
   String _studentNameForGrade = '';
   String searchText = '';
   String searchTextfinal = '';
   FocusNode serchButtonFocusNode = FocusNode();
-  String _selecteddClass = '';
-  String _selectedSubject = '';
   List<Map<String, dynamic>> _studentsOfNameList = [];
   List<Map<String, dynamic>> _studentsOfClassList = [];
   List<Map<String, dynamic>> _studentsOfSubjectList = [];
@@ -110,27 +112,163 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     }
   }
 
+  final List<String> _menuOptions = [
+    'Acadamics',
+    'Attendance',
+    'Finance',
+  ];
+  final List<IconData> _menuIcons = [
+    Icons.school,
+    Icons.check_circle,
+    Icons.currency_rupee_rounded,
+  ];
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
+      scrollDirection: Axis.vertical,
       child: Container(
         height: 2000,
         child: Column(
           children: [
-            widget.isDedicatedPage
-                ? Align(
-                    alignment: Alignment.topLeft,
-                    child: Container(
-                      child: Padding(
-                        padding: const EdgeInsets.all(20.0),
-                        child: Text(
-                          widget.className,
-                          style: TextStyle(fontFamily: 'revue', fontSize: 25),
+            Padding(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 100, vertical: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  widget.isDedicatedPage
+                      ? Container(
+                          width: 400,
+                          height: 120,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _menuOptions.length,
+                            itemBuilder: (context, index) {
+                              // Debug print to check the index and list lengths
+                              return Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Column(
+                                  children: [
+                                    Container(
+                                      height: 75,
+                                      width: 75,
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).cardColor,
+                                        borderRadius: BorderRadius.circular(10),
+                                        border: Border.all(
+                                          color: Colors.grey.withOpacity(.5),
+                                          width: .5,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Colors.grey.withOpacity(.5),
+                                            blurRadius: 5,
+                                            offset: Offset(2, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: [
+                                          Icon(
+                                            _menuIcons[
+                                                index], // This will be safe as the index is within bounds
+                                            size: 30,
+                                          ),
+                                          Text(
+                                            _menuOptions[index],
+                                            style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold),
+                                          )
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                        )
+                      : SizedBox(),
+                  Container(
+                    margin: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            SizedBox(
+                              width: 300,
+                              child: Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: TextField(
+                                  cursorColor: Colors.grey,
+                                  decoration: InputDecoration(
+                                    hintText: 'Search by $_selectedcriteria',
+                                    prefixIcon: const Icon(Icons.search),
+                                    filled: true,
+                                    fillColor: Theme.of(context).canvasColor,
+                                    focusColor: Theme.of(context).canvasColor,
+                                    contentPadding: const EdgeInsets.all(15.0),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(8.0),
+                                      borderSide: BorderSide(
+                                          color: Colors.grey.withOpacity(.4),
+                                          width: 0.4),
+                                    ),
+                                  ),
+                                  onChanged: (value) {
+                                    showGradeCard = false;
+                                    setState(() {
+                                      searchTextfinal = value.trim();
+                                    });
+                                  },
+                                  onSubmitted: (value) {
+                                    setState(() {
+                                      searchTextfinal = value.trim();
+                                    });
+                                    onSubmittedSerch(value);
+                                    serchButtonFocusNode.requestFocus();
+                                  },
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: ElevatedButton(
+                                  focusNode: serchButtonFocusNode,
+                                  onPressed: () {
+                                    onSubmittedSerch(searchTextfinal);
+                                  },
+                                  child: const Text('Search')),
+                            )
+                          ],
                         ),
-                      ),
+                        Padding(
+                          padding: const EdgeInsets.all(10.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              !widget.isDedicatedPage
+                                  ? SizedBox(
+                                      width: 200,
+                                      child: _criteriaDropdown(),
+                                    )
+                                  : const SizedBox(),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  )
-                : Container(),
+                  ),
+                ],
+              ),
+            ),
+            Divider(),
             Container(
               margin: EdgeInsets.symmetric(horizontal: 100),
               height: MediaQuery.of(context).size.height * .9,
@@ -139,119 +277,55 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 children: [
                   Expanded(
                     flex: 5,
-                    child: Container(
-                      margin: const EdgeInsets.all(10),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          FractionallySizedBox(
-                            widthFactor: .75,
-                            child: Container(
-                              margin: const EdgeInsets.all(10),
-                              padding: const EdgeInsets.all(10),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: TextField(
-                                      cursorColor: Colors.grey,
-                                      decoration: InputDecoration(
-                                        hintText:
-                                            'Search by $_selectedcriteria',
-                                        prefixIcon: const Icon(Icons.search),
-                                        filled: true,
-                                        fillColor:
-                                            Theme.of(context).canvasColor,
-                                        focusColor:
-                                            Theme.of(context).canvasColor,
-                                        contentPadding:
-                                            const EdgeInsets.all(15.0),
-                                        border: OutlineInputBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8.0),
-                                          borderSide: BorderSide(
-                                              color:
-                                                  Colors.grey.withOpacity(.4),
-                                              width: 0.4),
-                                        ),
-                                      ),
-                                      onChanged: (value) {
-                                        showGradeCard = false;
-                                        setState(() {
-                                          searchTextfinal = value.trim();
-                                        });
-                                      },
-                                      onSubmitted: (value) {
-                                        setState(() {
-                                          searchTextfinal = value.trim();
-                                        });
-                                        onSubmittedSerch(value);
-                                        serchButtonFocusNode.requestFocus();
-                                      },
-                                    ),
-                                  ),
-                                  Padding(
-                                    padding: const EdgeInsets.all(10.0),
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        !widget.isDedicatedPage
-                                            ? SizedBox(
-                                                width: 200,
-                                                child: _criteriaDropdown(),
-                                              )
-                                            : const SizedBox(),
-                                        Padding(
-                                          padding: const EdgeInsets.all(8.0),
-                                          child: ElevatedButton(
-                                              focusNode: serchButtonFocusNode,
-                                              onPressed: () {
-                                                onSubmittedSerch(
-                                                    searchTextfinal);
-                                              },
-                                              child: const Text('Search')),
-                                        )
-                                      ],
-                                    ),
-                                  ),
-                                ],
-                              ),
+                    child: searchText.isNotEmpty
+                        ? Container(
+                            // decoration: BoxDecoration(
+                            //   borderRadius: BorderRadius.circular(10),
+                            //   border: Border.all(
+                            //     color: Colors.grey.withOpacity(.5),
+                            //     width: .5,
+                            //   ),
+                            // ),
+                            margin: const EdgeInsets.all(10),
+                            padding: EdgeInsets.all(30),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.all(10),
+                                  child: switch (resultBoardIndex) {
+                                    3 => Text(
+                                        "Search results with  '$searchText'",
+                                        style: const TextStyle(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold)),
+                                    4 => Text("$searchText Students",
+                                        style: const TextStyle(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold)),
+                                    5 => Text("Students of $searchText",
+                                        style: const TextStyle(
+                                            fontSize: 24,
+                                            fontWeight: FontWeight.bold)),
+                                    _ => const Text(""),
+                                  },
+                                ),
+                                Expanded(
+                                  flex: 1,
+                                  child: switch (resultBoardIndex) {
+                                    3 => _studentsOfNameList == []
+                                        ? const CircleAvatar() //need updation
+                                        : studentsListView(_studentsOfNameList),
+                                    4 => studentsListView(_studentsOfClassList),
+                                    5 =>
+                                      studentsListView(_studentsOfSubjectList),
+                                    _ => Container(),
+                                  },
+                                ),
+                              ],
                             ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(10),
-                            child: switch (resultBoardIndex) {
-                              3 => Text("Search results with  '$searchText'",
-                                  style: const TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold)),
-                              4 => Text("$searchText Students",
-                                  style: const TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold)),
-                              5 => Text("Students of $searchText",
-                                  style: const TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold)),
-                              _ => const Text(""),
-                            },
-                          ),
-                          Expanded(
-                            flex: 1,
-                            child: switch (resultBoardIndex) {
-                              3 => _studentsOfNameList == []
-                                  ? const CircleAvatar() //need updation
-                                  : studentsListView(_studentsOfNameList),
-                              4 => studentsListView(_studentsOfClassList),
-                              5 => studentsListView(_studentsOfSubjectList),
-                              _ => Container(child: getLogo(30)),
-                            },
-                          ),
-                        ],
-                      ),
-                    ),
+                          )
+                        : SizedBox(),
                   ),
                   Expanded(
                     flex: 6,
@@ -281,10 +355,39 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               ),
             ),
             Divider(),
+            Expanded(
+              child: TestAnalytics(
+                allSubjects: allSubjects
+                    .map((e) => e['subject_name'] as String)
+                    .toList(),
+                testResults: testResults,
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  List<Map<String, dynamic>> allSubjects = [];
+  List<List<Map<String, dynamic>>> testResults = [];
+
+  void setAnalyticsStudentId(int studentId) async {
+    allSubjects = await _dbHelper.getSubjectsOfStudentID(studentId);
+    print(allSubjects);
+    for (var subject in allSubjects) {
+      var subjectId = subject['subject_id'];
+      var testHistory = await _dbHelper.getTestHistoryForSubjectOfStudentID(
+          studentId, subjectId);
+      print(testHistory);
+      testResults.add(testHistory);
+    }
+
+    print("all list :---------->$testResults   ");
+
+    setState(() {
+      _studentId = studentId;
+    });
   }
 
   Widget _criteriaDropdown() {
@@ -323,6 +426,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     return SizedBox(
       width: double.infinity,
       child: ListView.builder(
+        physics: const BouncingScrollPhysics(),
         scrollDirection: Axis.vertical,
         itemCount: students.length,
         itemBuilder: (context, index) {
@@ -337,10 +441,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                   height: 60,
                   padding: const EdgeInsets.all(5.0),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.withOpacity(0.3)),
-                    borderRadius: BorderRadius.circular(8.0),
-                    color: Theme.of(context).cardColor,
-                  ),
+                      border: Border.all(color: Colors.grey.withOpacity(0.3)),
+                      borderRadius: BorderRadius.circular(8.0),
+                      color: Theme.of(context).cardColor),
                   child: Row(
                     children: [
                       Container(
@@ -359,14 +462,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                   ? 'assets/fl.jpg'
                                   : 'assets/ml.jpg'),
                           fit: BoxFit.cover, // Fills the circular container
-                          // errorBuilder: (BuildContext context, Object error,
-                          //     StackTrace? stackTrace) {
-                          //   return student['gender'] == 'M'
-                          //       ? Image.asset('assets/ml.jpg',
-                          //           fit: BoxFit.cover)
-                          //       : Image.asset('assets/fl.jpg',
-                          //           fit: BoxFit.cover);
-                          // },
                         ),
                       ),
                       Padding(
@@ -386,6 +481,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 ),
                 onTap: () {
                   setState(() {
+                    _studentId = student['id'] as int;
+
+                    setAnalyticsStudentId(_studentId);
                     _studentNameForGrade = student['student_name'] as String;
                     showGradeCard = true;
                   });

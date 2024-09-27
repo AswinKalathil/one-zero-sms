@@ -31,6 +31,7 @@ class _CustomDrawerItemState extends State<CustomDrawerItem> {
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (event) => setState(() {
         isHovered = true;
       }),
@@ -47,64 +48,60 @@ class _CustomDrawerItemState extends State<CustomDrawerItem> {
         verticalOffset: 10,
         preferBelow: false,
         enableFeedback: true,
-        child: MouseRegion(
-          cursor: SystemMouseCursors.click,
-          child: GestureDetector(
-            onTap: () => widget.onTap(),
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 10.0),
-              width: widget.isMenuExpanded ? 200.0 : 50.0,
-              height: 50.0,
-              margin: EdgeInsets.symmetric(horizontal: 5, vertical: 2.5),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(
-                  color: widget.selectedPage == widget.page
-                      ? Colors.white.withOpacity(0.2)
-                      : Colors.transparent,
-                ),
+        child: GestureDetector(
+          onTap: () => widget.onTap(),
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 10.0),
+            width: widget.isMenuExpanded ? 200.0 : 50.0,
+            height: 50.0,
+            margin: EdgeInsets.symmetric(horizontal: 5, vertical: 2.5),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(
                 color: widget.selectedPage == widget.page
-                    ? Colors.white
-                        .withOpacity(0.2) // Highlight background if selected
-                    : isHovered
-                        ? Colors.white
-                            .withOpacity(0.1) // Background color on hover
-                        : Colors.transparent, // Default background
+                    ? Colors.white.withOpacity(0.2)
+                    : Colors.transparent,
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Icon(
-                    widget.selectedPage == widget.page
-                        ? widget.selectedIcon
-                        : widget.icon,
-                    color: widget.selectedPage == widget.page
-                        ? Colors.white // Change to highlight color if selected
-                        : isHovered
-                            ? Colors.white // Change icon color on hover
-                            : Color.fromRGBO(
-                                255, 255, 255, .7), // Default icon color
-                  ),
-                  widget.isMenuExpanded
-                      ? Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
-                          child: Text(
-                            widget.label,
-                            style: TextStyle(
-                              color: widget.selectedPage == widget.page
-                                  ? Colors
-                                      .white // Change to highlight color if selected
-                                  : isHovered
-                                      ? Colors
-                                          .white // Change text color on hover
-                                      : Color.fromRGBO(255, 255, 255,
-                                          .7), // Default text color
-                            ),
+              color: widget.selectedPage == widget.page
+                  ? Colors.white
+                      .withOpacity(0.2) // Highlight background if selected
+                  : isHovered
+                      ? Colors.white
+                          .withOpacity(0.1) // Background color on hover
+                      : Colors.transparent, // Default background
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Icon(
+                  widget.selectedPage == widget.page
+                      ? widget.selectedIcon
+                      : widget.icon,
+                  color: widget.selectedPage == widget.page
+                      ? Colors.white // Change to highlight color if selected
+                      : isHovered
+                          ? Colors.white // Change icon color on hover
+                          : Color.fromRGBO(
+                              255, 255, 255, .7), // Default icon color
+                ),
+                widget.isMenuExpanded
+                    ? Padding(
+                        padding: const EdgeInsets.only(left: 8.0),
+                        child: Text(
+                          widget.label,
+                          style: TextStyle(
+                            color: widget.selectedPage == widget.page
+                                ? Colors
+                                    .white // Change to highlight color if selected
+                                : isHovered
+                                    ? Colors.white // Change text color on hover
+                                    : Color.fromRGBO(255, 255, 255,
+                                        .7), // Default text color
                           ),
-                        )
-                      : Container(),
-                ],
-              ),
+                        ),
+                      )
+                    : Container(),
+              ],
             ),
           ),
         ),

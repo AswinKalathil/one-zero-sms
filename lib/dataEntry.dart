@@ -180,155 +180,182 @@ class _DataEntryPageState extends State<DataEntryPage> {
     }
   }
 
+  List<bool> _selections = [true, false];
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                const SizedBox(
-                  width: 300,
-                  child: Text(
-                    'Add New Students',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                const SizedBox(width: 20),
-                ElevatedButton(
-                  onPressed: _onSubmit,
-                  child: const Text('Submit'),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 20),
-          Divider(
-            color: Theme.of(context).canvasColor, // Line color
-            thickness: 2, // Line thickness
-          ),
-          const SizedBox(height: 20),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: SizedBox(
-              height: 500,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.vertical,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    columnSpacing: 16.0, // Space betweSen columns
-                    border: const TableBorder(
-                      verticalInside: BorderSide(color: Colors.grey, width: 1),
-                    ),
-                    headingRowColor:
-                        WidgetStateProperty.resolveWith<Color>((states) {
-                      return Theme.of(context)
-                          .primaryColor; // Header background color
-                    }),
-                    columns: headers.map((header) {
-                      return DataColumn(
-                        label: _buildHeaderCell(header),
-                      );
-                    }).toList(),
-                    rows: List<DataRow>.generate(
-                      rowTextEditingControllers.length,
-                      (rowIndex) => DataRow(
-                        color: WidgetStateProperty.resolveWith<Color>((states) {
-                          return (Theme.of(context).brightness ==
-                                  Brightness.light)
-                              ? (rowIndex % 2 == 0
-                                  ? Colors.white
-                                  : Colors.grey.shade200)
-                              : (rowIndex % 2 == 0
-                                  ? Colors.grey.shade600
-                                  : Colors.grey.shade700);
-                        }),
-                        cells: headers.map((header) {
-                          if (header == 'Remove') {
-                            return DataCell(
-                              IconButton(
-                                icon: const Icon(Icons.close_rounded,
-                                    color: Colors.black),
-                                onPressed: () {
-                                  setState(() {
-                                    rowTextEditingControllers
-                                        .removeAt(rowIndex);
-                                    focusNodes.removeAt(rowIndex);
-                                  });
-                                },
-                              ),
-                            );
-                          } else if (header == 'Save') {
-                            return DataCell(
-                              IconButton(
-                                icon: const Icon(Icons.save,
-                                    color: Color.fromRGBO(241, 167, 161, .5)),
-                                onPressed: () {
-                                  setState(() {
-                                    rowTextEditingControllers
-                                        .removeAt(rowIndex);
-                                    focusNodes.removeAt(rowIndex);
-                                  });
-                                },
-                              ),
-                            );
-                          } else if (header == 'ID') {
-                            int rowId = maxId + rowIndex + 1;
-                            rowTextEditingControllers[rowIndex][header]!.text =
-                                rowId.toString();
-
-                            return DataCell(
-                              Container(
-                                width: double.infinity,
-                                child: Text(rowId.toString(),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                    )),
-                              ),
-                            );
-                          } else if (header == 'Stream Name' &&
-                              widget.metadata.tableName == 'student_table') {
-                            return DataCell(
-                              Container(
-                                  width: double.infinity,
-                                  child: autoFill(
-                                    controller:
-                                        rowTextEditingControllers[rowIndex]
-                                            [header] as TextEditingController,
-                                    optionsList: STREAM_NAMES,
-                                    labelText: '',
-                                    needBorder: false,
-                                    nextFocusNode: focusNodes[rowIndex]
-                                        [headers.indexOf(header) + 1],
-                                  )),
-                            );
-                          } else {
-                            int cellIndex = headers.indexOf(header);
-                            return _buildDataCell(
-                              rowTextEditingControllers[rowIndex][header]!,
-                              focusNodes[rowIndex][cellIndex],
-                              cellIndex < focusNodes[rowIndex].length - 1
-                                  ? (cellIndex == 1
-                                      ? focusNodes[rowIndex][3]
-                                      : focusNodes[rowIndex][cellIndex + 1])
-                                  : null,
-                              columnLengths[cellIndex],
-                            );
-                          }
-                        }).toList(),
+    return SingleChildScrollView(
+      child: Container(
+        height: MediaQuery.of(context).size.height * 2,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 300,
+                    child: ToggleButtons(
+                      color: Colors
+                          .black, // Color of the text and icons (unselected)
+                      selectedColor: Colors
+                          .white, // Color of the text and icons (selected)
+                      fillColor: Theme.of(context)
+                          .primaryColor, // Background color (selected)
+                      borderColor: Colors.grey, // Border color (unselected)
+                      selectedBorderColor: Theme.of(context)
+                          .primaryColor, // Border color (selected)
+                      borderRadius: BorderRadius.circular(8.0), // Border radius
+                      constraints: BoxConstraints(
+                        minHeight: 40.0,
+                        minWidth: 80.0,
                       ),
+                      children: const <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Text('HS'),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                          child: Text('HSS'),
+                        ),
+                      ],
+                      isSelected: _selections,
+                      onPressed: (int index) {
+                        setState(() {
+                          for (int i = 0; i < _selections.length; i++) {
+                            _selections[i] = i == index;
+                          }
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  ElevatedButton(
+                    onPressed: _onSubmit,
+                    child: const Text('Submit'),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Divider(
+              color: Theme.of(context).canvasColor, // Line color
+              thickness: 2, // Line thickness
+            ),
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  columnSpacing: 16.0, // Space betweSen columns
+                  border: const TableBorder(
+                    verticalInside: BorderSide(color: Colors.grey, width: 1),
+                  ),
+                  headingRowColor:
+                      WidgetStateProperty.resolveWith<Color>((states) {
+                    return Theme.of(context)
+                        .primaryColor; // Header background color
+                  }),
+                  columns: headers.map((header) {
+                    return DataColumn(
+                      label: _buildHeaderCell(header),
+                    );
+                  }).toList(),
+                  rows: List<DataRow>.generate(
+                    rowTextEditingControllers.length,
+                    (rowIndex) => DataRow(
+                      color: WidgetStateProperty.resolveWith<Color>((states) {
+                        return (Theme.of(context).brightness ==
+                                Brightness.light)
+                            ? (rowIndex % 2 == 0
+                                ? Colors.white
+                                : Colors.grey.shade200)
+                            : (rowIndex % 2 == 0
+                                ? Colors.grey.shade600
+                                : Colors.grey.shade700);
+                      }),
+                      cells: headers.map((header) {
+                        if (header == 'Remove') {
+                          return DataCell(
+                            IconButton(
+                              icon: const Icon(Icons.close_rounded,
+                                  color: Colors.black),
+                              onPressed: () {
+                                setState(() {
+                                  rowTextEditingControllers.removeAt(rowIndex);
+                                  focusNodes.removeAt(rowIndex);
+                                });
+                              },
+                            ),
+                          );
+                        } else if (header == 'Save') {
+                          return DataCell(
+                            IconButton(
+                              icon: const Icon(Icons.save,
+                                  color: Color.fromRGBO(241, 167, 161, .5)),
+                              onPressed: () {
+                                setState(() {
+                                  rowTextEditingControllers.removeAt(rowIndex);
+                                  focusNodes.removeAt(rowIndex);
+                                });
+                              },
+                            ),
+                          );
+                        } else if (header == 'ID') {
+                          int rowId = maxId + rowIndex + 1;
+                          rowTextEditingControllers[rowIndex][header]!.text =
+                              rowId.toString();
+
+                          return DataCell(
+                            Container(
+                              width: double.infinity,
+                              child: Text(rowId.toString(),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  )),
+                            ),
+                          );
+                        } else if (header == 'Stream Name' &&
+                            widget.metadata.tableName == 'student_table') {
+                          return DataCell(
+                            Container(
+                                width: double.infinity,
+                                child: autoFill(
+                                  controller:
+                                      rowTextEditingControllers[rowIndex]
+                                          [header] as TextEditingController,
+                                  optionsList: STREAM_NAMES,
+                                  labelText: '',
+                                  needBorder: false,
+                                  nextFocusNode: focusNodes[rowIndex]
+                                      [headers.indexOf(header) + 1],
+                                )),
+                          );
+                        } else {
+                          int cellIndex = headers.indexOf(header);
+                          return _buildDataCell(
+                            rowTextEditingControllers[rowIndex][header]!,
+                            focusNodes[rowIndex][cellIndex],
+                            cellIndex < focusNodes[rowIndex].length - 1
+                                ? (cellIndex == 1
+                                    ? focusNodes[rowIndex][3]
+                                    : focusNodes[rowIndex][cellIndex + 1])
+                                : null,
+                            columnLengths[cellIndex],
+                          );
+                        }
+                      }).toList(),
                     ),
                   ),
                 ),
               ),
             ),
-          )
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -409,8 +436,7 @@ class StudentDataCell extends StatelessWidget {
           width: 300,
           child: Text(
             studentName ?? '',
-            style: const TextStyle(
-                fontWeight: FontWeight.bold, color: Colors.black),
+            style: const TextStyle(),
           ),
         );
       case 'ID':

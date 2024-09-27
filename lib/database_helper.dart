@@ -29,6 +29,15 @@ class DatabaseHelper {
     );
   }
 
+  String _acadamicYear = DateTime.now().year.toString() +
+      "-" +
+      (DateTime.now().year + 1).toString().substring(2);
+
+  void setAcadamicYear(String acadamicYear) {
+    _acadamicYear = acadamicYear;
+    print(" new Acadamic year private: $_acadamicYear");
+  }
+
   Future<void> _onCreate(Database db, int version) async {
     await db.execute(cretateQuery);
   }
@@ -41,6 +50,22 @@ class DatabaseHelper {
     } catch (e) {
       print("Error occurred while inserting data: $e");
       return 0;
+    }
+  }
+
+  Future<List<String>> getAcadamicYears() async {
+    final db = await database;
+    try {
+      String query = '''SELECT DISTINCT academic_year FROM class_table;''';
+      final List<Map<String, dynamic>> result = await db.rawQuery(query);
+      List<String> ss =
+          result.map((e) => e['academic_year'] as String).toList();
+
+      print(ss);
+      return ss;
+    } catch (e) {
+      print("Error occurred while fetching stream names: $e");
+      return [];
     }
   }
 
@@ -59,12 +84,15 @@ class DatabaseHelper {
   }
 
   Future<List<String>> getStreamNames() async {
+    // print("Acadamic year private: $_acadamicYear");
     final db = await database;
     try {
-      final List<Map<String, dynamic>> result = await db.query('stream_table');
+      String query =
+          '''SELECT stream_name FROM stream_table st JOIN class_table c ON st.class_id = c.id WHERE  c.academic_year = ?;''';
+      final List<Map<String, dynamic>> result =
+          await db.rawQuery(query, [_acadamicYear]);
       List<String> ss = result.map((e) => e['stream_name'] as String).toList();
 
-      print(ss);
       return ss;
     } catch (e) {
       print("Error occurred while fetching stream names: $e");
@@ -74,40 +102,42 @@ class DatabaseHelper {
 
   Future<List<Map<String, dynamic>>> getClasses(String tableName) async {
     final db = await database;
-    return await db.query(tableName);
+
+    return await db.query(tableName,
+        where: 'academic_year = ?', whereArgs: [_acadamicYear]);
   }
 
   // Assuming you already have an instance of your database (db)
-  Future<void> insertTest(Map<String, dynamic> newTest) async {
-    // Step 1: Fetch the subject_id using the subject_name
-    final db = await database;
-    final List<Map<String, dynamic>> subjectList = await db.query(
-      'subject_table',
-      columns: ['id'],
-      where: 'subject_name = ?',
-      whereArgs: [newTest['subject_name']],
-    );
+  // Future<void> insertTest1(Map<String, dynamic> newTest) async {
+  //   // Step 1: Fetch the subject_id using the subject_name
+  //   final db = await database;
+  //   final List<Map<String, dynamic>> subjectList = await db.query(
+  //     'subject_table',
+  //     columns: ['id'],
+  //     where: 'subject_name = ?',
+  //     whereArgs: [newTest['subject_name']],
+  //   );
 
-    if (subjectList.isNotEmpty) {
-      final int subjectId = subjectList.first['id'];
+  //   if (subjectList.isNotEmpty) {
+  //     final int subjectId = subjectList.first['id'];
 
-      // Step 2: Prepare the data for insertion into the test_table
-      Map<String, dynamic> test = {
-        'id': newTest['test_id'],
-        'subject_id': subjectId,
-        'topic': newTest['topic'],
-        'max_mark': int.parse(newTest['maxMark']),
-        'test_date': newTest['date'],
-      };
+  //     // Step 2: Prepare the data for insertion into the test_table
+  //     Map<String, dynamic> test = {
+  //       'id': newTest['test_id'],
+  //       'subject_id': subjectId,
+  //       'topic': newTest['topic'],
+  //       'max_mark': int.parse(newTest['maxMark']),
+  //       'test_date': newTest['date'],
+  //     };
 
-      // Step 3: Insert the data into the test_table
-      await db.insert('test_table', test);
+  //     // Step 3: Insert the data into the test_table
+  //     await db.insert('test_table', test);
 
-      print('Test data inserted successfully');
-    } else {
-      print('Subject not found');
-    }
-  }
+  //     print('Test data inserted successfully');
+  //   } else {
+  //     print('Subject not found');
+  //   }
+  // }
 
   Future<List<Map<String, dynamic>>> getStudentIdsAndNamesByTestId(
       int testId) async {
@@ -213,12 +243,13 @@ JOIN (SELECT id, student_name
     JOIN 
       class_table c ON st.class_id = c.id
     WHERE 
-     LOWER(c.class_name) = LOWER(?);
+     LOWER(c.class_name) = LOWER(?) AND c.academic_year = ?;
   ''';
 
     try {
       // Execute the query and get the result
-      List<Map<String, dynamic>> result = await db.rawQuery(query, [className]);
+      List<Map<String, dynamic>> result =
+          await db.rawQuery(query, [className, _acadamicYear]);
 
       // Check if the result is empty and return null if no subjects are found
       if (result.isEmpty) {
@@ -237,7 +268,7 @@ JOIN (SELECT id, student_name
     }
   }
 
-// fetch students of a subject
+// fetch students of a subject---------------------------need check
   Future<List<Map<String, dynamic>>> getStudentsOfSubject(
       String subjectName) async {
     final db = await database;
@@ -289,6 +320,61 @@ JOIN (SELECT id, student_name
     }
   }
 
+  Future<List<Map<String, dynamic>>> getSubjectsOfStudentID(
+      int studentId) async {
+    try {
+      final db = await database;
+
+      String query = '''
+      SELECT 
+        sub.id as subject_id, 
+        sub.subject_name 
+      FROM 
+        stream_subjects_table ss
+      JOIN 
+        subject_table sub ON ss.subject_id = sub.id
+      WHERE 
+        ss.stream_id = (SELECT stream_id FROM student_table WHERE id = ?);
+    ''';
+
+      final result = await db.rawQuery(query, [studentId]);
+      return result;
+    } catch (e) {
+      // Handle any exceptions that occur
+      print("Error occurred: $e");
+      return []; // Return an empty list or handle the error as needed
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getTestHistoryForSubjectOfStudentID(
+      int studentId, int subjectId) async {
+    final db = await database;
+
+    String query = '''
+    SELECT 
+      t.id AS test_id, 
+      t.topic, 
+      t.max_mark, 
+      t.test_date, 
+      COALESCE(ts.score, '-') AS score
+    FROM 
+      test_table t
+    LEFT JOIN 
+      test_score_table ts ON t.id = ts.test_id AND ts.student_id = ?
+    WHERE 
+      t.subject_id = ?
+
+    ORDER BY t.test_date ASC;
+  ''';
+
+    final result = await db.rawQuery(query, [studentId, subjectId]);
+
+    print(
+        "Test history for student ID: $studentId and subject ID: $subjectId:--->   $result");
+
+    return result;
+  }
+
   Future<List<Map<String, dynamic>>> getStudentsOfName(
       String studentName) async {
     final db = await database;
@@ -310,7 +396,8 @@ JOIN (SELECT id, student_name
     INNER JOIN 
       class_table c ON st.class_id = c.id
     WHERE 
-       LOWER(s.student_name) LIKE LOWER(?);''', ['%$studentName%']);
+       LOWER(s.student_name) LIKE LOWER(?) AND c.academic_year = ?;''',
+          ['%$studentName%', _acadamicYear]);
 
       // Check if the query returned any results
       if (queryResults.isEmpty) {
@@ -328,13 +415,13 @@ JOIN (SELECT id, student_name
 
   Future<List<Map<String, dynamic>>> getStudentsOfClass(
       String className) async {
-    print("Class Name: $className");
+    print("Class Name: $className acadamic year: $_acadamicYear");
     final db = await database;
 
     // Query to get the class ID
     final queryResults = await db.rawQuery(
-        'SELECT id FROM class_table WHERE LOWER(class_name) = LOWER(?);',
-        [className]);
+        'SELECT id FROM class_table WHERE LOWER(class_name) = LOWER(?) AND academic_year = ?  ;',
+        [className, _acadamicYear]);
 
     // Check if the query returned any results
     if (queryResults.isEmpty) {
@@ -367,7 +454,6 @@ JOIN (SELECT id, student_name
 
     // Execute the query
     final result = await db.rawQuery(query, [classId]);
-    print("Result: $result");
 
     return result;
   }
@@ -393,74 +479,7 @@ JOIN (SELECT id, student_name
     int studentId = sudentIdResults[0]['id'] as int;
     print("student id $studentId");
 
-    String query = '''
-    SELECT 
-      s.student_name,
-      s.photo_id AS photo_path,
-      s.gender,
-      c.class_name,
-      c.academic_year,
-      sub.subject_name,
-      COALESCE(ts.score, 0) AS latest_score,
-      t.max_mark,
-      t.test_date,
-      t.id as test_id
-    FROM student_table s
-    LEFT JOIN stream_table st ON s.stream_id = st.id
-    LEFT JOIN class_table c ON st.class_id = c.id
-    LEFT JOIN test_score_table ts ON s.id = ts.student_id
-    LEFT JOIN test_table t ON ts.test_id = t.id
-    LEFT JOIN subject_table sub ON t.subject_id = sub.id
-    WHERE s.id = ?;
-  ''';
-
-    query = '''SELECT 
-    s.student_name,
-    s.photo_id AS photo_path,
-    s.gender,
-    c.class_name,
-    c.academic_year,
-    sub.subject_name,
-    COALESCE(ts.score, '-') AS score,
-    t.max_mark,
-    t.test_date,
-    t.id as test_id
-FROM 
-    student_table s
-LEFT JOIN 
-    stream_table st ON s.stream_id = st.id
-LEFT JOIN 
-    class_table c ON st.class_id = c.id
-LEFT JOIN 
-    stream_subjects_table ss ON st.id = ss.stream_id
-LEFT JOIN 
-    subject_table sub ON ss.subject_id = sub.id
-LEFT JOIN 
-    test_table t ON sub.id = t.subject_id
-LEFT JOIN 
-    test_score_table ts ON t.id = ts.test_id AND ts.student_id = s.id
-LEFT JOIN (
-    SELECT 
-        ts.student_id,
-        t.subject_id,
-        MAX(t.test_date) AS latest_test_date
-    FROM 
-        test_table t
-    JOIN 
-        test_score_table ts ON t.id = ts.test_id
-    WHERE 
-        ts.student_id = 4001
-    GROUP BY 
-        ts.student_id, t.subject_id
-) latest_test ON latest_test.subject_id = t.subject_id 
-              AND latest_test.latest_test_date = t.test_date
-WHERE 
-    s.id = ?
-ORDER BY 
-    sub.subject_name;
-''';
-
-    query = ''' SELECT 
+    String query = ''' SELECT 
     s.student_name,
     s.photo_id AS photo_path,
     s.gender,
@@ -503,12 +522,14 @@ LEFT JOIN (
               AND latest_test.latest_test_date = t.test_date
 WHERE 
     s.id = ?
+    AND c.academic_year = ?
 ORDER BY 
     sub.subject_name; ''';
 
     try {
       // Execute the query and get the result
-      List<Map<String, dynamic>> result = await db.rawQuery(query, [studentId]);
+      List<Map<String, dynamic>> result =
+          await db.rawQuery(query, [studentId, _acadamicYear]);
 
       // Check if the result is empty
       if (result.isEmpty) {
@@ -574,7 +595,7 @@ ORDER BY
 
     // Query to get the subject ID
     String query = '''
-    SELECT id FROM subject_table  WHERE subject_name = ? AND class_id = ?;
+    SELECT id FROM subject_table  WHERE subject_name = ? AND class_id = ? ;
   ''';
 
     try {
@@ -606,13 +627,13 @@ ORDER BY
 
     // Query to get the stream ID
     String query = '''
-    SELECT id FROM stream_table WHERE stream_name = ?;
+    SELECT st.id FROM stream_table st join class_table c ON st.class_id = c.id WHERE st.stream_name = ? AND c.academic_year = ?;
   ''';
 
     try {
       // Execute the query and get the result
       List<Map<String, dynamic>> result =
-          await db.rawQuery(query, [streamName]);
+          await db.rawQuery(query, [streamName, _acadamicYear]);
 
       // Check if the result is empty and return null if no stream is found
       if (result.isEmpty) {
@@ -883,12 +904,14 @@ JOIN
     stream_table st ON ss.stream_id = st.id
 JOIN 
     class_table c ON st.class_id = c.id
+WHERE c.academic_year = ?
 ORDER BY 
     t.id DESC;  
 
 
 ''';
-    List<Map<String, dynamic>> results = await db.rawQuery(query);
+    List<Map<String, dynamic>> results =
+        await db.rawQuery(query, [_acadamicYear]);
 
     return results;
   }
