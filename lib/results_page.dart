@@ -23,8 +23,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   List<String> _criteriaOptions = [];
   // Default criteria
 
-  List<String> subjects = ['Physics', 'Science', 'English', 'History'];
-
   int _studentId = 0;
 
   String _studentNameForGrade = '';
@@ -36,6 +34,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   List<Map<String, dynamic>> _studentsOfSubjectList = [];
   int resultBoardIndex = 0;
   bool showGradeCard = false;
+
+  List<Map<String, dynamic>> _allSubjects = [];
+  List<List<Map<String, dynamic>>> _testResults = [];
   @override
   void initState() {
     // TODO: implement initState
@@ -128,13 +129,14 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     return SingleChildScrollView(
       scrollDirection: Axis.vertical,
       child: Container(
-        height: 2000,
+        height: MediaQuery.of(context).size.height * 4.5,
         child: Column(
           children: [
             Padding(
               padding:
                   const EdgeInsets.symmetric(horizontal: 100, vertical: 10),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   widget.isDedicatedPage
@@ -199,6 +201,20 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Padding(
+                          padding: const EdgeInsets.all(10.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              !widget.isDedicatedPage
+                                  ? SizedBox(
+                                      width: 200,
+                                      child: _criteriaDropdown(),
+                                    )
+                                  : const SizedBox(),
+                            ],
+                          ),
+                        ),
                         Row(
                           children: [
                             SizedBox(
@@ -248,20 +264,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                             )
                           ],
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(10.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              !widget.isDedicatedPage
-                                  ? SizedBox(
-                                      width: 200,
-                                      child: _criteriaDropdown(),
-                                    )
-                                  : const SizedBox(),
-                            ],
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -271,7 +273,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
             Divider(),
             Container(
               margin: EdgeInsets.symmetric(horizontal: 100),
-              height: MediaQuery.of(context).size.height * .9,
+              height: MediaQuery.of(context).size.height * .7,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -310,18 +312,14 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                     _ => const Text(""),
                                   },
                                 ),
-                                Expanded(
-                                  flex: 1,
-                                  child: switch (resultBoardIndex) {
-                                    3 => _studentsOfNameList == []
-                                        ? const CircleAvatar() //need updation
-                                        : studentsListView(_studentsOfNameList),
-                                    4 => studentsListView(_studentsOfClassList),
-                                    5 =>
-                                      studentsListView(_studentsOfSubjectList),
-                                    _ => Container(),
-                                  },
-                                ),
+                                switch (resultBoardIndex) {
+                                  3 => _studentsOfNameList == []
+                                      ? const CircleAvatar() //need updation
+                                      : studentsListView(_studentsOfNameList),
+                                  4 => studentsListView(_studentsOfClassList),
+                                  5 => studentsListView(_studentsOfSubjectList),
+                                  _ => Container(),
+                                },
                               ],
                             ),
                           )
@@ -330,12 +328,10 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                   Expanded(
                     flex: 6,
                     child: Container(
-                      margin: const EdgeInsets.all(10),
                       child: showGradeCard
                           ? Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment
-                                  .start, // Aligns children to the start (left)
+                              mainAxisAlignment: MainAxisAlignment.start,
                               children: [
                                 Expanded(
                                   flex: 2,
@@ -355,38 +351,45 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               ),
             ),
             Divider(),
-            Expanded(
-              child: TestAnalytics(
-                allSubjects: allSubjects
-                    .map((e) => e['subject_name'] as String)
-                    .toList(),
-                testResults: testResults,
-              ),
-            ),
+            _testResults.isNotEmpty
+                ? Expanded(
+                    child: TestAnalytics(
+                      allSubjects: _allSubjects
+                          .map((e) => e['subject_name'] as String)
+                          .toList(),
+                      testResults: _testResults,
+                      key: ValueKey(_testResults.hashCode),
+                    ),
+                  )
+                : SizedBox(),
           ],
         ),
       ),
     );
   }
 
-  List<Map<String, dynamic>> allSubjects = [];
-  List<List<Map<String, dynamic>>> testResults = [];
-
   void setAnalyticsStudentId(int studentId) async {
-    allSubjects = await _dbHelper.getSubjectsOfStudentID(studentId);
-    print(allSubjects);
-    for (var subject in allSubjects) {
+    // Clear the previous test results
+    _testResults.clear();
+
+    // Fetch subjects for the student
+    _allSubjects = await _dbHelper.getSubjectsOfStudentID(studentId);
+
+    for (var subject in _allSubjects) {
       var subjectId = subject['subject_id'];
       var testHistory = await _dbHelper.getTestHistoryForSubjectOfStudentID(
           studentId, subjectId);
-      print(testHistory);
-      testResults.add(testHistory);
+      print(" $studentId : :\n -------------------------\n$testHistory\n\n");
+
+      // Add the test history to the results
+      _testResults.add(testHistory);
     }
 
-    print("all list :---------->$testResults   ");
-
+    // Update the state to rebuild the widget with new data
     setState(() {
-      _studentId = studentId;
+      // Use a unique key for the TestAnalytics widget to trigger a rebuild
+      _testResults =
+          _testResults; // This is a redundant assignment, just for clarity
     });
   }
 
@@ -424,6 +427,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
   Widget studentsListView(List<Map<String, dynamic>> students) {
     return SizedBox(
+      height: 410,
       width: double.infinity,
       child: ListView.builder(
         physics: const BouncingScrollPhysics(),
@@ -483,10 +487,10 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                   setState(() {
                     _studentId = student['id'] as int;
 
-                    setAnalyticsStudentId(_studentId);
                     _studentNameForGrade = student['student_name'] as String;
                     showGradeCard = true;
                   });
+                  setAnalyticsStudentId(_studentId);
                 },
               ),
             ),
@@ -677,7 +681,7 @@ class _GradeCardState extends State<GradeCard> {
   Widget build(BuildContext context) {
     return SizedBox(
       child: AspectRatio(
-        aspectRatio: 210 / 297, // A4 aspect ratio (210mm x 297mm)
+        aspectRatio: 297 / 210, // A4 aspect ratio (210mm x 297mm)
         child: Container(
           padding: const EdgeInsets.all(30.0),
           decoration: BoxDecoration(
@@ -735,7 +739,7 @@ class _GradeCardState extends State<GradeCard> {
               ),
               const SizedBox(height: 16.0),
               const Text(
-                'Grades',
+                'Latest Grades',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8.0),

@@ -12,7 +12,6 @@ class ScoreDataPoints {
   String toString() => 'x: $x, y: $y'; // Override toString for debugging
 }
 
-// ignore: must_be_immutable
 class TestAnalytics extends StatelessWidget {
   final List<String> allSubjects;
   final List<List<Map<String, dynamic>>> testResults;
@@ -26,7 +25,7 @@ class TestAnalytics extends StatelessWidget {
     int subjectIndex = allSubjects.indexOf(subject);
 
     if (subjectIndex == -1) {
-      print('Subject not found: $subject');
+      print('Subject not found');
       return; // If subject not found in the list, return
     }
 
@@ -38,45 +37,25 @@ class TestAnalytics extends StatelessWidget {
     for (var i = 0; i < subjectTestResults.length; i++) {
       var test = subjectTestResults[i];
 
-      // Initialize score and maxMark variables
-      int score = 0;
-      int maxMark = test['max_mark'] ?? 0; // Default to 0 if max_mark is null
+      // Extract score and max_mark
+      int score = test['score'];
+      int maxMark = test['max_mark'];
 
-      // Safely extract and convert score
-      if (test['score'] is String) {
-        if (test['score'] != '-' && test['score'].isNotEmpty) {
-          // Attempt to parse score if it's a valid string
-          try {
-            score = int.parse(test['score']);
-          } catch (e) {
-            print('Error parsing score for test ID ${test['test_id']}: $e');
-            score = 0; // Fallback on error
-          }
-        }
-      } else if (test['score'] is int) {
-        score = test['score']; // Use it directly if it's already an int
-      }
+      // Create data point where x = test index and y = score percentage
+      ScoreDataPoints dataPoint = ScoreDataPoints(
+        x: i + 1, // Test index (starting from 1)
+        y: (score / maxMark * 100).toInt(), // Score percentage
+      );
 
-      // Prevent division by zero if maxMark is 0
-      if (maxMark > 0) {
-        // Create data point where x = test index and y = score percentage
-        ScoreDataPoints dataPoint = ScoreDataPoints(
-          x: i + 1, // Test index (starting from 1)
-          y: ((score / maxMark) * 100).toInt(), // Score percentage
-        );
-
-        // Add the data point to the list
-        dataPoints.add(dataPoint);
-      } else {
-        print('Warning: maxMark for test ID ${test['test_id']} is 0 or null.');
-      }
+      // Add the data point to the list
+      dataPoints.add(dataPoint);
     }
 
     // Add the data points for this subject to the graphListMap
     graphListMap[subject] = dataPoints;
 
     // Output for debugging purposes
-    // print("Data points for $subject: $dataPoints");
+    print("Data points for $subject: $dataPoints");
   }
 
 // Class to store the data points
@@ -92,15 +71,14 @@ class TestAnalytics extends StatelessWidget {
     // print("points: $graphListMap");
 
     return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 10),
-        testResults.isNotEmpty && allSubjects.isNotEmpty
+        testResults.isNotEmpty
             ? ConstrainedBox(
                 constraints: BoxConstraints(
                   maxHeight: MediaQuery.of(context).size.height *
-                      2.8, // Adjust height as needed
+                      3, // Adjust height as needed
                 ),
                 child: ListView.builder(
                   physics:
@@ -323,29 +301,23 @@ class TestAnalytics extends StatelessWidget {
                                 widthFactor: .8,
                                 child: Container(
                                   padding: EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                      border: Border.all(
+                                    color: Theme.of(context).primaryColor,
+                                  )),
                                   child: Column(children: [
                                     //Initialize the chart widget
                                     SfCartesianChart(
-                                        primaryXAxis: CategoryAxis(
-                                          title: AxisTitle(
-                                              text:
-                                                  'Tests No.'), // Title for the X-axis
-                                        ),
-                                        primaryYAxis: NumericAxis(
-                                          title: AxisTitle(
-                                              text:
-                                                  'Percentage Marks'), // Title for the Y-axis
-                                        ),
+                                        primaryXAxis: CategoryAxis(),
+                                        // Chart title
                                         title: ChartTitle(
                                             text:
                                                 'Exam Performance Trend: ${allSubjects[index]}',
                                             textStyle: TextStyle(
                                                 fontWeight: FontWeight.bold)),
-                                        backgroundColor:
-                                            Theme.of(context).cardColor,
                                         // Enable legend
                                         legend: Legend(
-                                          isVisible: false,
+                                          isVisible: true,
                                         ),
                                         // Enable tooltip
                                         tooltipBehavior:
@@ -365,9 +337,7 @@ class TestAnalytics extends StatelessWidget {
                                               // Enable data label
                                               dataLabelSettings:
                                                   DataLabelSettings(
-                                                      isVisible: true,
-                                                      textStyle: TextStyle(
-                                                          fontSize: 10))),
+                                                      isVisible: true))
                                         ]),
                                   ]),
                                 ),
@@ -387,66 +357,9 @@ class TestAnalytics extends StatelessWidget {
                   child: Text('No tests available'),
                 ),
               ),
-        SizedBox(
-          height: 20,
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 100.0),
-          child: SizedBox(
-            width: double.infinity,
-            child: Container(
-              color: Theme.of(context).cardColor,
-              padding: EdgeInsets.all(16),
-              child: Column(children: [
-                //Initialize the chart widget
-                SfCartesianChart(
-                  primaryXAxis: CategoryAxis(
-                    title: AxisTitle(text: 'Tests No.'), // Title for the X-axis
-                  ),
-                  primaryYAxis: NumericAxis(
-                    title: AxisTitle(
-                        text: 'Percentage Marks'), // Title for the Y-axis
-                  ),
-                  // Chart title
-                  title: ChartTitle(
-                    text: 'Performance Trend',
-                    textStyle: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  backgroundColor: Theme.of(context).cardColor,
-                  // Enable legend
-                  legend: Legend(
-                    isVisible: true,
-                  ),
-                  // Enable tooltip
-                  tooltipBehavior: TooltipBehavior(enable: true),
-                  series: <CartesianSeries<ScoreDataPoints, int>>[
-                    ...allSubjects
-                        .map((subject) {
-                          // Check if the data exists for the subject to avoid null exceptions
-                          if (graphListMap.containsKey(subject)) {
-                            return SplineSeries<ScoreDataPoints, int>(
-                              dataSource: graphListMap[subject],
-                              xValueMapper: (ScoreDataPoints exam, _) => exam.x,
-                              yValueMapper: (ScoreDataPoints exam, _) => exam.y,
-                              name: subject,
-                              // Enable data label
-                              dataLabelSettings:
-                                  DataLabelSettings(isVisible: false),
-                            );
-                          } else {
-                            return null; // Return null if no data exists for that subject
-                          }
-                        })
-                        .where((series) => series != null)
-                        .cast<SplineSeries<ScoreDataPoints, int>>()
-                        .toList(), // Filter out nulls
-                  ],
-                )
-              ]),
-            ),
-          ),
-        ),
       ],
     );
   }
+
+  void setGraphLists() {}
 }

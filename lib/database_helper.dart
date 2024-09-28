@@ -369,8 +369,8 @@ JOIN (SELECT id, student_name
 
     final result = await db.rawQuery(query, [studentId, subjectId]);
 
-    print(
-        "Test history for student ID: $studentId and subject ID: $subjectId:--->   $result");
+    // print(
+    // "Test history for student ID: $studentId and subject ID: $subjectId:--->   $result");
 
     return result;
   }
