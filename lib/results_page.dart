@@ -351,7 +351,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               ),
             ),
             Divider(),
-            _testResults.isNotEmpty
+            _testResults.isNotEmpty && _allSubjects.isNotEmpty
                 ? Expanded(
                     child: TestAnalytics(
                       allSubjects: _allSubjects

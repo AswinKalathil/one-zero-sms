@@ -13,25 +13,55 @@ class ScoreDataPoints {
 }
 
 // ignore: must_be_immutable
-class TestAnalytics extends StatelessWidget {
+class TestAnalytics extends StatefulWidget {
   final List<String> allSubjects;
   final List<List<Map<String, dynamic>>> testResults;
-  Map<String, List<ScoreDataPoints>> graphListMap = {};
 
   TestAnalytics(
       {required this.allSubjects, required this.testResults, required Key key});
+
+  @override
+  State<TestAnalytics> createState() => _TestAnalyticsState();
+}
+
+class _TestAnalyticsState extends State<TestAnalytics> {
+  Map<String, List<ScoreDataPoints>> graphListMap = {};
+
   DatabaseHelper dbHelper = DatabaseHelper();
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    _createAllDataPoints();
+  }
+
+  void _createAllDataPoints() {
+    graphListMap
+        .clear(); // Clear any existing data to avoid retaining old values
+
+    for (var subject in widget.allSubjects) {
+      createDataPointsForSubject(subject);
+    }
+  }
+
   void createDataPointsForSubject(String subject) {
     // Get the index of the subject in the allSubjects list
-    int subjectIndex = allSubjects.indexOf(subject);
+
+    int subjectIndex = widget.allSubjects.indexOf(subject);
 
     if (subjectIndex == -1) {
       print('Subject not found: $subject');
       return; // If subject not found in the list, return
     }
-
+    if (widget.testResults.length <= subjectIndex) {
+      print(
+          "error=====Subject Index: $subjectIndex   and length of list ${widget.testResults.length}");
+      return;
+    }
     // Get the list of test results for this subject
-    List<Map<String, dynamic>> subjectTestResults = testResults[subjectIndex];
+    List<Map<String, dynamic>> subjectTestResults =
+        widget.testResults[subjectIndex];
     List<ScoreDataPoints> dataPoints = [];
 
     // Iterate over the test results for the selected subject
@@ -80,12 +110,11 @@ class TestAnalytics extends StatelessWidget {
   }
 
 // Class to store the data points
-
   @override
   Widget build(BuildContext context) {
     // print('AllSubjects: $allSubjects');
     // print('TestResults: $testResults');
-    for (var subject in allSubjects) {
+    for (var subject in widget.allSubjects) {
       createDataPointsForSubject(subject);
     }
 
@@ -96,7 +125,7 @@ class TestAnalytics extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 10),
-        testResults.isNotEmpty && allSubjects.isNotEmpty
+        widget.testResults.isNotEmpty && widget.allSubjects.isNotEmpty
             ? ConstrainedBox(
                 constraints: BoxConstraints(
                   maxHeight: MediaQuery.of(context).size.height *
@@ -106,15 +135,18 @@ class TestAnalytics extends StatelessWidget {
                   physics:
                       const NeverScrollableScrollPhysics(), // Disable scrolling
 
-                  itemCount: allSubjects.length,
+                  itemCount: widget.allSubjects.length,
                   itemBuilder: (context, index) {
-                    var result = testResults[index];
+                    if (widget.testResults.length <= index) {
+                      return CircularProgressIndicator();
+                    }
+                    var result = widget.testResults[index];
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Padding(
                           padding: const EdgeInsets.only(left: 100.0),
-                          child: Text(allSubjects[index],
+                          child: Text(widget.allSubjects[index],
                               style: const TextStyle(
                                   fontSize: 30, fontWeight: FontWeight.bold)),
                         ),
@@ -338,7 +370,7 @@ class TestAnalytics extends StatelessWidget {
                                         ),
                                         title: ChartTitle(
                                             text:
-                                                'Exam Performance Trend: ${allSubjects[index]}',
+                                                'Exam Performance Trend: ${widget.allSubjects[index]}',
                                             textStyle: TextStyle(
                                                 fontWeight: FontWeight.bold)),
                                         backgroundColor:
@@ -354,7 +386,7 @@ class TestAnalytics extends StatelessWidget {
                                             ScoreDataPoints, int>>[
                                           LineSeries<ScoreDataPoints, int>(
                                               dataSource: graphListMap[
-                                                  allSubjects[index]],
+                                                  widget.allSubjects[index]],
                                               xValueMapper:
                                                   (ScoreDataPoints exam, _) =>
                                                       exam.x,
@@ -420,7 +452,7 @@ class TestAnalytics extends StatelessWidget {
                   // Enable tooltip
                   tooltipBehavior: TooltipBehavior(enable: true),
                   series: <CartesianSeries<ScoreDataPoints, int>>[
-                    ...allSubjects
+                    ...widget.allSubjects
                         .map((subject) {
                           // Check if the data exists for the subject to avoid null exceptions
                           if (graphListMap.containsKey(subject)) {
