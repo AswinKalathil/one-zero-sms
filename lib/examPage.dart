@@ -134,7 +134,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                                 vertical: 5),
                                             height: 70,
                                             width: 200,
-                                            child: autoFill(
+                                            child: AutoFill(
                                               key: ValueKey(
                                                   widget.classes.hashCode),
                                               labelText: 'Class Name',
@@ -187,7 +187,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                                 vertical: 5),
                                             height: 70,
                                             width: 200,
-                                            child: autoFill(
+                                            child: AutoFill(
                                               key: ValueKey(
                                                   _subjectForSuggestions
                                                       .hashCode),
@@ -595,6 +595,7 @@ class _ExamEntryState extends State<ExamEntry> {
   Map<String, dynamic> testDetails = {};
   int maxId = 0;
   DatabaseHelper dbHelper = DatabaseHelper();
+  int maxScore = 100;
   @override
   void initState() {
     headers = ['ID', 'Student Name', 'Score'];
@@ -627,6 +628,8 @@ class _ExamEntryState extends State<ExamEntry> {
         rowTextEditingControllers[i].text =
             _studentScoreList[i]['score']?.toString() ?? "";
       }
+
+      maxScore = testDetails['max_mark'];
     });
   }
 
@@ -662,10 +665,19 @@ class _ExamEntryState extends State<ExamEntry> {
             padding: const EdgeInsets.only(left: 16.0, top: 16.0),
             child: SizedBox(
               width: 300,
-              child: Text(
-                "${testDetails['subject_name']}  Test",
-                style:
-                    const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              child: Row(
+                children: [
+                  Text(
+                    "${testDetails['subject_name']} ",
+                    style: const TextStyle(
+                        fontSize: 24, fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    "${testDetails['topic']} ",
+                    style: const TextStyle(
+                        fontSize: 20, fontStyle: FontStyle.italic),
+                  ),
+                ],
               ),
             ),
           ),
@@ -680,10 +692,26 @@ class _ExamEntryState extends State<ExamEntry> {
                         "${testDetails['test_date'].toString().substring(0, 10)}")),
                 ElevatedButton(
                   onPressed: () async {
+                    bool abort = false;
                     var data = rowTextEditingControllers.map((controller) {
-                      print("Data ${controller.text}");
+                      if (controller.text.isNotEmpty) {
+                        if (int.parse(controller.text) > maxScore ||
+                            int.parse(controller.text) < 0) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Score should be within $maxScore'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                          abort = true;
+                          return "-";
+                        }
+                      }
+
                       return controller.text.trim();
                     }).toList();
+
+                    if (abort) return;
                     DatabaseHelper dbHelper = DatabaseHelper();
 
                     for (int i = 0; i < _studentScoreList.length; i++) {
@@ -733,7 +761,7 @@ class _ExamEntryState extends State<ExamEntry> {
                     return DataColumn(
                       label: Center(
                         child: Text(
-                          header,
+                          header == 'Score' ? "$header \n($maxScore)" : header,
                           style: const TextStyle(
                               color: Colors.white, fontWeight: FontWeight.bold),
                         ),
@@ -774,6 +802,7 @@ class _ExamEntryState extends State<ExamEntry> {
                                   ? student['student_id'] as int
                                   : 0,
                               currentScore: student['score']?.toString() ?? "",
+                              maxMark: maxScore,
                               onSubmitted: isScoreColumn
                                   ? () => _moveFocusToNextRow(rowIndex)
                                   : null,
@@ -822,5 +851,87 @@ class _ExamEntryState extends State<ExamEntry> {
         );
       },
     );
+  }
+}
+
+class StudentDataCell extends StatelessWidget {
+  final String columnName;
+  final String? studentName;
+  final TextEditingController? scoreController;
+  final FocusNode? focusNode;
+  final int studentId;
+  final String currentScore;
+  final int maxMark;
+  final VoidCallback? onSubmitted;
+
+  StudentDataCell({
+    required this.columnName,
+    this.studentName,
+    this.scoreController,
+    this.focusNode,
+    required this.studentId,
+    required this.currentScore,
+    required this.maxMark,
+    this.onSubmitted,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    switch (columnName) {
+      case 'Student Name':
+        return SizedBox(
+          width: 300,
+          child: Text(
+            studentName ?? '',
+            style: const TextStyle(),
+          ),
+        );
+      case 'ID':
+        return SizedBox(
+          width: 50,
+          child: Text(
+            studentId.toString(),
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        );
+      case 'Score':
+        return SizedBox(
+          width: 100,
+          child: TextField(
+            controller: scoreController,
+            focusNode: focusNode,
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+            ),
+            keyboardType: TextInputType.number,
+            inputFormatters: <TextInputFormatter>[
+              FilteringTextInputFormatter.digitsOnly,
+            ],
+            onSubmitted: (value) {
+              int? score = int.tryParse(value);
+
+              if (score != null) {
+                // If the score is not null, check if it's less than or equal to the max score
+                if (score <= maxMark && score >= 0) {
+                  // Valid score, proceed to save
+                  onSubmitted?.call();
+                } else {
+                  // Invalid score (greater than max score)
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text("Score shoulbe within $maxMark"),
+                        backgroundColor: Colors.black),
+                  );
+                }
+              } else {
+                onSubmitted?.call();
+              }
+            },
+          ),
+        );
+      default:
+        return const Text('');
+    }
   }
 }

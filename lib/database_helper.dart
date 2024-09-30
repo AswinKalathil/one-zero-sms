@@ -73,7 +73,7 @@ class DatabaseHelper {
     final db = await database;
     try {
       String query =
-          '''  Select s.subject_name,tt.test_date from test_table tt JOIN subject_table s ON tt.subject_id = s.id  where tt.id = ?''';
+          '''  Select s.subject_name,tt.test_date,tt.topic,tt.max_mark from test_table tt JOIN subject_table s ON tt.subject_id = s.id  where tt.id = ?''';
       final List<Map<String, dynamic>> result =
           await db.rawQuery(query, [testId]);
       return result[0];
@@ -83,14 +83,14 @@ class DatabaseHelper {
     }
   }
 
-  Future<List<String>> getStreamNames() async {
+  Future<List<String>> getStreamNames(String section) async {
     // print("Acadamic year private: $_acadamicYear");
     final db = await database;
     try {
       String query =
-          '''SELECT stream_name FROM stream_table st JOIN class_table c ON st.class_id = c.id WHERE  c.academic_year = ?;''';
+          '''SELECT stream_name FROM stream_table st JOIN class_table c ON st.class_id = c.id WHERE  c.section = ? AND c.academic_year = ?;''';
       final List<Map<String, dynamic>> result =
-          await db.rawQuery(query, [_acadamicYear]);
+          await db.rawQuery(query, [section, _acadamicYear]);
       List<String> ss = result.map((e) => e['stream_name'] as String).toList();
 
       return ss;
@@ -396,8 +396,15 @@ JOIN (SELECT id, student_name
     INNER JOIN 
       class_table c ON st.class_id = c.id
     WHERE 
-       LOWER(s.student_name) LIKE LOWER(?) AND c.academic_year = ?;''',
-          ['%$studentName%', _acadamicYear]);
+       LOWER(s.student_name) LIKE LOWER(?) AND c.academic_year = ?
+    ORDER BY 
+    CASE 
+      WHEN  LOWER(s.student_name) LIKE LOWER(?) THEN 1  
+    ELSE 2                      
+    END, 
+    s.student_name;   
+       
+       ''', ['%$studentName%', _acadamicYear, '$studentName%']);
 
       // Check if the query returned any results
       if (queryResults.isEmpty) {
@@ -458,26 +465,68 @@ JOIN (SELECT id, student_name
     return result;
   }
 
-  Future<List<Map<String, dynamic>>> getGradeCard(String studentName) async {
+  // Future<List<Map<String, dynamic>>> getGradeCard(String studentName) async {
+  //   final db = await database;
+  //   print("student id for grade card $studentName");
+  //   // Check if studentId is correctly passed and is not empty
+  //   if (studentName.isEmpty) {
+  //     throw ArgumentError("Student Name cannot be empty");
+  //   }
+  //   final sudentIdResults = await db.rawQuery(
+  //       'SELECT id FROM student_table WHERE LOWER(student_name) = LOWER(?);',
+  //       [studentName]);
+  //   // Check if the query returned any results
+  //   if (sudentIdResults.isEmpty) {
+  //     print("No student Name found with name: $studentName !");
+  //     return []; // Return an empty list if no class is found
+  //   }
+  //   // Get the class ID from the result
+  //   int studentId = sudentIdResults[0]['id'] as int;
+
+  Future<List<Map<String, dynamic>>> getStudentData(int studentId) async {
     final db = await database;
-    print("student id for grade card $studentName");
-    // Check if studentId is correctly passed and is not empty
-    if (studentName.isEmpty) {
-      throw ArgumentError("Student Name cannot be empty");
-    }
-    final sudentIdResults = await db.rawQuery(
-        'SELECT id FROM student_table WHERE LOWER(student_name) = LOWER(?);',
-        [studentName]);
 
-    // Check if the query returned any results
-    if (sudentIdResults.isEmpty) {
-      print("No student Name found with name: $studentName !");
-      return []; // Return an empty list if no class is found
-    }
-
-    // Get the class ID from the result
-    int studentId = sudentIdResults[0]['id'] as int;
     print("student id $studentId");
+
+    String query = ''' SELECT 
+    s.student_name,
+    s.photo_id AS photo_path,
+    s.gender,
+    s.school_name,
+    c.class_name,
+    c.academic_year,
+   st.stream_name
+FROM 
+    student_table s
+LEFT JOIN 
+    stream_table st ON s.stream_id = st.id
+LEFT JOIN 
+    class_table c ON st.class_id = c.id
+WHERE 
+    s.id = ?''';
+
+    try {
+      // Execute the query and get the result
+      List<Map<String, dynamic>> result = await db.rawQuery(query, [
+        studentId,
+      ]);
+
+      // Check if the result is empty
+      if (result.isEmpty) {
+        throw ArgumentError("No student found with the given ID");
+      }
+
+      return result;
+    } catch (e) {
+      // Handle any exceptions that occur
+      print("Error occurred while fetching grade card: $e");
+      throw Exception(
+          "Failed to retrieve grade card data. Please try again later.");
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getGradeCard(int studentId) async {
+    final db = await database;
 
     String query = ''' SELECT 
     s.student_name,
@@ -515,7 +564,7 @@ LEFT JOIN (
     JOIN 
         test_score_table ts ON t.id = ts.test_id
     WHERE 
-        ts.student_id = 4001
+        ts.student_id = ?
     GROUP BY 
         ts.student_id, t.subject_id, t.id
 ) latest_test ON latest_test.subject_id = t.subject_id 
@@ -524,12 +573,12 @@ WHERE
     s.id = ?
     AND c.academic_year = ?
 ORDER BY 
-    sub.subject_name; ''';
+    sub.id; ''';
 
     try {
       // Execute the query and get the result
       List<Map<String, dynamic>> result =
-          await db.rawQuery(query, [studentId, _acadamicYear]);
+          await db.rawQuery(query, [studentId, studentId, _acadamicYear]);
 
       // Check if the result is empty
       if (result.isEmpty) {
@@ -668,6 +717,7 @@ ORDER BY
             'id': classId,
             'class_name': classData['class_name'],
             'academic_year': classData['academic_year'],
+            'section': classData['section']
           });
           classIdMap[classData['class_id']] = classId;
         }
@@ -723,33 +773,63 @@ ORDER BY
       {
         'class_id': 1,
         'class_name': 'Plus Two STATE',
-        'academic_year': academicYear
+        'academic_year': academicYear,
+        'section': 'HSS'
       },
       {
         'class_id': 2,
         'class_name': 'Plus Two CBSE',
-        'academic_year': academicYear
+        'academic_year': academicYear,
+        'section': 'HSS'
       },
       {
         'class_id': 3,
         'class_name': 'Plus One STATE',
-        'academic_year': academicYear
+        'academic_year': academicYear,
+        'section': 'HSS'
       },
       {
         'class_id': 4,
         'class_name': 'Plus One CBSE',
-        'academic_year': academicYear
+        'academic_year': academicYear,
+        'section': 'HSS'
       },
       {
         'class_id': 5,
         'class_name': '10th STATE',
-        'academic_year': academicYear
+        'academic_year': academicYear,
+        'section': 'HSS'
       },
-      {'class_id': 6, 'class_name': '10th CBSE', 'academic_year': academicYear},
-      {'class_id': 7, 'class_name': '9th STATE', 'academic_year': academicYear},
-      {'class_id': 8, 'class_name': '9th CBSE', 'academic_year': academicYear},
-      {'class_id': 9, 'class_name': '8th STATE', 'academic_year': academicYear},
-      {'class_id': 10, 'class_name': '8th CBSE', 'academic_year': academicYear},
+      {
+        'class_id': 6,
+        'class_name': '10th CBSE',
+        'academic_year': academicYear,
+        'section': 'HS'
+      },
+      {
+        'class_id': 7,
+        'class_name': '9th STATE',
+        'academic_year': academicYear,
+        'section': 'HS'
+      },
+      {
+        'class_id': 8,
+        'class_name': '9th CBSE',
+        'academic_year': academicYear,
+        'section': 'HS'
+      },
+      {
+        'class_id': 9,
+        'class_name': '8th STATE',
+        'academic_year': academicYear,
+        'section': 'HS'
+      },
+      {
+        'class_id': 10,
+        'class_name': '8th CBSE',
+        'academic_year': academicYear,
+        'section': 'HS'
+      },
     ];
 
     List<Map<String, dynamic>> subjectDataList = [

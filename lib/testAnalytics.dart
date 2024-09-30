@@ -82,6 +82,8 @@ class _TestAnalyticsState extends State<TestAnalytics> {
             print('Error parsing score for test ID ${test['test_id']}: $e');
             score = 0; // Fallback on error
           }
+        } else {
+          score = -1;
         }
       } else if (test['score'] is int) {
         score = test['score']; // Use it directly if it's already an int
@@ -92,7 +94,9 @@ class _TestAnalyticsState extends State<TestAnalytics> {
         // Create data point where x = test index and y = score percentage
         ScoreDataPoints dataPoint = ScoreDataPoints(
           x: i + 1, // Test index (starting from 1)
-          y: ((score / maxMark) * 100).toInt(), // Score percentage
+          y: score == -1
+              ? -1
+              : ((score / maxMark) * 100).toInt(), // Score percentage
         );
 
         // Add the data point to the list
@@ -118,8 +122,6 @@ class _TestAnalyticsState extends State<TestAnalytics> {
       createDataPointsForSubject(subject);
     }
 
-    // print("points: $graphListMap");
-
     return Column(
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,8 +130,8 @@ class _TestAnalyticsState extends State<TestAnalytics> {
         widget.testResults.isNotEmpty && widget.allSubjects.isNotEmpty
             ? ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height *
-                      2.8, // Adjust height as needed
+                  maxHeight: (widget.allSubjects.length *
+                      445), // Adjust height as needed
                 ),
                 child: ListView.builder(
                   physics:
@@ -153,6 +155,7 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                         const SizedBox(height: 10),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
                               child: FractionallySizedBox(
@@ -354,54 +357,62 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                               child: FractionallySizedBox(
                                 widthFactor: .8,
                                 child: Container(
-                                  padding: EdgeInsets.all(16),
-                                  child: Column(children: [
-                                    //Initialize the chart widget
-                                    SfCartesianChart(
-                                        primaryXAxis: CategoryAxis(
-                                          title: AxisTitle(
-                                              text:
-                                                  'Tests No.'), // Title for the X-axis
-                                        ),
-                                        primaryYAxis: NumericAxis(
-                                          title: AxisTitle(
-                                              text:
-                                                  'Percentage Marks'), // Title for the Y-axis
-                                        ),
-                                        title: ChartTitle(
-                                            text:
-                                                'Exam Performance Trend: ${widget.allSubjects[index]}',
-                                            textStyle: TextStyle(
-                                                fontWeight: FontWeight.bold)),
-                                        backgroundColor:
-                                            Theme.of(context).cardColor,
-                                        // Enable legend
-                                        legend: Legend(
-                                          isVisible: false,
-                                        ),
-                                        // Enable tooltip
-                                        tooltipBehavior:
-                                            TooltipBehavior(enable: true),
-                                        series: <CartesianSeries<
-                                            ScoreDataPoints, int>>[
-                                          LineSeries<ScoreDataPoints, int>(
-                                              dataSource: graphListMap[
-                                                  widget.allSubjects[index]],
-                                              xValueMapper:
-                                                  (ScoreDataPoints exam, _) =>
-                                                      exam.x,
-                                              yValueMapper:
-                                                  (ScoreDataPoints exam, _) =>
-                                                      exam.y,
-                                              name: 'Percetage Score',
-                                              // Enable data label
-                                              dataLabelSettings:
-                                                  DataLabelSettings(
-                                                      isVisible: true,
-                                                      textStyle: TextStyle(
-                                                          fontSize: 10))),
-                                        ]),
-                                  ]),
+                                  padding: const EdgeInsets.all(20.0),
+                                  child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.start,
+                                      children: [
+                                        SfCartesianChart(
+                                            primaryXAxis: CategoryAxis(
+                                              title: AxisTitle(
+                                                  text:
+                                                      'Tests No.'), // Title for the X-axis
+                                            ),
+                                            primaryYAxis: NumericAxis(
+                                              title: AxisTitle(
+                                                  text:
+                                                      'Percentage Marks'), // Title for the Y-axis
+                                            ),
+                                            title: ChartTitle(
+                                                text:
+                                                    'Exam Performance Trend: ${widget.allSubjects[index]}',
+                                                textStyle: TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.bold)),
+                                            backgroundColor:
+                                                Theme.of(context).cardColor,
+                                            // Enable legend
+                                            legend: Legend(
+                                              isVisible: false,
+                                            ),
+                                            // Enable tooltip
+                                            tooltipBehavior:
+                                                TooltipBehavior(enable: true),
+                                            series: <CartesianSeries<
+                                                ScoreDataPoints, int>>[
+                                              LineSeries<ScoreDataPoints, int>(
+                                                  dataSource: graphListMap[
+                                                      widget
+                                                          .allSubjects[index]],
+                                                  xValueMapper:
+                                                      (ScoreDataPoints exam,
+                                                              _) =>
+                                                          exam.x,
+                                                  yValueMapper:
+                                                      (ScoreDataPoints exam,
+                                                              _) =>
+                                                          exam.y == -1
+                                                              ? null
+                                                              : exam.y,
+                                                  name: 'Percetage Score',
+                                                  // Enable data label
+                                                  dataLabelSettings:
+                                                      DataLabelSettings(
+                                                          isVisible: true,
+                                                          textStyle: TextStyle(
+                                                              fontSize: 10))),
+                                            ]),
+                                      ]),
                                 ),
                               ),
                             ),
@@ -426,12 +437,11 @@ class _TestAnalyticsState extends State<TestAnalytics> {
           padding: const EdgeInsets.symmetric(horizontal: 100.0),
           child: SizedBox(
             width: double.infinity,
-            child: Container(
-              color: Theme.of(context).cardColor,
-              padding: EdgeInsets.all(16),
-              child: Column(children: [
-                //Initialize the chart widget
-                SfCartesianChart(
+            child:
+                Column(mainAxisAlignment: MainAxisAlignment.start, children: [
+              SizedBox(
+                height: 500,
+                child: SfCartesianChart(
                   primaryXAxis: CategoryAxis(
                     title: AxisTitle(text: 'Tests No.'), // Title for the X-axis
                   ),
@@ -449,17 +459,24 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                   legend: Legend(
                     isVisible: true,
                   ),
+
                   // Enable tooltip
-                  tooltipBehavior: TooltipBehavior(enable: true),
+                  tooltipBehavior: TooltipBehavior(enable: true, duration: 1),
                   series: <CartesianSeries<ScoreDataPoints, int>>[
                     ...widget.allSubjects
                         .map((subject) {
                           // Check if the data exists for the subject to avoid null exceptions
                           if (graphListMap.containsKey(subject)) {
                             return SplineSeries<ScoreDataPoints, int>(
+                              legendIconType: LegendIconType.circle,
+                              width: 3,
+                              // Define the style of the line
+                              // Dotted line between points
+
                               dataSource: graphListMap[subject],
                               xValueMapper: (ScoreDataPoints exam, _) => exam.x,
-                              yValueMapper: (ScoreDataPoints exam, _) => exam.y,
+                              yValueMapper: (ScoreDataPoints exam, _) =>
+                                  exam.y == -1 ? null : exam.y,
                               name: subject,
                               // Enable data label
                               dataLabelSettings:
@@ -473,11 +490,11 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                         .cast<SplineSeries<ScoreDataPoints, int>>()
                         .toList(), // Filter out nulls
                   ],
-                )
-              ]),
-            ),
+                ),
+              )
+            ]),
           ),
-        ),
+        )
       ],
     );
   }

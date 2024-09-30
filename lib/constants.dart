@@ -13,46 +13,78 @@ final List<Color> cardBackgroundColors = [
   Color(0xFFFFDAB9), // Light Peach
 ];
 
+List<Color> GRAPH_LINE_COLORS = [
+  Colors.blue, // Bright Blue
+  Colors.red, // Bright Red
+  Colors.green, // Bright Green
+  Colors.orange, // Orange
+  Colors.purple, // Purple
+  Colors.teal, // Teal
+  Colors.pink, // Pink
+  Colors.amber, // Amber
+];
+
 //   ? Color.fromARGB(255, 2, 47, 22)
 // : Color.fromARGB(255, 45, 205, 114),
-Column getLogo(double fontSize) {
+Column getLogo(double fontSize, double opacity) {
   return Column(
     mainAxisAlignment: MainAxisAlignment.center,
     crossAxisAlignment: CrossAxisAlignment.center,
     children: [
       StrokeText(
-        strokeColor: Color.fromRGBO(0, 0, 0, 0.05),
+        strokeColor: Color.fromRGBO(0, 0, 0, opacity),
         strokeWidth: 2,
         textAlign: TextAlign.center,
         text: "ONE ZERO",
         textStyle: TextStyle(
           fontSize: fontSize + 10,
           fontFamily: 'Revue',
-          color: Color.fromRGBO(70, 68, 68, 0.05),
+          color: Color.fromRGBO(70, 68, 68, opacity),
         ),
       ),
       StrokeText(
-        strokeColor: Color.fromRGBO(0, 0, 0, 0.05),
+        strokeColor: Color.fromRGBO(0, 0, 0, opacity),
         strokeWidth: 2,
         textAlign: TextAlign.center,
         text: " TUITION + ENTRENCE",
         textStyle: TextStyle(
           fontSize: fontSize,
           fontFamily: 'Revue',
-          color: Color.fromRGBO(70, 68, 68, 0.05),
+          color: Color.fromRGBO(70, 68, 68, opacity),
         ),
       ),
     ],
   );
 }
 
-DatabaseHelper dbHelperForConstants = DatabaseHelper();
-Future<List<String>> getStreamNames() async {
-  return await dbHelperForConstants.getStreamNames();
+Column getLogoColored(double fontSize, double opacity) {
+  return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          "ONE ZERO",
+          style: TextStyle(
+            fontSize: fontSize * 1.2,
+            fontFamily: 'Revue',
+            color: Colors.red.withOpacity(opacity),
+          ),
+        ),
+        Text(
+          " TUITION + ENTRENCE",
+          style: TextStyle(
+            fontSize: fontSize,
+            fontFamily: 'Revue',
+            color: Colors.red.withOpacity(opacity),
+          ),
+        )
+      ]);
 }
 
-Future<void> initializeStreamNames() async {
-  STREAM_NAMES = await getStreamNames();
+DatabaseHelper dbHelperForConstants = DatabaseHelper();
+
+Future<void> initializeStreamNames(String section) async {
+  STREAM_NAMES = await dbHelperForConstants.getStreamNames(section);
 }
 
 List<String> STREAM_NAMES = [];
@@ -101,9 +133,9 @@ Map<String, InputTableMetadata> tableMetadataMap = {
     ],
     columnLengths: [
       50,
-      150,
       200,
-      100,
+      205,
+      150,
       100,
       150,
       100,
@@ -160,7 +192,8 @@ String cretateQuery = '''
 CREATE TABLE class_table (
   id INTEGER PRIMARY KEY ,           
   class_name TEXT NOT NULL,              
-  academic_year TEXT NOT NULL             
+  academic_year TEXT NOT NULL,
+  section TEXT NOT NULL         
 );
 
 CREATE TABLE stream_table (

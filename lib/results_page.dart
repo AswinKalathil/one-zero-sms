@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:one_zero/constants.dart';
 import 'package:one_zero/database_helper.dart';
@@ -42,9 +44,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     // TODO: implement initState
     super.initState();
     _selectedcriteria = 'Student';
-    _criteriaOptions = widget.isDedicatedPage
-        ? ['Student', 'Subject']
-        : ['Student', 'Class', 'Subject'];
+    _criteriaOptions = ['Student', 'Class'];
+
     if (widget.isDedicatedPage) {
       resultBoardIndex = 4;
       onSubmittedSerch('class');
@@ -139,84 +140,20 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  widget.isDedicatedPage
-                      ? Container(
-                          width: 400,
-                          height: 120,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: _menuOptions.length,
-                            itemBuilder: (context, index) {
-                              // Debug print to check the index and list lengths
-                              return Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: Column(
-                                  children: [
-                                    Container(
-                                      height: 75,
-                                      width: 75,
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context).cardColor,
-                                        borderRadius: BorderRadius.circular(10),
-                                        border: Border.all(
-                                          color: Colors.grey.withOpacity(.5),
-                                          width: .5,
-                                        ),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.grey.withOpacity(.5),
-                                            blurRadius: 5,
-                                            offset: Offset(2, 2),
-                                          ),
-                                        ],
-                                      ),
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: [
-                                          Icon(
-                                            _menuIcons[
-                                                index], // This will be safe as the index is within bounds
-                                            size: 30,
-                                          ),
-                                          Text(
-                                            _menuOptions[index],
-                                            style: TextStyle(
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.bold),
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-                        )
-                      : SizedBox(),
                   Container(
                     margin: const EdgeInsets.all(10),
                     padding: const EdgeInsets.all(10),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Padding(
-                          padding: const EdgeInsets.all(10.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              !widget.isDedicatedPage
-                                  ? SizedBox(
-                                      width: 200,
-                                      child: _criteriaDropdown(),
-                                    )
-                                  : const SizedBox(),
-                            ],
-                          ),
-                        ),
                         Row(
                           children: [
+                            !widget.isDedicatedPage
+                                ? SizedBox(
+                                    width: 200,
+                                    child: _criteriaDropdown(),
+                                  )
+                                : const SizedBox(),
                             SizedBox(
                               width: 300,
                               child: Padding(
@@ -337,13 +274,13 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                   flex: 2,
                                   child: GradeCard(
                                     key: UniqueKey(),
-                                    studentName: _studentNameForGrade,
+                                    studentId: _studentId,
                                   ),
                                 ),
                               ],
                             )
                           : Center(
-                              child: getLogo(30),
+                              child: getLogo(30, .05),
                             ),
                     ),
                   ),
@@ -379,7 +316,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       var subjectId = subject['subject_id'];
       var testHistory = await _dbHelper.getTestHistoryForSubjectOfStudentID(
           studentId, subjectId);
-      print(" $studentId : :\n -------------------------\n$testHistory\n\n");
+      // print(" $studentId : :\n -------------------------\n$testHistory\n\n");
 
       // Add the test history to the results
       _testResults.add(testHistory);
@@ -502,9 +439,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 }
 
 class GradeCard extends StatefulWidget {
-  final String studentName;
+  final int studentId;
 
-  GradeCard({Key? key, required this.studentName}) : super(key: key);
+  GradeCard({Key? key, required this.studentId}) : super(key: key);
   @override
   _GradeCardState createState() => _GradeCardState();
 }
@@ -512,8 +449,10 @@ class GradeCard extends StatefulWidget {
 class _GradeCardState extends State<GradeCard> {
   String studentName = '';
   String className = '';
+  String studentAcadamicYeat = '';
   String currentMonth = DateTime.now().month.toString();
   String photoUrl = '';
+  String schoolName = '';
   List<Map<String, dynamic>> subjects = [];
 
   @override
@@ -525,29 +464,31 @@ class _GradeCardState extends State<GradeCard> {
 
   Future<void> fetchStudentData() async {
     DatabaseHelper dbHelper = DatabaseHelper();
-
+    List<Map<String, dynamic>> studentData =
+        await dbHelper.getStudentData(widget.studentId);
     List<Map<String, dynamic>> resultsfromDb =
-        await dbHelper.getGradeCard(widget.studentName);
+        await dbHelper.getGradeCard(widget.studentId);
     if (resultsfromDb.isEmpty) {
-      throw Exception("No data found for student name: ${widget.studentName}");
+      throw Exception("No data found for student name: ${widget.studentId}");
     }
     // print("Results received from db: $resultsfromDb");
     List<Map<String, dynamic>> results = getLatestScores(resultsfromDb);
 
-    if (results.isNotEmpty) {
-      // print("Results received from db: $results");--------------
+    if (studentData.isNotEmpty) {
       setState(() {
-        // Extract basic information from the first entry
-        studentName = results.first['student_name'] as String? ?? '-';
-        className = results.first['class_name'] as String? ?? '-';
-        // photoUrl = results.first['photo_path'] as String? ??
-        //     (results.first['gender'] == 'M'
-        //         ? 'assets/ml.jpg'
-        //         : 'assets/fl.jpg');
-        photoUrl = (results.first['gender'] == 'M'
+        studentName = studentData.first['student_name'] as String? ?? '-';
+        className = studentData.first['class_name'] as String? ?? '-';
+        schoolName = studentData.first['school_name'] as String? ?? '-';
+        photoUrl = (studentData.first['gender'] == 'M'
             ? 'assets/ml.jpg'
             : 'assets/fl.jpg');
+      });
+    }
 
+    if (results.isNotEmpty) {
+      // print("Results received from db: $results");--------------
+      // Simulate a delay for loading
+      setState(() {
         // Construct the list of subjects
         subjects = results.map((row) {
           final subjectName = row['subject_name'] as String? ?? '-';
@@ -578,7 +519,7 @@ class _GradeCardState extends State<GradeCard> {
             'grade': _calculateGrade(latestScore == '-' ? -1 : latestScore,
                 maxMark is String ? -1 : maxMark),
             'date':
-                "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}",
+                "${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}",
           };
         }).toList();
       });
@@ -695,30 +636,9 @@ class _GradeCardState extends State<GradeCard> {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          studentName,
-                          style: const TextStyle(
-                              fontSize: 20, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          'Class: $className',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                        Text(
-                          'Date: ${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().day.toString().padLeft(2, '0')}',
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const Spacer(),
                   SizedBox(
-                    width: 100,
-                    height: 130,
+                    width: MediaQuery.of(context).size.width * 0.06,
+                    height: MediaQuery.of(context).size.width * 0.065,
                     child: Image.asset(
                       photoUrl,
                       fit: BoxFit.fitHeight, // Fills the circular container
@@ -727,14 +647,34 @@ class _GradeCardState extends State<GradeCard> {
                         return Image.asset('assets/ml.jpg', fit: BoxFit.cover);
                       },
                     ),
-                  )
-                  // child: Image.asset(
-                  //   photoUrl,
-                  //   fit: BoxFit.fitHeight,
-                  //   errorBuilder: (_, __, ___) {
-                  //     return Image.asset('assets/ml.jpg');
-                  //   },
-                  // )),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: SizedBox(
+                      width: MediaQuery.of(context).size.width * 0.2,
+                      height: MediaQuery.of(context).size.width * 0.065,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            studentName,
+                            style: const TextStyle(
+                                fontSize: 20, fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            '$className',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          Text(
+                            '$schoolName',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  getLogoColored(10, .6)
                 ],
               ),
               const SizedBox(height: 16.0),
@@ -754,34 +694,43 @@ class _GradeCardState extends State<GradeCard> {
                   },
                   children: [
                     const TableRow(
+                      decoration: BoxDecoration(
+                        color: Color.fromRGBO(0, 0, 0, 0.05),
+                      ),
                       children: [
                         Padding(
                           padding: EdgeInsets.all(6.0),
                           child: Center(
-                            child: Text(
-                              'Subject',
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
+                            child: FittedBox(
+                              child: Text(
+                                'Subject',
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
                             ),
                           ),
                         ),
                         Padding(
                           padding: EdgeInsets.all(6.0),
                           child: Center(
-                            child: Text(
-                              'Marks',
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
+                            child: FittedBox(
+                              child: Text(
+                                'Marks',
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
                             ),
                           ),
                         ),
                         Padding(
                           padding: EdgeInsets.all(6.0),
                           child: Center(
-                            child: Text(
-                              'Grade',
-                              style: TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
+                            child: FittedBox(
+                              child: Text(
+                                'Grade',
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
                             ),
                           ),
                         ),
@@ -832,6 +781,15 @@ class _GradeCardState extends State<GradeCard> {
                     ),
                   ],
                 ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    ' ${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}',
+                    style: const TextStyle(fontSize: 10),
+                  ),
+                ],
               ),
             ],
           ),

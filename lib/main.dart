@@ -131,71 +131,70 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
-        toolbarHeight: 70,
-        leading: IconButton(
-          icon: _isMenuExpanded
-              ? Icon(Icons.menu_open, color: Colors.white)
-              : Icon(Icons.menu, color: Colors.white),
-          onPressed: () {
-            setState(() {
-              super.setState(() {
-                _isMenuExpanded = !_isMenuExpanded;
+          toolbarHeight: 70,
+          leading: IconButton(
+            icon: _isMenuExpanded
+                ? Icon(Icons.menu_open, color: Colors.white)
+                : Icon(Icons.menu, color: Colors.white),
+            onPressed: () {
+              setState(() {
+                super.setState(() {
+                  _isMenuExpanded = !_isMenuExpanded;
+                });
               });
-            });
-          },
-        ),
-        title: Text(appBarTitle[_pageNumber],
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontFamily: 'Revue',
-            )),
-        backgroundColor: Theme.of(context).primaryColor,
-        actions: [
-          Container(
-              color: Theme.of(context).primaryColor,
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              width: 200,
-              height: 70,
-              child: DropdownButtonFormField(
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8.0),
-                    borderSide: BorderSide(
-                        color: Colors.grey.withOpacity(.4), width: 0.4),
-                  ),
-                  contentPadding: const EdgeInsets.all(15.0),
-                ),
-                value: _selectdAcadamicYear != null &&
-                        _academicYears.contains(_selectdAcadamicYear)
-                    ? _selectdAcadamicYear
-                    : null,
-                items: List.generate(
-                  _academicYears.length,
-                  (index) => DropdownMenuItem(
-                    child: Text(_academicYears[index],
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontFamily: 'Revue',
-                        )),
-                    value: _academicYears[index],
-                  ),
-                ),
-                dropdownColor: Theme.of(context).primaryColor,
-                onChanged: (value) {
-                  setState(() {
-                    _selectdAcadamicYear = value!;
-                    _dbHelper.setAcadamicYear(_selectdAcadamicYear);
-                    super.setState(() {
-                      _loadClasess();
-                      _pageNumber = 0;
-                    });
-                  });
-                },
+            },
+          ),
+          title: Text(appBarTitle[_pageNumber],
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontFamily: 'Revue',
               )),
-          _pageNumber == 0
-              ? Padding(
+          backgroundColor: Theme.of(context).primaryColor,
+          actions: switch (_pageNumber) {
+            0 => [
+                Container(
+                    color: Theme.of(context).primaryColor,
+                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    width: 200,
+                    height: 70,
+                    child: DropdownButtonFormField(
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                          borderSide: BorderSide(
+                              color: Colors.grey.withOpacity(.4), width: 0.4),
+                        ),
+                        contentPadding: const EdgeInsets.all(15.0),
+                      ),
+                      value: _selectdAcadamicYear != null &&
+                              _academicYears.contains(_selectdAcadamicYear)
+                          ? _selectdAcadamicYear
+                          : null,
+                      items: List.generate(
+                        _academicYears.length,
+                        (index) => DropdownMenuItem(
+                          child: Text(_academicYears[index],
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontFamily: 'Revue',
+                              )),
+                          value: _academicYears[index],
+                        ),
+                      ),
+                      dropdownColor: Theme.of(context).primaryColor,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectdAcadamicYear = value!;
+                          _dbHelper.setAcadamicYear(_selectdAcadamicYear);
+
+                          _loadClasess();
+                          _pageNumber = 0;
+                        });
+                      },
+                    )),
+                Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: IconButton(
                     icon: const Icon(Icons.new_label, color: Colors.white),
@@ -276,10 +275,81 @@ class _MyHomePageState extends State<MyHomePage> {
                       );
                     },
                   ),
-                )
-              : SizedBox(),
-        ],
-      ),
+                ),
+              ],
+            1 => [
+                SizedBox(
+                  width: 400,
+                  height: 70,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _menuOptions.length,
+                    itemBuilder: (context, index) {
+                      // Debug print to check the index and list lengths
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _appMode = _menuOptions[index];
+                          });
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Column(
+                            children: [
+                              Container(
+                                height: 50,
+                                width: 50,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).cardColor,
+                                  borderRadius: BorderRadius.circular(5),
+                                  border: Border.all(
+                                    color: Colors.grey.withOpacity(.5),
+                                    width: .5,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(.5),
+                                      blurRadius: 5,
+                                      offset: Offset(2, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      _menuIcons[
+                                          index], // This will be safe as the index is within bounds
+                                      size: _menuOptions[index] == _appMode
+                                          ? 25
+                                          : 20,
+                                      color: _menuOptions[index] == _appMode
+                                          ? Colors.black
+                                          : Colors.grey,
+                                    ),
+                                    Text(
+                                      _menuOptions[index],
+                                      style: TextStyle(
+                                        fontSize: 8,
+                                        fontWeight: FontWeight.bold,
+                                        color: _menuOptions[index] == _appMode
+                                            ? Colors.black
+                                            : Colors.grey,
+                                      ),
+                                    )
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            int() => [],
+          }),
       body: Row(
         children: [
           Container(
@@ -325,7 +395,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       selectedPage: _pageNumber,
                       onTap: () {
                         setState(() {
-                          initializeStreamNames();
+                          initializeStreamNames("HSS");
                           _pageNumber = 2;
                         });
                       },
@@ -400,7 +470,7 @@ class _MyHomePageState extends State<MyHomePage> {
             0 => _buildClassRooms(context),
             1 => _buildClassPage(index: _selectdClass, isDedicatedPage: true),
             2 => _buildEntrySection("student_table", UniqueKey()),
-            3 => _buildClassPage(isDedicatedPage: false),
+            3 => _buildClassPage(index: 0, isDedicatedPage: false),
             4 => ExamScoreSheet(
                 isClassTablesInitialized: _isClassTablesInitialized,
                 classes: _classes,
@@ -419,93 +489,91 @@ class _MyHomePageState extends State<MyHomePage> {
   final List<String> _menuOptions = [
     'Acadamics',
     'Attendance',
-    'Finance',
-    'New Batch'
+    'Fees',
   ];
   final List<IconData> _menuIcons = [
     Icons.school,
     Icons.check_circle,
     Icons.currency_rupee_rounded,
-    Icons.new_label
   ];
-  String _appMode = 'Student';
-  Widget _buildHome(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 500,
-        height: 500,
-        margin: EdgeInsets.all(20),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: GridView.builder(
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3, // Number of cards in a row
-                    childAspectRatio:
-                        1, // Width/height ratio of the cards (1 for square)
-                    crossAxisSpacing: 20,
-                    mainAxisSpacing: 20,
-                  ),
-                  itemCount: _menuOptions.length,
-                  itemBuilder: (context, index) {
-                    return Align(
-                      alignment: Alignment.topLeft,
-                      child: MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _appMode = _menuOptions[index];
-                            });
-                          },
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).cardColor,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: Colors.grey.withOpacity(.5),
-                                width: .5,
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withOpacity(.5),
-                                  blurRadius: 5,
-                                  offset: Offset(2, 2),
-                                ),
-                              ],
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  _menuIcons[index],
-                                  size: 50,
-                                ),
-                                Center(
-                                  child: Text(
-                                    _menuOptions[index],
-                                    style:
-                                        TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  String _appMode = 'Acadamics';
+  // Widget _buildHome(BuildContext context) {
+  //   return Center(
+  //     child: Container(
+  //       width: 500,
+  //       height: 500,
+  //       margin: EdgeInsets.all(20),
+  //       child: Center(
+  //         child: Column(
+  //           mainAxisAlignment: MainAxisAlignment.start,
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: [
+  //             Expanded(
+  //               child: GridView.builder(
+  //                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+  //                   crossAxisCount: 3, // Number of cards in a row
+  //                   childAspectRatio:
+  //                       1, // Width/height ratio of the cards (1 for square)
+  //                   crossAxisSpacing: 20,
+  //                   mainAxisSpacing: 20,
+  //                 ),
+  //                 itemCount: _menuOptions.length,
+  //                 itemBuilder: (context, index) {
+  //                   return Align(
+  //                     alignment: Alignment.topLeft,
+  //                     child: MouseRegion(
+  //                       cursor: SystemMouseCursors.click,
+  //                       child: GestureDetector(
+  //                         onTap: () {
+  //                           setState(() {
+  //                             _appMode = _menuOptions[index];
+  //                           });
+  //                         },
+  //                         child: Container(
+  //                           decoration: BoxDecoration(
+  //                             color: Theme.of(context).cardColor,
+  //                             borderRadius: BorderRadius.circular(10),
+  //                             border: Border.all(
+  //                               color: Colors.grey.withOpacity(.5),
+  //                               width: .5,
+  //                             ),
+  //                             boxShadow: [
+  //                               BoxShadow(
+  //                                 color: Colors.grey.withOpacity(.5),
+  //                                 blurRadius: 5,
+  //                                 offset: Offset(2, 2),
+  //                               ),
+  //                             ],
+  //                           ),
+  //                           child: Column(
+  //                             mainAxisAlignment: MainAxisAlignment.center,
+  //                             children: [
+  //                               Icon(
+  //                                 _menuIcons[index],
+  //                                 size: 50,
+  //                               ),
+  //                               Center(
+  //                                 child: Text(
+  //                                   _menuOptions[index],
+  //                                   style:
+  //                                       TextStyle(fontWeight: FontWeight.bold),
+  //                                 ),
+  //                               ),
+  //                             ],
+  //                           ),
+  //                         ),
+  //                       ),
+  //                     ),
+  //                   );
+  //                 },
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
   Widget _buildClassPage({int index = 0, bool isDedicatedPage = true}) {
     return (_isClassTablesInitialized)
@@ -513,7 +581,7 @@ class _MyHomePageState extends State<MyHomePage> {
             className: _classes[index]['class_name'],
             classIndex: index,
             isDedicatedPage: isDedicatedPage,
-            key: ValueKey(isDedicatedPage.hashCode),
+            key: UniqueKey(),
           )
         : Container(
             child: Center(

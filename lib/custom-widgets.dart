@@ -110,7 +110,85 @@ class _CustomDrawerItemState extends State<CustomDrawerItem> {
   }
 }
 
-class autoFill extends StatefulWidget {
+class AutoFill extends StatefulWidget {
+  bool needBorder;
+  TextEditingController controller;
+  List<String> optionsList;
+  String labelText;
+  FocusNode? focusNode;
+  FocusNode? nextFocusNode;
+  Function? onSubmitCallback;
+
+  AutoFill({
+    super.key,
+    required this.controller,
+    required this.optionsList,
+    required this.labelText,
+    this.focusNode,
+    this.nextFocusNode,
+    this.onSubmitCallback,
+    this.needBorder = true,
+  });
+
+  @override
+  State<AutoFill> createState() => _AutoFillState();
+}
+
+class _AutoFillState extends State<AutoFill> {
+  String? selectedValue; // Track the selected value
+
+  @override
+  Widget build(BuildContext context) {
+    return DropdownButtonFormField<String>(
+      focusNode: widget.focusNode,
+      decoration: InputDecoration(
+        labelText: widget.labelText,
+        filled: widget.needBorder ? true : false,
+        fillColor: Theme.of(context).canvasColor,
+        focusedBorder: OutlineInputBorder(),
+        contentPadding: const EdgeInsets.all(15.0),
+        border: widget.needBorder
+            ? OutlineInputBorder(
+                borderRadius: BorderRadius.circular(4.0),
+                borderSide: BorderSide(
+                  color: Colors.grey.withOpacity(.2),
+                  width: 0.4,
+                ),
+              )
+            : const OutlineInputBorder(borderSide: BorderSide.none),
+      ),
+      value: selectedValue ??
+          (widget.controller.text.isNotEmpty
+              ? widget.controller.text
+              : null), // Initialize with the controller value if available
+      items: widget.optionsList.map((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      }).toList(),
+      onChanged: (String? newValue) {
+        setState(() {
+          if (newValue != null) {
+            // Update controller with the selected value
+            selectedValue = newValue;
+            widget.controller.text = newValue;
+
+            // Move focus to next field, if provided
+            widget.nextFocusNode?.requestFocus();
+
+            // Call the submit callback, if available
+            if (widget.onSubmitCallback != null) {
+              widget.onSubmitCallback!(newValue);
+            }
+          }
+        });
+      },
+    );
+  }
+}
+
+class autoFill2 extends StatefulWidget {
   bool needBorder = true;
   TextEditingController controller = TextEditingController();
   List<String> optionsList = [];
@@ -118,7 +196,7 @@ class autoFill extends StatefulWidget {
   FocusNode? focusNode;
   FocusNode? nextFocusNode;
   Function? onSubmitCallback;
-  autoFill(
+  autoFill2(
       {super.key,
       required this.controller,
       required this.optionsList,
@@ -129,10 +207,10 @@ class autoFill extends StatefulWidget {
       this.needBorder = true});
 
   @override
-  State<autoFill> createState() => _autoFillState();
+  State<autoFill2> createState() => _autoFillState();
 }
 
-class _autoFillState extends State<autoFill> {
+class _autoFillState extends State<autoFill2> {
   @override
   Widget build(BuildContext context) {
     return Autocomplete<String>(
