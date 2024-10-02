@@ -481,13 +481,17 @@ class _DataEntryPageState extends State<DataEntryPage> {
             ),
             Row(
               children: [
+                Spacer(),
                 Padding(
-                    padding: EdgeInsets.only(left: 800, right: 20),
+                    padding: EdgeInsets.only(left: 20, right: 20),
                     child: TextButton(
                         onPressed: _addNewRow, child: Text("New Row"))),
-                ElevatedButton(
-                  onPressed: _onSubmit,
-                  child: const Text('Submit'),
+                Padding(
+                  padding: const EdgeInsets.only(right: 100.0),
+                  child: ElevatedButton(
+                    onPressed: _onSubmit,
+                    child: const Text('Submit'),
+                  ),
                 ),
               ],
             )

@@ -114,6 +114,15 @@ class _MyHomePageState extends State<MyHomePage> {
 
     _classes = await _dbHelper.getClasses('class_table');
     _isClassTablesInitialized = _classCount == 0 ? false : true;
+
+    appBarTitle = [
+      'Class Rooms',
+      '${_classes[_selectdClass]['class_name']}',
+      'Add Students',
+      'Reports',
+      'Exam Entry',
+      'Settings'
+    ];
     setState(() {
       _classes;
       _classCount = _classes.length;

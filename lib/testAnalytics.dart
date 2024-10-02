@@ -114,10 +114,12 @@ class _TestAnalyticsState extends State<TestAnalytics> {
   }
 
 // Class to store the data points
+
   @override
   Widget build(BuildContext context) {
-    // print('AllSubjects: $allSubjects');
-    // print('TestResults: $testResults');
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+
     for (var subject in widget.allSubjects) {
       createDataPointsForSubject(subject);
     }
@@ -126,14 +128,24 @@ class _TestAnalyticsState extends State<TestAnalytics> {
       mainAxisAlignment: MainAxisAlignment.start,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 10),
+        Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Center(
+              child: Text('Detailed Performance Analysis',
+                  style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
+            )),
+        SizedBox(
+          height: 20,
+        ),
         widget.testResults.isNotEmpty && widget.allSubjects.isNotEmpty
-            ? ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight: (widget.allSubjects.length *
-                      445), // Adjust height as needed
-                ),
-                child: ListView.builder(
+            ? SizedBox(
+                height: screenWidth > 1400
+                    ? ((widget.allSubjects.length / 2).ceil() * 390.0)
+                    : (widget.allSubjects.length * 430.0),
+                child: GridView.builder(
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: screenWidth > 1400 ? 2 : 1,
+                      childAspectRatio: screenWidth > 1400 ? 3.7 / 2 : 2.5 / 1),
                   physics:
                       const NeverScrollableScrollPhysics(), // Disable scrolling
 
@@ -143,25 +155,30 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                       return CircularProgressIndicator();
                     }
                     var result = widget.testResults[index];
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(left: 100.0),
-                          child: Text(widget.allSubjects[index],
-                              style: const TextStyle(
-                                  fontSize: 30, fontWeight: FontWeight.bold)),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: FractionallySizedBox(
-                                widthFactor: .8,
+                    return Container(
+                      height: 300,
+                      margin: const EdgeInsets.all(5),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(left: 20.0),
+                            child: Text(widget.allSubjects[index],
+                                style: const TextStyle(
+                                    fontSize: 30, fontWeight: FontWeight.bold)),
+                          ),
+                          Divider(),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Expanded(
                                 child: Padding(
-                                  padding: const EdgeInsets.all(20.0),
+                                  padding: const EdgeInsets.all(10.0),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -185,52 +202,63 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                                                 Padding(
                                                   padding: EdgeInsets.all(6.0),
                                                   child: Center(
-                                                    child: Text(
-                                                      'SL No.',
-                                                      style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 16,
-                                                          fontWeight:
-                                                              FontWeight.bold),
+                                                    child: FittedBox(
+                                                      child: Text(
+                                                        'Test No.',
+                                                        style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontSize: 16,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
                                                 Padding(
                                                   padding: EdgeInsets.all(6.0),
                                                   child: Center(
-                                                    child: Text(
-                                                      'Chapter Name',
-                                                      style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 16,
-                                                          fontWeight:
-                                                              FontWeight.bold),
+                                                    child: FittedBox(
+                                                      child: Text(
+                                                        'Chapter Name',
+                                                        style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
                                                 Padding(
                                                   padding: EdgeInsets.all(6.0),
                                                   child: Center(
-                                                    child: Text(
-                                                      'Marks',
-                                                      style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 16,
-                                                          fontWeight:
-                                                              FontWeight.bold),
+                                                    child: FittedBox(
+                                                      child: Text(
+                                                        'Marks',
+                                                        style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontSize: 16,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
                                                 Padding(
                                                   padding: EdgeInsets.all(6.0),
                                                   child: Center(
-                                                    child: Text(
-                                                      'Date',
-                                                      style: TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 16,
-                                                          fontWeight:
-                                                              FontWeight.bold),
+                                                    child: FittedBox(
+                                                      child: Text(
+                                                        'Date',
+                                                        style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontSize: 16,
+                                                            fontWeight:
+                                                                FontWeight
+                                                                    .bold),
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
@@ -239,7 +267,7 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                                           ]),
                                       SizedBox(
                                         width: double.infinity,
-                                        height: 300,
+                                        height: 211,
                                         child: SingleChildScrollView(
                                           scrollDirection: Axis.vertical,
                                           child: Container(
@@ -292,7 +320,7 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                                                                             .all(
                                                                             5.5),
                                                                     child: FittedBox(
-                                                                        child: Text(rowIndex.toString() ??
+                                                                        child: Text((result.length - rowIndex + 1).toString() ??
                                                                             '')),
                                                                   ),
                                                                   Container(
@@ -325,7 +353,7 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                                                                             .all(
                                                                             5.5),
                                                                     child: FittedBox(
-                                                                        child: Text(subject['test_date'].toString().substring(0,
+                                                                        child: Text(subject['test_date'].toString().substring(5,
                                                                                 10) ??
                                                                             '')),
                                                                   ),
@@ -352,74 +380,71 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                                   ),
                                 ),
                               ),
-                            ),
-                            Expanded(
-                              child: FractionallySizedBox(
-                                widthFactor: .8,
-                                child: Container(
-                                  padding: const EdgeInsets.all(20.0),
-                                  child: Column(
+                              Expanded(
+                                child: FractionallySizedBox(
+                                  widthFactor: 1,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(10.0),
+                                    child: Column(
                                       mainAxisAlignment:
                                           MainAxisAlignment.start,
                                       children: [
-                                        SfCartesianChart(
+                                        SizedBox(
+                                          height:
+                                              260, // Set the height as per your requirement
+                                          child: SfCartesianChart(
                                             primaryXAxis: CategoryAxis(
-                                              title: AxisTitle(
-                                                  text:
-                                                      'Tests No.'), // Title for the X-axis
+                                              title:
+                                                  AxisTitle(text: 'Tests No.'),
                                             ),
                                             primaryYAxis: NumericAxis(
                                               title: AxisTitle(
-                                                  text:
-                                                      'Percentage Marks'), // Title for the Y-axis
+                                                  text: 'Percentage Marks'),
                                             ),
                                             title: ChartTitle(
-                                                text:
-                                                    'Exam Performance Trend: ${widget.allSubjects[index]}',
-                                                textStyle: TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.bold)),
+                                              text:
+                                                  'Exam Performance Trend: ${widget.allSubjects[index]}',
+                                              textStyle: const TextStyle(
+                                                  fontWeight: FontWeight.bold),
+                                            ),
                                             backgroundColor:
                                                 Theme.of(context).cardColor,
-                                            // Enable legend
-                                            legend: Legend(
-                                              isVisible: false,
-                                            ),
-                                            // Enable tooltip
+                                            legend: Legend(isVisible: false),
                                             tooltipBehavior:
                                                 TooltipBehavior(enable: true),
                                             series: <CartesianSeries<
                                                 ScoreDataPoints, int>>[
                                               LineSeries<ScoreDataPoints, int>(
-                                                  dataSource: graphListMap[
-                                                      widget
-                                                          .allSubjects[index]],
-                                                  xValueMapper:
-                                                      (ScoreDataPoints exam,
-                                                              _) =>
-                                                          exam.x,
-                                                  yValueMapper:
-                                                      (ScoreDataPoints exam,
-                                                              _) =>
-                                                          exam.y == -1
-                                                              ? null
-                                                              : exam.y,
-                                                  name: 'Percetage Score',
-                                                  // Enable data label
-                                                  dataLabelSettings:
-                                                      DataLabelSettings(
-                                                          isVisible: true,
-                                                          textStyle: TextStyle(
-                                                              fontSize: 10))),
-                                            ]),
-                                      ]),
+                                                dataSource: graphListMap[
+                                                    widget.allSubjects[index]],
+                                                xValueMapper:
+                                                    (ScoreDataPoints exam, _) =>
+                                                        exam.x,
+                                                yValueMapper:
+                                                    (ScoreDataPoints exam, _) =>
+                                                        exam.y == -1
+                                                            ? null
+                                                            : exam.y,
+                                                name: 'Percentage Score',
+                                                dataLabelSettings:
+                                                    const DataLabelSettings(
+                                                  isVisible: true,
+                                                  textStyle:
+                                                      TextStyle(fontSize: 10),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                        Divider()
-                      ],
+                            ],
+                          ),
+                        ],
+                      ),
                     );
                   },
                 ),
@@ -430,16 +455,24 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                   child: Text('No tests available'),
                 ),
               ),
-        SizedBox(
-          height: 20,
-        ),
+        Divider(),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 100.0),
           child: SizedBox(
             width: double.infinity,
             child:
                 Column(mainAxisAlignment: MainAxisAlignment.start, children: [
-              SizedBox(
+              Padding(
+                padding: const EdgeInsets.all(30.0),
+                child: Text('Overall Analysis',
+                    style:
+                        TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 height: 500,
                 child: SfCartesianChart(
                   primaryXAxis: CategoryAxis(
@@ -454,7 +487,7 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                     text: 'Performance Trend',
                     textStyle: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  backgroundColor: Theme.of(context).cardColor,
+
                   // Enable legend
                   legend: Legend(
                     isVisible: true,

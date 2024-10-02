@@ -364,7 +364,7 @@ JOIN (SELECT id, student_name
     WHERE 
       t.subject_id = ?
 
-    ORDER BY t.test_date ASC;
+    ORDER BY t.test_date DESC;
   ''';
 
     final result = await db.rawQuery(query, [studentId, subjectId]);
@@ -446,7 +446,6 @@ JOIN (SELECT id, student_name
       s.id,
       s.student_name,
       s.gender,
-
       s.photo_id,
       st.stream_name
     FROM 
@@ -456,12 +455,13 @@ JOIN (SELECT id, student_name
     INNER JOIN 
       class_table c ON st.class_id = c.id
     WHERE 
-      c.id = ?;
+      c.id = ?
+    ORDER BY s.student_name ASC ;  
   ''';
 
     // Execute the query
     final result = await db.rawQuery(query, [classId]);
-
+    print("result of getStudentsOfClass $result");
     return result;
   }
 

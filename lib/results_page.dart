@@ -127,15 +127,20 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double screenHeight = MediaQuery.of(context).size.height;
+
     return SingleChildScrollView(
       scrollDirection: Axis.vertical,
       child: Container(
-        height: MediaQuery.of(context).size.height * 4.5,
+        padding: const EdgeInsets.all(10),
+        height: screenWidth > 1400
+            ? screenHeight + 800 + ((_allSubjects.length / 2).ceil() * 390)
+            : screenHeight + 800 + (_allSubjects.length * 430),
         child: Column(
           children: [
             Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 100, vertical: 10),
+              padding: const EdgeInsets.all(10),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -209,7 +214,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
             ),
             Divider(),
             Container(
-              margin: EdgeInsets.symmetric(horizontal: 100),
+              margin: EdgeInsets.symmetric(horizontal: 30),
               height: MediaQuery.of(context).size.height * .7,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -299,6 +304,11 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                     ),
                   )
                 : SizedBox(),
+            Divider(),
+            // Padding(
+            //   padding: const EdgeInsets.all(100.0),
+            //   child: GradeCard(studentId: _studentId),
+            // )
           ],
         ),
       ),
@@ -363,8 +373,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   }
 
   Widget studentsListView(List<Map<String, dynamic>> students) {
+    double screenHeight = MediaQuery.of(context).size.height;
     return SizedBox(
-      height: 410,
+      height: screenHeight * .5,
       width: double.infinity,
       child: ListView.builder(
         physics: const BouncingScrollPhysics(),
@@ -487,7 +498,7 @@ class _GradeCardState extends State<GradeCard> {
 
     if (results.isNotEmpty) {
       // print("Results received from db: $results");--------------
-      // Simulate a delay for loading
+
       setState(() {
         // Construct the list of subjects
         subjects = results.map((row) {
