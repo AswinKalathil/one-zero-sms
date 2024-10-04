@@ -391,7 +391,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                             alignment: Alignment.topLeft,
                             child: Container(
                               width: 600,
-                              height: MediaQuery.of(context).size.height * .9,
+                              height: 685,
                               child: ExamEntry(
                                   test_id: _testId, key: ValueKey(_testId)),
                             ),

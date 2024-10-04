@@ -499,21 +499,16 @@ class _GradeCardState extends State<GradeCard> {
     }
 
     if (results.isNotEmpty) {
-      // print("Results received from db: $results");--------------
-
       setState(() {
-        // Construct the list of subjects
         subjects = results.map((row) {
           final subjectName = row['subject_name'] as String? ?? '-';
 
-          // Handle latestScore with type checks
           final latestScore = (row['score'] != null && row['score'] != '-')
               ? (row['score'] is int
                   ? row['score']
                   : int.tryParse(row['score'] as String) ?? 0)
               : '-'; // Replaced with '-' if null or invalid
 
-          // Handle maxMark with type checks
           final maxMark = (row['max_mark'] != null && row['max_mark'] != -1)
               ? (row['max_mark'] is int
                   ? row['max_mark']
@@ -524,6 +519,8 @@ class _GradeCardState extends State<GradeCard> {
           String dateFormatted = '';
           DateTime? date =
               DateTime.tryParse(row['test_date']?.toString() ?? '');
+
+          print(row['test_date']);
 
 // Check if the date is not null
           if (date != null) {
@@ -538,7 +535,7 @@ class _GradeCardState extends State<GradeCard> {
           return {
             'subject': subjectName,
             'maxMarks': maxMark.toString(),
-            'marks': latestScore == '-' ? '-' : latestScore.toString(),
+            'marks': latestScore == '' ? '-' : latestScore.toString(),
             'grade': _calculateGrade(latestScore == '-' ? -1 : latestScore,
                 maxMark is String ? -1 : maxMark),
             'date': dateFormatted,

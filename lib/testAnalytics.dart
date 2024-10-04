@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:one_zero/database_helper.dart';
+import 'package:one_zero/main.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
 class ScoreDataPoints {
@@ -132,20 +134,21 @@ class _TestAnalyticsState extends State<TestAnalytics> {
             padding: const EdgeInsets.all(20.0),
             child: Center(
               child: Text('Detailed Performance Analysis',
-                  style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
+                  style:
+                      TextStyle(fontSize: 8.sp, fontWeight: FontWeight.bold)),
             )),
         SizedBox(
           height: 20,
         ),
         widget.testResults.isNotEmpty && widget.allSubjects.isNotEmpty
             ? SizedBox(
-                height: screenWidth > 1400
+                height: screenWidth > 1200
                     ? ((widget.allSubjects.length / 2).ceil() * 390.0)
                     : (widget.allSubjects.length * 430.0),
                 child: GridView.builder(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: screenWidth > 1400 ? 2 : 1,
-                      childAspectRatio: screenWidth > 1400 ? 3.7 / 2 : 2.5 / 1),
+                      crossAxisCount: screenWidth > 1200 ? 2 : 1,
+                      childAspectRatio: screenWidth > 1200 ? 3.7 / 2.1 : 2 / 1),
                   physics:
                       const NeverScrollableScrollPhysics(), // Disable scrolling
 
@@ -168,8 +171,9 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                           Padding(
                             padding: const EdgeInsets.only(left: 20.0),
                             child: Text(widget.allSubjects[index],
-                                style: const TextStyle(
-                                    fontSize: 30, fontWeight: FontWeight.bold)),
+                                style: TextStyle(
+                                    fontSize: 7.sp,
+                                    fontWeight: FontWeight.bold)),
                           ),
                           Divider(),
                           Row(
@@ -267,9 +271,12 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                                           ]),
                                       SizedBox(
                                         width: double.infinity,
-                                        height: 211,
+                                        height:
+                                            getWidthBasedOnScreenSize(context) -
+                                                32,
                                         child: SingleChildScrollView(
                                           scrollDirection: Axis.vertical,
+                                          physics: BouncingScrollPhysics(),
                                           child: Container(
                                             decoration: BoxDecoration(),
                                             child: Column(
@@ -390,25 +397,30 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                                           MainAxisAlignment.start,
                                       children: [
                                         SizedBox(
-                                          height:
-                                              260, // Set the height as per your requirement
+                                          height: getWidthBasedOnScreenSize(
+                                              context), // Set the height as per your requirement
                                           child: SfCartesianChart(
                                             primaryXAxis: CategoryAxis(
-                                              title:
-                                                  AxisTitle(text: 'Tests No.'),
+                                              title: AxisTitle(
+                                                  text: 'Tests No.',
+                                                  textStyle: TextStyle(
+                                                      fontSize: 4.sp)),
                                             ),
                                             primaryYAxis: NumericAxis(
+                                              maximum: 100,
+                                              minimum: 0,
+                                              interval: 25,
                                               title: AxisTitle(
-                                                  text: 'Percentage Marks'),
+                                                  text: 'Percentage Marks',
+                                                  textStyle: TextStyle(
+                                                      fontSize: 4.sp)),
                                             ),
                                             title: ChartTitle(
-                                              text:
-                                                  'Exam Performance Trend: ${widget.allSubjects[index]}',
-                                              textStyle: const TextStyle(
+                                              text: 'Performance Trend',
+                                              textStyle: TextStyle(
+                                                  fontSize: 4.sp,
                                                   fontWeight: FontWeight.bold),
                                             ),
-                                            backgroundColor:
-                                                Theme.of(context).cardColor,
                                             legend: Legend(isVisible: false),
                                             tooltipBehavior:
                                                 TooltipBehavior(enable: true),
@@ -427,10 +439,10 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                                                             : exam.y,
                                                 name: 'Percentage Score',
                                                 dataLabelSettings:
-                                                    const DataLabelSettings(
+                                                    DataLabelSettings(
                                                   isVisible: true,
                                                   textStyle:
-                                                      TextStyle(fontSize: 10),
+                                                      TextStyle(fontSize: 2.sp),
                                                 ),
                                               ),
                                             ],
@@ -479,6 +491,8 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                     title: AxisTitle(text: 'Tests No.'), // Title for the X-axis
                   ),
                   primaryYAxis: NumericAxis(
+                    minimum: 0,
+                    maximum: 100,
                     title: AxisTitle(
                         text: 'Percentage Marks'), // Title for the Y-axis
                   ),
@@ -530,5 +544,34 @@ class _TestAnalyticsState extends State<TestAnalytics> {
         )
       ],
     );
+  }
+
+  double getWidthBasedOnScreenSize(BuildContext context) {
+    double width = MediaQuery.of(context).size.width;
+
+    // Assign category based on width
+    int category;
+    if (width > 1200) {
+      category = 4;
+    } else if (width > 1000) {
+      category = 3;
+    } else if (width > 800) {
+      category = 2;
+    } else {
+      category = 1;
+    }
+
+    // Use switch to return width based on the category
+    switch (category) {
+      case 4:
+        return 211; // For screens larger than 1200
+      case 3:
+        return 300; // For screens between 1001 and 1200
+      case 2:
+        return 180;
+      case 1: // For screens between 801 and 1000
+      default:
+        return 200; // For screens smaller than 1000
+    }
   }
 }

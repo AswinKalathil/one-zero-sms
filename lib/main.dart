@@ -646,7 +646,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildClassRooms(BuildContext context) {
-    int crossAxisCount = (MediaQuery.of(context).size.width / 450).floor();
+    int crossAxisCount = (MediaQuery.of(context).size.width / 400).floor() + 1;
     return _isClassTablesInitialized
         ? Container(
             padding: const EdgeInsets.symmetric(horizontal: 150, vertical: 20),

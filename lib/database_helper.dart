@@ -173,6 +173,7 @@ class DatabaseHelper {
       FROM student_table s
       INNER JOIN stream_subjects_table ss ON s.stream_id = ss.stream_id
       WHERE ss.subject_id = ?
+      ORDER BY s.student_name ASC;
     ''', [subjectId]);
     // print(
     //     "students list result in getStudentIdsAndNamesByTestId function $studentResult");
@@ -197,6 +198,8 @@ FROM (SELECT student_id, test_id, id, score
 JOIN (SELECT id, student_name 
       FROM student_table) s 
   ON ts.student_id = s.id;
+
+  ORDER BY s.student_name ASC;
 
     ''', [testId]);
 
