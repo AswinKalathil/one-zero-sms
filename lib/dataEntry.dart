@@ -6,10 +6,12 @@ import 'package:one_zero/constants.dart';
 
 class DataEntryPage extends StatefulWidget {
   final InputTableMetadata metadata;
+  final int classId;
   // Parameter
 
   // Constructor accepting the headers list
-  DataEntryPage({Key? key, required this.metadata}) : super(key: key);
+  DataEntryPage({Key? key, required this.metadata, required this.classId})
+      : super(key: key);
   @override
   _DataEntryPageState createState() => _DataEntryPageState();
 }
@@ -191,309 +193,331 @@ class _DataEntryPageState extends State<DataEntryPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  SizedBox(
-                      width: 300,
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _selections[0]
-                                  ? Theme.of(context).primaryColor
-                                  : Colors.grey[300],
-                              foregroundColor:
-                                  _selections[0] ? Colors.white : Colors.black,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _selections = [true, false];
-                                initializeStreamNames('HSS');
-                              });
-                            },
-                            child: const Text('HSS'),
-                          ),
-                          const SizedBox(
-                              width: 16), // Space between the buttons
-                          ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _selections[1]
-                                  ? Theme.of(context).primaryColor
-                                  : Colors.grey[300],
-                              foregroundColor:
-                                  _selections[1] ? Colors.white : Colors.black,
-                            ),
-                            onPressed: () {
-                              setState(() {
-                                _selections = [false, true];
-                                initializeStreamNames('HS');
-                              });
-                            },
-                            child: const Text('HS'),
-                          ),
-                        ],
-                      )),
-                  const SizedBox(width: 20),
-                ],
-              ),
-            ),
+            // Padding(
+            //   padding: const EdgeInsets.all(16.0),
+            //   child: Row(
+            //     mainAxisAlignment: MainAxisAlignment.start,
+            //     children: [
+            //       SizedBox(
+            //           width: 300,
+            //           child: Row(
+            //             mainAxisAlignment: MainAxisAlignment.center,
+            //             children: [
+            //               ElevatedButton(
+            //                 style: ElevatedButton.styleFrom(
+            //                   backgroundColor: _selections[0]
+            //                       ? Theme.of(context).primaryColor
+            //                       : Colors.grey[300],
+            //                   foregroundColor:
+            //                       _selections[0] ? Colors.white : Colors.black,
+            //                 ),
+            //                 onPressed: () {
+            //                   setState(() {
+            //                     _selections = [true, false];
+            //                     initializeStreamNames(widget.classId);
+            //                   });
+            //                 },
+            //                 child: const Text('HSS'),
+            //               ),
+            //               const SizedBox(
+            //                   width: 16), // Space between the buttons
+            //               ElevatedButton(
+            //                 style: ElevatedButton.styleFrom(
+            //                   backgroundColor: _selections[1]
+            //                       ? Theme.of(context).primaryColor
+            //                       : Colors.grey[300],
+            //                   foregroundColor:
+            //                       _selections[1] ? Colors.white : Colors.black,
+            //                 ),
+            //                 onPressed: () {
+            //                   setState(() {
+            //                     _selections = [false, true];
+            //                     initializeStreamNames(widget.classId);
+            //                   });
+            //                 },
+            //                 child: const Text('HS'),
+            //               ),
+            //             ],
+            //           )),
+            //       const SizedBox(width: 20),
+            //     ],
+            //   ),
+            // ),
+
             const SizedBox(height: 20),
             Divider(
               color: Theme.of(context).canvasColor, // Line color
               thickness: 2, // Line thickness
             ),
             const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  columnSpacing: 16.0, // Space betweSen columns
-                  border: const TableBorder(
-                    verticalInside: BorderSide(color: Colors.grey, width: 1),
-                  ),
-                  headingRowColor:
-                      WidgetStateProperty.resolveWith<Color>((states) {
-                    return Theme.of(context)
-                        .primaryColor; // Header background color
-                  }),
-                  columns: headers.map((header) {
-                    return DataColumn(
-                      label: _buildHeaderCell(header,
-                          width: columnLengths[headers.indexOf(header)]),
-                    );
-                  }).toList(),
-                  rows: List<DataRow>.generate(
-                    rowTextEditingControllers.length,
-                    (rowIndex) => DataRow(
-                      color: WidgetStateProperty.resolveWith<Color>((states) {
-                        return (Theme.of(context).brightness ==
-                                Brightness.light)
-                            ? (rowIndex % 2 == 0
-                                ? Colors.white
-                                : Colors.grey.shade200)
-                            : (rowIndex % 2 == 0
-                                ? Colors.grey.shade600
-                                : Colors.grey.shade700);
-                      }),
-                      cells: headers.map((header) {
-                        if (header == 'Remove') {
-                          return DataCell(
-                            IconButton(
-                              icon: const Icon(Icons.close_rounded,
-                                  color: Colors.black),
-                              onPressed: () {
-                                setState(() {
-                                  rowTextEditingControllers.removeAt(rowIndex);
-                                  focusNodes.removeAt(rowIndex);
-                                });
-                              },
-                            ),
-                          );
-                        } else if (header == 'Save') {
-                          return DataCell(
-                            IconButton(
-                              icon: const Icon(Icons.save,
-                                  color: Color.fromRGBO(241, 167, 161, .5)),
-                              onPressed: () {
-                                setState(() {
-                                  rowTextEditingControllers.removeAt(rowIndex);
-                                  focusNodes.removeAt(rowIndex);
-                                });
-                              },
-                            ),
-                          );
-                        } else if (header == 'ID') {
-                          int rowId = maxId + rowIndex + 1;
-                          rowTextEditingControllers[rowIndex][header]!.text =
-                              rowId.toString();
+            Align(
+              alignment: Alignment.center,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    columnSpacing: 16.0, // Space betweSen columns
+                    border: const TableBorder(
+                      verticalInside: BorderSide(color: Colors.grey, width: 1),
+                    ),
+                    headingRowColor:
+                        WidgetStateProperty.resolveWith<Color>((states) {
+                      return Theme.of(context)
+                          .primaryColor; // Header background color
+                    }),
+                    columns: headers.map((header) {
+                      return DataColumn(
+                        label: _buildHeaderCell(header,
+                            width: columnLengths[headers.indexOf(header)]),
+                      );
+                    }).toList(),
+                    rows: List<DataRow>.generate(
+                      rowTextEditingControllers.length,
+                      (rowIndex) => DataRow(
+                        color: WidgetStateProperty.resolveWith<Color>((states) {
+                          return (Theme.of(context).brightness ==
+                                  Brightness.light)
+                              ? (rowIndex % 2 == 0
+                                  ? Colors.white
+                                  : Colors.grey.shade200)
+                              : (rowIndex % 2 == 0
+                                  ? Colors.grey.shade600
+                                  : Colors.grey.shade700);
+                        }),
+                        cells: headers.map((header) {
+                          if (header == 'Remove') {
+                            return DataCell(
+                              IconButton(
+                                icon: const Icon(Icons.close_rounded,
+                                    color: Colors.black),
+                                onPressed: () {
+                                  setState(() {
+                                    rowTextEditingControllers
+                                        .removeAt(rowIndex);
+                                    focusNodes.removeAt(rowIndex);
+                                  });
+                                },
+                              ),
+                            );
+                          } else if (header == 'Save') {
+                            return DataCell(
+                              IconButton(
+                                icon: const Icon(Icons.save,
+                                    color: Color.fromRGBO(241, 167, 161, .5)),
+                                onPressed: () {
+                                  setState(() {
+                                    rowTextEditingControllers
+                                        .removeAt(rowIndex);
+                                    focusNodes.removeAt(rowIndex);
+                                  });
+                                },
+                              ),
+                            );
+                          } else if (header == 'ID') {
+                            int rowId = maxId + rowIndex + 1;
+                            rowTextEditingControllers[rowIndex][header]!.text =
+                                rowId.toString();
 
-                          return DataCell(
-                            Container(
-                              width: double.infinity,
-                              child: Text(rowId.toString(),
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  )),
-                            ),
-                          );
-                        } else if (header == 'Parent Phone') {
-                          int cellIndex = headers.indexOf(header);
+                            return DataCell(
+                              Container(
+                                width: double.infinity,
+                                child: Text(rowId.toString(),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    )),
+                              ),
+                            );
+                          } else if (header == 'Parent Phone') {
+                            int cellIndex = headers.indexOf(header);
 
-                          return DataCell(
-                            Container(
-                              width: double.infinity,
-                              child: TextField(
-                                decoration: const InputDecoration(
-                                  border: InputBorder.none,
+                            return DataCell(
+                              Container(
+                                width: double.infinity,
+                                child: TextField(
+                                  decoration: const InputDecoration(
+                                    border: InputBorder.none,
+                                  ),
+                                  controller:
+                                      rowTextEditingControllers[rowIndex]
+                                          [header]!,
+                                  focusNode: focusNodes[rowIndex][cellIndex],
+                                  keyboardType: TextInputType.phone,
+                                  inputFormatters: <TextInputFormatter>[
+                                    FilteringTextInputFormatter
+                                        .digitsOnly, // Restrict input to digits only
+                                  ],
+                                  onChanged: (value) {
+                                    if (value.length == 10) {
+                                      // Move to the next focus node if input is valid (10 digits)
+                                      focusNodes[rowIndex][cellIndex + 1]
+                                          .requestFocus();
+                                    }
+                                  },
+                                  onSubmitted: (value) {
+                                    if (value.length == 10) {
+                                      // Move to the next focus node if input is valid (10 digits)
+                                      focusNodes[rowIndex][cellIndex + 1]
+                                          .requestFocus();
+                                    } else {
+                                      // Show error if input is not valid (not 10 digits)
+                                      focusNodes[rowIndex][cellIndex]
+                                          .requestFocus();
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                              'Please enter a valid 10-digit phone number.'),
+                                          duration: Duration(seconds: 1),
+                                        ),
+                                      );
+                                    }
+                                  },
                                 ),
-                                controller: rowTextEditingControllers[rowIndex]
-                                    [header]!,
-                                focusNode: focusNodes[rowIndex][cellIndex],
-                                keyboardType: TextInputType.phone,
-                                inputFormatters: <TextInputFormatter>[
-                                  FilteringTextInputFormatter
-                                      .digitsOnly, // Restrict input to digits only
-                                ],
-                                onChanged: (value) {
-                                  if (value.length == 10) {
-                                    // Move to the next focus node if input is valid (10 digits)
-                                    focusNodes[rowIndex][cellIndex + 1]
-                                        .requestFocus();
-                                  }
-                                },
-                                onSubmitted: (value) {
-                                  if (value.length == 10) {
-                                    // Move to the next focus node if input is valid (10 digits)
-                                    focusNodes[rowIndex][cellIndex + 1]
-                                        .requestFocus();
-                                  } else {
-                                    // Show error if input is not valid (not 10 digits)
-                                    focusNodes[rowIndex][cellIndex]
-                                        .requestFocus();
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                            'Please enter a valid 10-digit phone number.'),
-                                        duration: Duration(seconds: 1),
+                              ),
+                            );
+                          } else if (header == 'Gender') {
+                            int cellIndex = headers.indexOf(header);
+
+                            return DataCell(
+                              Container(
+                                width: double.infinity,
+                                child: StatefulBuilder(
+                                  builder: (context, setState) {
+                                    return DropdownButtonFormField<String>(
+                                      focusNode: focusNodes[rowIndex]
+                                          [cellIndex],
+                                      decoration: InputDecoration(
+                                        focusedBorder: OutlineInputBorder(
+                                            borderSide:
+                                                BorderSide(color: Colors.grey)),
+                                        border: InputBorder.none,
                                       ),
+                                      value: rowTextEditingControllers[rowIndex]
+                                                  [header]!
+                                              .text
+                                              .isNotEmpty
+                                          ? rowTextEditingControllers[rowIndex]
+                                                  [header]!
+                                              .text
+                                          : null, // Get the current value from the controller
+                                      items: ['M', 'F', 'Other']
+                                          .map((String value) {
+                                        return DropdownMenuItem<String>(
+                                          value: value,
+                                          child: Text(value),
+                                        );
+                                      }).toList(),
+                                      onChanged: (String? newValue) {
+                                        setState(() {
+                                          if (newValue != null) {
+                                            // Update the controller with the selected gender
+                                            rowTextEditingControllers[rowIndex]
+                                                    [header]!
+                                                .text = newValue;
+                                            focusNodes[rowIndex][cellIndex + 1]
+                                                .requestFocus();
+                                          }
+                                        });
+                                      },
                                     );
-                                  }
-                                },
+                                  },
+                                ),
                               ),
-                            ),
-                          );
-                        } else if (header == 'Gender') {
-                          int cellIndex = headers.indexOf(header);
+                            );
+                          } else if (header == 'Stream Name') {
+                            int cellIndex = headers.indexOf(header);
 
-                          return DataCell(
-                            Container(
-                              width: double.infinity,
-                              child: StatefulBuilder(
-                                builder: (context, setState) {
-                                  return DropdownButtonFormField<String>(
-                                    focusNode: focusNodes[rowIndex][cellIndex],
-                                    decoration: InputDecoration(
-                                      focusedBorder: OutlineInputBorder(
-                                          borderSide:
-                                              BorderSide(color: Colors.grey)),
-                                      border: InputBorder.none,
-                                    ),
-                                    value: rowTextEditingControllers[rowIndex]
-                                                [header]!
-                                            .text
-                                            .isNotEmpty
-                                        ? rowTextEditingControllers[rowIndex]
-                                                [header]!
-                                            .text
-                                        : null, // Get the current value from the controller
-                                    items:
-                                        ['M', 'F', 'Other'].map((String value) {
-                                      return DropdownMenuItem<String>(
-                                        value: value,
-                                        child: Text(value),
-                                      );
-                                    }).toList(),
-                                    onChanged: (String? newValue) {
-                                      setState(() {
-                                        if (newValue != null) {
-                                          // Update the controller with the selected gender
-                                          rowTextEditingControllers[rowIndex]
+                            return DataCell(
+                              Container(
+                                width: double.infinity,
+                                child: StatefulBuilder(
+                                  builder: (context, setState) {
+                                    return DropdownButtonFormField<String>(
+                                      focusNode: focusNodes[rowIndex]
+                                          [cellIndex],
+                                      decoration: InputDecoration(
+                                        focusedBorder: OutlineInputBorder(
+                                            borderSide:
+                                                BorderSide(color: Colors.grey)),
+                                        border: InputBorder.none,
+                                      ),
+                                      value: rowTextEditingControllers[rowIndex]
                                                   [header]!
-                                              .text = newValue;
-                                          focusNodes[rowIndex][cellIndex + 1]
-                                              .requestFocus();
-                                        }
-                                      });
-                                    },
-                                  );
-                                },
-                              ),
-                            ),
-                          );
-                        } else if (header == 'Stream Name') {
-                          int cellIndex = headers.indexOf(header);
-
-                          return DataCell(
-                            Container(
-                              width: double.infinity,
-                              child: StatefulBuilder(
-                                builder: (context, setState) {
-                                  return DropdownButtonFormField<String>(
-                                    focusNode: focusNodes[rowIndex][cellIndex],
-                                    decoration: InputDecoration(
-                                      focusedBorder: OutlineInputBorder(
-                                          borderSide:
-                                              BorderSide(color: Colors.grey)),
-                                      border: InputBorder.none,
-                                    ),
-                                    value: rowTextEditingControllers[rowIndex]
-                                                [header]!
-                                            .text
-                                            .isNotEmpty
-                                        ? rowTextEditingControllers[rowIndex]
-                                                [header]!
-                                            .text
-                                        : null, // Get the current value from the controller
-                                    items: STREAM_NAMES.map((String value) {
-                                      return DropdownMenuItem<String>(
-                                        value: value,
-                                        child: Text(value),
-                                      );
-                                    }).toList(),
-                                    onChanged: (String? newValue) {
-                                      setState(() {
-                                        if (newValue != null) {
-                                          // Update the controller with the selected gender
-                                          rowTextEditingControllers[rowIndex]
+                                              .text
+                                              .isNotEmpty
+                                          ? rowTextEditingControllers[rowIndex]
                                                   [header]!
-                                              .text = newValue;
-                                          focusNodes[rowIndex][cellIndex + 1]
-                                              .requestFocus();
-                                        }
-                                      });
-                                    },
-                                  );
-                                },
+                                              .text
+                                          : null, // Get the current value from the controller
+                                      items: STREAM_NAMES.map((String value) {
+                                        return DropdownMenuItem<String>(
+                                          value: value,
+                                          child: Text(value),
+                                        );
+                                      }).toList(),
+                                      onChanged: (String? newValue) {
+                                        setState(() {
+                                          if (newValue != null) {
+                                            // Update the controller with the selected gender
+                                            rowTextEditingControllers[rowIndex]
+                                                    [header]!
+                                                .text = newValue;
+                                            focusNodes[rowIndex][cellIndex + 1]
+                                                .requestFocus();
+                                          }
+                                        });
+                                      },
+                                    );
+                                  },
+                                ),
                               ),
-                            ),
-                          );
-                        } else {
-                          int cellIndex = headers.indexOf(header);
-                          return _buildDataCell(
-                            rowTextEditingControllers[rowIndex][header]!,
-                            focusNodes[rowIndex][cellIndex],
-                            cellIndex < focusNodes[rowIndex].length - 1
-                                ? focusNodes[rowIndex][cellIndex + 1]
-                                : null,
-                            columnLengths[cellIndex],
-                          );
-                        }
-                      }).toList(),
+                            );
+                          } else {
+                            int cellIndex = headers.indexOf(header);
+                            return _buildDataCell(
+                              rowTextEditingControllers[rowIndex][header]!,
+                              focusNodes[rowIndex][cellIndex],
+                              cellIndex < focusNodes[rowIndex].length - 1
+                                  ? focusNodes[rowIndex][cellIndex + 1]
+                                  : null,
+                              columnLengths[cellIndex],
+                            );
+                          }
+                        }).toList(),
+                      ),
                     ),
                   ),
                 ),
               ),
             ),
-            Row(
-              children: [
-                Spacer(),
-                Padding(
-                    padding: EdgeInsets.only(left: 20, right: 20),
-                    child: TextButton(
-                        onPressed: _addNewRow, child: Text("New Row"))),
-                Padding(
-                  padding: const EdgeInsets.only(right: 100.0),
-                  child: ElevatedButton(
-                    onPressed: _onSubmit,
-                    child: const Text('Submit'),
-                  ),
+            Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Spacer(),
+                    Padding(
+                        padding: EdgeInsets.only(left: 20, right: 20),
+                        child: TextButton(
+                            onPressed: _addNewRow, child: Text("New Row"))),
+                    Padding(
+                      padding: const EdgeInsets.only(right: 60.0),
+                      child: CustomButton(
+                          text: "Save",
+                          onPressed: () {
+                            _onSubmit();
+                          },
+                          width: 100,
+                          height: 45,
+                          textColor: Colors.white),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             )
           ],
         ),
@@ -548,5 +572,19 @@ class _DataEntryPageState extends State<DataEntryPage> {
         ),
       ),
     );
+  }
+}
+
+class StudentProfile extends StatefulWidget {
+  const StudentProfile({super.key});
+
+  @override
+  State<StudentProfile> createState() => _StudentProfileState();
+}
+
+class _StudentProfileState extends State<StudentProfile> {
+  @override
+  Widget build(BuildContext context) {
+    return const Placeholder();
   }
 }

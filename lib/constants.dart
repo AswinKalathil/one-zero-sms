@@ -83,8 +83,10 @@ Column getLogoColored(double fontSize, double opacity) {
 
 DatabaseHelper dbHelperForConstants = DatabaseHelper();
 
-Future<void> initializeStreamNames(String section) async {
-  STREAM_NAMES = await dbHelperForConstants.getStreamNames(section);
+Future<void> initializeStreamNames(int class_id) async {
+  print("initializeStreamNames class_id: $class_id");
+  STREAM_NAMES = await dbHelperForConstants.getStreamNames(class_id);
+  print(STREAM_NAMES);
 }
 
 List<String> STREAM_NAMES = [];
@@ -200,22 +202,22 @@ CREATE TABLE stream_table (
   id INTEGER PRIMARY KEY , 
   stream_name TEXT NOT NULL,  
   class_id INTEGER,                          
-  FOREIGN KEY (class_id) REFERENCES class_table(id)
+  FOREIGN KEY (class_id) REFERENCES class_table(id) ON DELETE CASCADE
 );
 
 CREATE TABLE subject_table (
   id INTEGER PRIMARY KEY ,   
   subject_name TEXT NOT NULL,            
   class_id INTEGER,
-  FOREIGN KEY (class_id) REFERENCES class_table(id)
+  FOREIGN KEY (class_id) REFERENCES class_table(id) ON DELETE CASCADE
 );
 
 CREATE TABLE stream_subjects_table (
   id INTEGER PRIMARY KEY ,   
   stream_id INTEGER,
   subject_id INTEGER,
-  FOREIGN KEY (stream_id) REFERENCES stream_table(id),
-  FOREIGN KEY (subject_id) REFERENCES subject_table(id)
+  FOREIGN KEY (stream_id) REFERENCES stream_table(id) ON DELETE CASCADE,
+  FOREIGN KEY (subject_id) REFERENCES subject_table(id) ON DELETE CASCADE
 );
 
 CREATE TABLE student_table (
@@ -226,7 +228,7 @@ CREATE TABLE student_table (
   gender TEXT,
   school_name TEXT,
   stream_id INTEGER NOT NULL,
-  FOREIGN KEY (stream_id) REFERENCES stream_table(id)
+  FOREIGN KEY (stream_id) REFERENCES stream_table(id) ON DELETE CASCADE
 );
 
 CREATE TABLE test_table (
@@ -235,7 +237,7 @@ CREATE TABLE test_table (
   topic TEXT,
   max_mark INTEGER,
   test_date DATETIME NOT NULL,
-  FOREIGN KEY (subject_id) REFERENCES subject_table(id)
+  FOREIGN KEY (subject_id) REFERENCES subject_table(id) ON DELETE CASCADE
 );
 
 CREATE TABLE test_score_table (
@@ -243,8 +245,8 @@ CREATE TABLE test_score_table (
   score INTEGER,
   student_id INTEGER,
   test_id INTEGER,
-  FOREIGN KEY (student_id) REFERENCES student_table(id),
-  FOREIGN KEY (test_id) REFERENCES test_table(id)
+  FOREIGN KEY (student_id) REFERENCES student_table(id) ON DELETE CASCADE,
+  FOREIGN KEY (test_id) REFERENCES test_table(id) ON DELETE CASCADE
 );
 
 CREATE VIEW student_grade_view AS

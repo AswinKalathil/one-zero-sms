@@ -1,18 +1,20 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:one_zero/constants.dart';
+import 'package:one_zero/custom-widgets.dart';
 import 'package:one_zero/database_helper.dart';
 import 'package:one_zero/testAnalytics.dart';
 
 class ClassDetailPage extends StatefulWidget {
   final String className;
-  final int classIndex;
+  final int classId;
   final bool isDedicatedPage;
 
   ClassDetailPage(
       {required this.className,
-      required this.classIndex,
+      required this.classId,
       required this.isDedicatedPage,
       Key? key});
 
@@ -83,7 +85,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       if (_selectedcriteria == 'Student') {
         fetchedStudentsList = await _dbHelper.getStudentsOfName(value);
       } else if (_selectedcriteria == 'Class') {
-        fetchedStudentsList = await _dbHelper.getStudentsOfClass(value);
+        fetchedStudentsList =
+            await _dbHelper.getStudentsOfClass(int.parse(value));
       } else if (_selectedcriteria == 'Subject') {
         fetchedStudentsList = await _dbHelper.getStudentsOfSubject(value);
       }
@@ -105,8 +108,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     }
 
     if (widget.isDedicatedPage && value == 'class') {
-      value = widget.className;
-      fetchedStudentsList = await _dbHelper.getStudentsOfClass(value);
+      fetchedStudentsList = await _dbHelper.getStudentsOfClass(widget.classId);
       _studentsOfClassList = fetchedStudentsList;
       resultBoardIndex = 4;
       searchText = value;
@@ -124,30 +126,33 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     Icons.check_circle,
     Icons.currency_rupee_rounded,
   ];
-
+  double _screenWidth = 0;
+  double _screenHeight = 0;
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
-    double screenHeight = MediaQuery.of(context).size.height;
+    _screenWidth = MediaQuery.of(context).size.width;
+    _screenHeight = MediaQuery.of(context).size.height;
 
     return SingleChildScrollView(
       scrollDirection: Axis.vertical,
       child: Container(
         padding: const EdgeInsets.all(10),
-        height: screenWidth > 1400
-            ? screenHeight + 800 + ((_allSubjects.length / 2).ceil() * 390)
-            : screenHeight + 800 + (_allSubjects.length * 430),
+        height: _screenWidth > 1400
+            ? _screenHeight +
+                800 +
+                ((_allSubjects.length / 2).ceil() * 390) +
+                1000
+            : _screenHeight + 800 + (_allSubjects.length * 430) + 1000,
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
                     margin: const EdgeInsets.all(10),
-                    padding: const EdgeInsets.all(10),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -195,15 +200,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                 ),
                               ),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: ElevatedButton(
-                                  focusNode: serchButtonFocusNode,
-                                  onPressed: () {
-                                    onSubmittedSerch(searchTextfinal);
-                                  },
-                                  child: const Text('Search')),
-                            )
                           ],
                         ),
                       ],
@@ -213,84 +209,94 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               ),
             ),
             Divider(),
-            Container(
-              margin: EdgeInsets.symmetric(horizontal: 30),
-              height: MediaQuery.of(context).size.height * .7,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    flex: 5,
-                    child: searchText.isNotEmpty
-                        ? Container(
-                            // decoration: BoxDecoration(
-                            //   borderRadius: BorderRadius.circular(10),
-                            //   border: Border.all(
-                            //     color: Colors.grey.withOpacity(.5),
-                            //     width: .5,
-                            //   ),
-                            // ),
-                            margin: const EdgeInsets.all(10),
-                            padding: EdgeInsets.all(30),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(10),
-                                  child: switch (resultBoardIndex) {
-                                    3 => Text(
-                                        "Search results with  '$searchText'",
-                                        style: const TextStyle(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.bold)),
-                                    4 => Text("$searchText Students",
-                                        style: const TextStyle(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.bold)),
-                                    5 => Text("Students of $searchText",
-                                        style: const TextStyle(
-                                            fontSize: 24,
-                                            fontWeight: FontWeight.bold)),
-                                    _ => const Text(""),
-                                  },
-                                ),
-                                switch (resultBoardIndex) {
-                                  3 => _studentsOfNameList == []
-                                      ? const CircleAvatar() //need updation
-                                      : studentsListView(_studentsOfNameList),
-                                  4 => studentsListView(_studentsOfClassList),
-                                  5 => studentsListView(_studentsOfSubjectList),
-                                  _ => Container(),
-                                },
-                              ],
-                            ),
-                          )
-                        : SizedBox(),
-                  ),
-                  Expanded(
-                    flex: 6,
-                    child: Container(
-                      child: showGradeCard
-                          ? Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  flex: 2,
-                                  child: GradeCard(
-                                    key: UniqueKey(),
-                                    studentId: _studentId,
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Container(
+                margin: EdgeInsets.only(right: 50),
+                height: MediaQuery.of(context).size.height * .7,
+                width: 1350,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 550,
+                      child: searchText.isNotEmpty
+                          ? Container(
+                              // decoration: BoxDecoration(
+                              //   borderRadius: BorderRadius.circular(10),
+                              //   border: Border.all(
+                              //     color: Colors.grey.withOpacity(.5),
+                              //     width: .5,
+                              //   ),
+                              // ),
+                              margin: const EdgeInsets.all(10),
+
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(10),
+                                    child: switch (resultBoardIndex) {
+                                      3 => Text(
+                                          "Search results with  '$searchText'",
+                                          style: const TextStyle(
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.bold)),
+                                      4 => Text("$searchText Students",
+                                          style: const TextStyle(
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.bold)),
+                                      5 => Text("Students of $searchText",
+                                          style: const TextStyle(
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.bold)),
+                                      _ => const Text(""),
+                                    },
                                   ),
-                                ),
-                              ],
+                                  switch (resultBoardIndex) {
+                                    3 => _studentsOfNameList == []
+                                        ? const CircleAvatar() //need updation
+                                        : studentsListView(_studentsOfNameList),
+                                    4 => studentsListView(_studentsOfClassList),
+                                    5 =>
+                                      studentsListView(_studentsOfSubjectList),
+                                    _ => Container(),
+                                  },
+                                ],
+                              ),
                             )
-                          : Center(
-                              child: getLogo(30, .05),
-                            ),
+                          : SizedBox(),
                     ),
-                  ),
-                ],
+                    SizedBox(
+                      width: 750,
+                      child: Container(
+                        child: showGradeCard
+                            ? Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    flex: 2,
+                                    child: GradeCard(
+                                      key: UniqueKey(),
+                                      studentId: _studentId,
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : Center(
+                                child: getLogo(30, .05),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
+            ),
+            Divider(),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [],
             ),
             Divider(),
             _testResults.isNotEmpty && _allSubjects.isNotEmpty
@@ -305,10 +311,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                   )
                 : SizedBox(),
             Divider(),
-            // Padding(
-            //   padding: const EdgeInsets.all(100.0),
-            //   child: GradeCard(studentId: _studentId),
-            // )
           ],
         ),
       ),
@@ -373,9 +375,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   }
 
   Widget studentsListView(List<Map<String, dynamic>> students) {
-    double screenHeight = MediaQuery.of(context).size.height;
+    double _screenHeight = MediaQuery.of(context).size.height;
     return SizedBox(
-      height: screenHeight * .5,
+      height: _screenHeight * .5,
       width: double.infinity,
       child: ListView.builder(
         physics: const BouncingScrollPhysics(),
@@ -519,9 +521,19 @@ class _GradeCardState extends State<GradeCard> {
               : '-'; // Replaced with '-' if null or invalid
 
           // Handle date parsing
-          DateTime date =
-              DateTime.tryParse(row['test_date'] as String? ?? '') ??
-                  DateTime.now();
+          String dateFormatted = '';
+          DateTime? date =
+              DateTime.tryParse(row['test_date']?.toString() ?? '');
+
+// Check if the date is not null
+          if (date != null) {
+            // Format the date as 'dd-MM-yyyy'
+            dateFormatted =
+                '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}';
+          } else {
+            // Fallback for null dates
+            dateFormatted = '-';
+          }
 
           return {
             'subject': subjectName,
@@ -529,8 +541,7 @@ class _GradeCardState extends State<GradeCard> {
             'marks': latestScore == '-' ? '-' : latestScore.toString(),
             'grade': _calculateGrade(latestScore == '-' ? -1 : latestScore,
                 maxMark is String ? -1 : maxMark),
-            'date':
-                "${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}",
+            'date': dateFormatted,
           };
         }).toList();
       });
@@ -633,7 +644,8 @@ class _GradeCardState extends State<GradeCard> {
   Widget build(BuildContext context) {
     return SizedBox(
       child: AspectRatio(
-        aspectRatio: 297 / 210, // A4 aspect ratio (210mm x 297mm)
+        aspectRatio: 210 / 297,
+        // aspectRatio: 297 / 210, // A4 aspect ratio (210mm x 297mm)
         child: Container(
           padding: const EdgeInsets.all(30.0),
           decoration: BoxDecoration(

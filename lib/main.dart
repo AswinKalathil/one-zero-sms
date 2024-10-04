@@ -6,7 +6,7 @@ import 'package:one_zero/database_helper.dart';
 import 'package:one_zero/examPage.dart';
 import 'package:one_zero/results_page.dart';
 import 'package:one_zero/dataEntry.dart';
-import 'package:intl/intl.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:stroke_text/stroke_text.dart';
 
@@ -30,39 +30,42 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'One-Zero SMS',
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-        primaryColor: _isDarkMode
-            ? Color.fromRGBO(23, 33, 43, 1)
-            // : Color.fromRGBO(35, 144, 198, 1),
-            : Color.fromRGBO(53, 104, 84, 1),
-        secondaryHeaderColor: _isDarkMode
-            ? Color.fromRGBO(238, 108, 77, 1)
-            : Color.fromRGBO(238, 108, 77, 1),
-        scaffoldBackgroundColor: _isDarkMode
-            ? Color.fromRGBO(14, 22, 33, 1)
-            : Color.fromRGBO(240, 240, 240, 1),
-        brightness: _isDarkMode ? Brightness.dark : Brightness.light,
-        canvasColor: _isDarkMode
-            ? Color.fromRGBO(36, 47, 61, 1)
-            : Color.fromRGBO(241, 241, 241, 1),
-        cardColor: _isDarkMode ? Color.fromRGBO(24, 37, 51, 1) : Colors.white,
-        primaryTextTheme: TextTheme(
-          bodyMedium: TextStyle(
-            color: _isDarkMode ? Colors.white : Colors.black,
+    return ScreenUtilInit(
+      designSize: Size(360, 690), // Set your design dimensions
+      builder: (BuildContext context, Widget? child) {
+        return MaterialApp(
+          title: 'One-Zero SMS',
+          theme: ThemeData(
+            primarySwatch: Colors.green,
+            primaryColor: _isDarkMode
+                ? Color.fromRGBO(23, 33, 43, 1)
+                : Color.fromRGBO(53, 104, 84, 1),
+            secondaryHeaderColor: Color.fromRGBO(238, 108, 77, 1),
+            scaffoldBackgroundColor: _isDarkMode
+                ? Color.fromRGBO(14, 22, 33, 1)
+                : Color.fromRGBO(240, 240, 240, 1),
+            brightness: _isDarkMode ? Brightness.dark : Brightness.light,
+            canvasColor: _isDarkMode
+                ? Color.fromRGBO(36, 47, 61, 1)
+                : Color.fromRGBO(241, 241, 241, 1),
+            cardColor:
+                _isDarkMode ? Color.fromRGBO(24, 37, 51, 1) : Colors.white,
+            primaryTextTheme: TextTheme(
+              bodyMedium: TextStyle(
+                color: _isDarkMode ? Colors.white : Colors.black,
+              ),
+            ),
           ),
-        ),
-      ),
-      home: MyHomePage(
-        onThemeChanged: (bool value) {
-          setState(() {
-            _isDarkMode = value;
-          });
-        },
-        isDarkMode: _isDarkMode,
-      ),
+          home: MyHomePage(
+            onThemeChanged: (bool value) {
+              setState(() {
+                _isDarkMode = value;
+              });
+            },
+            isDarkMode: _isDarkMode,
+          ),
+        );
+      },
     );
   }
 }
@@ -81,6 +84,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   DatabaseHelper _dbHelper = DatabaseHelper();
   int _pageNumber = 0;
+  int _selectedClass_index = 0;
   int _selectdClass = 0;
   int _classCount = 0;
   bool _isMenuExpanded = false;
@@ -117,11 +121,10 @@ class _MyHomePageState extends State<MyHomePage> {
 
     appBarTitle = [
       'Class Rooms',
-      '${_classes[_selectdClass]['class_name']}',
-      'Add Students',
-      'Reports',
-      'Exam Entry',
-      'Settings'
+      'Reports for ${_classes[_selectedClass_index]['class_name']}',
+      'Add Students to ${_classes[_selectedClass_index]['class_name']}',
+      'Settings',
+      'Exam Entry for ${_classes[_selectedClass_index]['class_name']}',
     ];
     setState(() {
       _classes;
@@ -142,14 +145,13 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
           toolbarHeight: 70,
           leading: IconButton(
-            icon: _isMenuExpanded
-                ? Icon(Icons.menu_open, color: Colors.white)
-                : Icon(Icons.menu, color: Colors.white),
+            iconSize: 40,
+            icon: _pageNumber == 0
+                ? Icon(Icons.home, color: Colors.white)
+                : Icon(Icons.home_outlined, color: Colors.white),
             onPressed: () {
               setState(() {
-                super.setState(() {
-                  _isMenuExpanded = !_isMenuExpanded;
-                });
+                _pageNumber = 0;
               });
             },
           ),
@@ -360,114 +362,141 @@ class _MyHomePageState extends State<MyHomePage> {
             int() => [],
           }),
       body: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             color: Theme.of(context).primaryColor,
             width: _isMenuExpanded ? 200 : 60,
+            height: MediaQuery.of(context).size.height - 70,
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  children: [
-                    CustomDrawerItem(
-                      icon: Icons.home_outlined,
-                      selectedIcon: Icons.home,
-                      label: 'Home',
-                      page: 0,
-                      selectedPage: _pageNumber,
-                      onTap: () {
-                        setState(() {
-                          _pageNumber = 0;
-                        });
-                      },
-                      isMenuExpanded: _isMenuExpanded,
-                    ),
-                    // CustomDrawerItem(
-                    //   icon: Icons.rectangle_outlined,
-                    //   selectedIcon: Icons.rectangle_outlined,
-                    //   label: 'Class Rooms',
-                    //   page: 1,
-                    //   selectedPage: _pageNumber,
-                    //   onTap: () {
-                    //     setState(() {
-                    //       _loadClasess();
-                    //       _pageNumber = 1;
-                    //     });
-                    //   },
-                    //   isMenuExpanded: _isMenuExpanded,
-                    // ),
-                    CustomDrawerItem(
-                      icon: Icons.group_add_outlined,
-                      selectedIcon: Icons.group_add_rounded,
-                      label: 'Add Students',
-                      page: 2,
-                      selectedPage: _pageNumber,
-                      onTap: () {
-                        setState(() {
-                          initializeStreamNames("HSS");
-                          _pageNumber = 2;
-                        });
-                      },
-                      isMenuExpanded: _isMenuExpanded,
-                    ),
-                    CustomDrawerItem(
-                      icon: Icons.analytics_outlined,
-                      selectedIcon: Icons.analytics,
-                      label: 'Reports',
-                      page: 3,
-                      selectedPage: _pageNumber,
-                      onTap: () {
-                        setState(() {
-                          _pageNumber = 3;
-                        });
-                      },
-                      isMenuExpanded: _isMenuExpanded,
-                    ),
-                    CustomDrawerItem(
-                      icon: Icons.add_box_outlined,
-                      selectedIcon: Icons.add_box,
-                      label: 'Exam Entry',
-                      page: 4,
-                      selectedPage: _pageNumber,
-                      onTap: () {
-                        setState(() {
-                          _pageNumber = 4;
-                        });
-                      },
-                      isMenuExpanded: _isMenuExpanded,
-                    ),
-                  ],
-                ),
-                Column(
-                  children: [
-                    CustomDrawerItem(
-                        icon: widget.isDarkMode
-                            ? Icons.wb_sunny
-                            : Icons.nightlight_round,
-                        selectedIcon: Icons.wb_sunny,
-                        label: widget.isDarkMode ? "Light" : "Dark",
-                        page: -1,
-                        selectedPage: _pageNumber,
-                        onTap: () {
-                          setState(() {
-                            widget.onThemeChanged(!widget.isDarkMode);
-                          });
-                        },
-                        isMenuExpanded: _isMenuExpanded),
-                    CustomDrawerItem(
-                      icon: Icons.settings_outlined,
-                      selectedIcon: Icons.settings,
-                      label: 'Settings',
-                      page: 5,
-                      selectedPage: _pageNumber,
-                      onTap: () {
-                        setState(() {
-                          _pageNumber = 0;
-                        });
-                      },
-                      isMenuExpanded: _isMenuExpanded,
-                    ),
-                  ],
+                _pageNumber == 0
+                    ? Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: IconButton(
+                          icon: _isMenuExpanded
+                              ? Icon(Icons.menu_open, color: Colors.white)
+                              : Icon(Icons.menu, color: Colors.white),
+                          onPressed: () {
+                            setState(() {
+                              super.setState(() {
+                                _isMenuExpanded = !_isMenuExpanded;
+                              });
+                            });
+                          },
+                        ),
+                      )
+                    : SizedBox(),
+                Container(
+                  // color: Colors.amber,
+                  height: MediaQuery.of(context).size.height - 126,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _pageNumber > 0
+                          ? SizedBox(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: IconButton(
+                                      icon: _isMenuExpanded
+                                          ? Icon(Icons.menu_open,
+                                              color: Colors.white)
+                                          : Icon(Icons.menu,
+                                              color: Colors.white),
+                                      onPressed: () {
+                                        setState(() {
+                                          super.setState(() {
+                                            _isMenuExpanded = !_isMenuExpanded;
+                                          });
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                  CustomDrawerItem(
+                                    icon: Icons.analytics_outlined,
+                                    selectedIcon: Icons.analytics,
+                                    label: 'Reports',
+                                    page: 1,
+                                    selectedPage: _pageNumber,
+                                    onTap: () {
+                                      setState(() {
+                                        _pageNumber = 1;
+                                      });
+                                    },
+                                    isMenuExpanded: _isMenuExpanded,
+                                  ),
+                                  CustomDrawerItem(
+                                    icon: Icons.group_add_outlined,
+                                    selectedIcon: Icons.group_add_rounded,
+                                    label: 'Add Students',
+                                    page: 2,
+                                    selectedPage: _pageNumber,
+                                    onTap: () {
+                                      setState(() {
+                                        initializeStreamNames(_selectdClass);
+                                        _pageNumber = 2;
+                                      });
+                                    },
+                                    isMenuExpanded: _isMenuExpanded,
+                                  ),
+                                  CustomDrawerItem(
+                                    icon: Icons.add_box_outlined,
+                                    selectedIcon: Icons.add_box,
+                                    label: 'Exam Entry',
+                                    page: 4,
+                                    selectedPage: _pageNumber,
+                                    onTap: () {
+                                      setState(() {
+                                        _pageNumber = 4;
+                                      });
+                                    },
+                                    isMenuExpanded: _isMenuExpanded,
+                                  ),
+                                ],
+                              ),
+                            )
+                          : SizedBox(
+                              height: 0,
+                            ),
+                      SizedBox(
+                        child: Column(
+                          children: [
+                            CustomDrawerItem(
+                                icon: widget.isDarkMode
+                                    ? Icons.wb_sunny
+                                    : Icons.nightlight_round,
+                                selectedIcon: Icons.wb_sunny,
+                                label: widget.isDarkMode ? "Light" : "Dark",
+                                page: -1,
+                                selectedPage: _pageNumber,
+                                onTap: () {
+                                  setState(() {
+                                    widget.onThemeChanged(!widget.isDarkMode);
+                                  });
+                                },
+                                isMenuExpanded: _isMenuExpanded),
+                            CustomDrawerItem(
+                              icon: Icons.settings_outlined,
+                              selectedIcon: Icons.settings,
+                              label: 'Settings',
+                              page: 5,
+                              selectedPage: _pageNumber,
+                              onTap: () {
+                                setState(() {
+                                  _pageNumber = 0;
+                                });
+                              },
+                              isMenuExpanded: _isMenuExpanded,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -477,10 +506,13 @@ class _MyHomePageState extends State<MyHomePage> {
           Expanded(
               child: switch (_pageNumber) {
             0 => _buildClassRooms(context),
-            1 => _buildClassPage(index: _selectdClass, isDedicatedPage: true),
-            2 => _buildEntrySection("student_table", UniqueKey()),
-            3 => _buildClassPage(index: 0, isDedicatedPage: false),
+            1 => _buildClassPage(
+                index: _selectedClass_index, isDedicatedPage: true),
+            2 => _buildEntrySection(UniqueKey()),
+            3 => _buildClassPage(
+                index: _selectedClass_index, isDedicatedPage: false),
             4 => ExamScoreSheet(
+                classId: _selectdClass,
                 isClassTablesInitialized: _isClassTablesInitialized,
                 classes: _classes,
                 isMenuExpanded: _isMenuExpanded,
@@ -588,7 +620,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return (_isClassTablesInitialized)
         ? ClassDetailPage(
             className: _classes[index]['class_name'],
-            classIndex: index,
+            classId: _selectdClass,
             isDedicatedPage: isDedicatedPage,
             key: UniqueKey(),
           )
@@ -599,10 +631,11 @@ class _MyHomePageState extends State<MyHomePage> {
           );
   }
 
-  Widget _buildEntrySection(String tableName, Key key) {
+  Widget _buildEntrySection(Key key) {
     return (_isClassTablesInitialized)
         ? DataEntryPage(
-            metadata: tableMetadataMap[tableName]!,
+            metadata: tableMetadataMap['student_table']!,
+            classId: _selectdClass,
             key: key,
           )
         : Container(
@@ -635,10 +668,12 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                   child: InkWell(
                     onTap: () {
-                      setState(() {
-                        _selectdClass = index;
+                      super.setState(() {
+                        _selectdClass = _classes[index]['id'];
+                        _selectedClass_index = index;
                         _pageNumber = 1;
                       });
+                      _loadClasess();
                     },
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,

@@ -22,11 +22,15 @@ class DatabaseHelper {
   Future<Database> _initDatabase() async {
     String path = join(await getDatabasesPath(), 'one_zero_sqlite_db_file.db');
 
-    return await openDatabase(
+    // Open the database and enable foreign key support
+    var db = await openDatabase(
       path,
       version: 1,
       onCreate: _onCreate,
+      onOpen: _onOpen, // Call _onOpen when the database is opened
     );
+
+    return db;
   }
 
   String _acadamicYear = DateTime.now().year.toString() +
@@ -35,11 +39,17 @@ class DatabaseHelper {
 
   void setAcadamicYear(String acadamicYear) {
     _acadamicYear = acadamicYear;
-    print(" new Acadamic year private: $_acadamicYear");
+    print("New Academic year private: $_acadamicYear");
   }
 
   Future<void> _onCreate(Database db, int version) async {
     await db.execute(cretateQuery);
+    // Other table creation queries can be executed here
+  }
+
+  Future<void> _onOpen(Database db) async {
+    // Enable foreign key support
+    await db.execute('PRAGMA foreign_keys = ON;');
   }
 
   Future<int> insertToTable(
@@ -49,9 +59,11 @@ class DatabaseHelper {
       return await db.insert(tableName, values);
     } catch (e) {
       print("Error occurred while inserting data: $e");
-      return 0;
+      return 0; // Return 0 or an error code if insertion fails
     }
   }
+
+  // Additional methods for querying, updating, and deleting can be added here
 
   Future<List<String>> getAcadamicYears() async {
     final db = await database;
@@ -83,14 +95,15 @@ class DatabaseHelper {
     }
   }
 
-  Future<List<String>> getStreamNames(String section) async {
+  Future<List<String>> getStreamNames(int class_id) async {
     // print("Acadamic year private: $_acadamicYear");
+    print("class id in getStreamNames function $class_id");
     final db = await database;
     try {
       String query =
-          '''SELECT stream_name FROM stream_table st JOIN class_table c ON st.class_id = c.id WHERE  c.section = ? AND c.academic_year = ?;''';
+          '''SELECT stream_name FROM stream_table  where class_id  = ? ;''';
       final List<Map<String, dynamic>> result =
-          await db.rawQuery(query, [section, _acadamicYear]);
+          await db.rawQuery(query, [class_id]);
       List<String> ss = result.map((e) => e['stream_name'] as String).toList();
 
       return ss;
@@ -228,7 +241,7 @@ JOIN (SELECT id, student_name
     }
   }
 
-  Future<List<String>?> getClassSubjects(String className) async {
+  Future<List<String>?> getClassSubjects(int classId) async {
     final db = await database;
     String query = '''
     SELECT 
@@ -243,17 +256,18 @@ JOIN (SELECT id, student_name
     JOIN 
       class_table c ON st.class_id = c.id
     WHERE 
-     LOWER(c.class_name) = LOWER(?) AND c.academic_year = ?;
+    c.id = ?;
   ''';
 
     try {
       // Execute the query and get the result
-      List<Map<String, dynamic>> result =
-          await db.rawQuery(query, [className, _acadamicYear]);
+      List<Map<String, dynamic>> result = await db.rawQuery(query, [
+        classId,
+      ]);
 
       // Check if the result is empty and return null if no subjects are found
       if (result.isEmpty) {
-        print("No subjects found for class: $className");
+        print("No subjects found for class: $classId");
         return [];
       }
 
@@ -420,25 +434,13 @@ JOIN (SELECT id, student_name
     }
   }
 
-  Future<List<Map<String, dynamic>>> getStudentsOfClass(
-      String className) async {
-    print("Class Name: $className acadamic year: $_acadamicYear");
+  Future<List<Map<String, dynamic>>> getStudentsOfClass(int class_id) async {
+    print("Class id : $class_id acadamic year: $_acadamicYear");
     final db = await database;
 
     // Query to get the class ID
-    final queryResults = await db.rawQuery(
-        'SELECT id FROM class_table WHERE LOWER(class_name) = LOWER(?) AND academic_year = ?  ;',
-        [className, _acadamicYear]);
-
-    // Check if the query returned any results
-    if (queryResults.isEmpty) {
-      print("No class found with name: $className!");
-      return []; // Return an empty list if no class is found
-    }
 
     // Get the class ID from the result
-    int classId = queryResults[0]['id'] as int;
-    print("Class ID: $classId");
 
     // Query to get students of the class
     String query = '''
@@ -460,7 +462,7 @@ JOIN (SELECT id, student_name
   ''';
 
     // Execute the query
-    final result = await db.rawQuery(query, [classId]);
+    final result = await db.rawQuery(query, [class_id]);
     print("result of getStudentsOfClass $result");
     return result;
   }
@@ -866,19 +868,55 @@ ORDER BY
       {'subject_id': 20, 'subject_name': 'Zoology', 'class_id': 4},
 
       // // 10th state
-      // {'subject_id': 22, 'subject_name': 'Mathematics', 'class_id': 4},
-      // {'subject_id': 23, 'subject_name': 'Physics', 'class_id': 4},
-      // {'subject_id': 24, 'subject_name': 'Chemistry', 'class_id': 4},
-      // {'subject_id': 25, 'subject_name': 'Botany', 'class_id': 4},
-      // {'subject_id': 26, 'subject_name': 'Zoology', 'class_id': 4},
-      // {'subject_id': 27, 'subject_name': 'English', 'class_id': 4},
+      {'subject_id': 21, 'subject_name': 'English', 'class_id': 5},
+      {'subject_id': 22, 'subject_name': 'Hindi', 'class_id': 5},
+      {'subject_id': 23, 'subject_name': 'Mathematics', 'class_id': 5},
+      {'subject_id': 25, 'subject_name': 'Social Science', 'class_id': 5},
+      {'subject_id': 26, 'subject_name': 'Physics', 'class_id': 5},
+      {'subject_id': 27, 'subject_name': 'Chemistry', 'class_id': 5},
+      {'subject_id': 28, 'subject_name': 'Biology', 'class_id': 5},
 
       // 10th cbse
+      {'subject_id': 29, 'subject_name': 'English', 'class_id': 6},
+      {'subject_id': 30, 'subject_name': 'Hindi', 'class_id': 6},
+      {'subject_id': 31, 'subject_name': 'Mathematics', 'class_id': 6},
+      {'subject_id': 32, 'subject_name': 'Social Science', 'class_id': 6},
+      {'subject_id': 33, 'subject_name': 'Physics', 'class_id': 6},
+      {'subject_id': 34, 'subject_name': 'Chemistry', 'class_id': 6},
+      {'subject_id': 35, 'subject_name': 'Biology', 'class_id': 6},
 
       // 9th state
+      {'subject_id': 36, 'subject_name': 'English', 'class_id': 7},
+      {'subject_id': 37, 'subject_name': 'Hindi', 'class_id': 7},
+      {'subject_id': 38, 'subject_name': 'Mathematics', 'class_id': 7},
+      {'subject_id': 39, 'subject_name': 'Social Science', 'class_id': 7},
+      {'subject_id': 40, 'subject_name': 'Physics', 'class_id': 7},
+      {'subject_id': 41, 'subject_name': 'Chemistry', 'class_id': 7},
+      {'subject_id': 42, 'subject_name': 'Biology', 'class_id': 7},
       // 9th cbse
+      {'subject_id': 43, 'subject_name': 'English', 'class_id': 8},
+      {'subject_id': 44, 'subject_name': 'Hindi', 'class_id': 8},
+      {'subject_id': 45, 'subject_name': 'Mathematics', 'class_id': 8},
+      {'subject_id': 46, 'subject_name': 'Social Science', 'class_id': 8},
+      {'subject_id': 47, 'subject_name': 'Physics', 'class_id': 8},
+      {'subject_id': 48, 'subject_name': 'Chemistry', 'class_id': 8},
+      {'subject_id': 49, 'subject_name': 'Biology', 'class_id': 8},
       // 8th state
+      {'subject_id': 50, 'subject_name': 'English', 'class_id': 9},
+      {'subject_id': 51, 'subject_name': 'Hindi', 'class_id': 9},
+      {'subject_id': 52, 'subject_name': 'Mathematics', 'class_id': 9},
+      {'subject_id': 53, 'subject_name': 'Social Science', 'class_id': 9},
+      {'subject_id': 54, 'subject_name': 'Physics', 'class_id': 9},
+      {'subject_id': 55, 'subject_name': 'Chemistry', 'class_id': 9},
+      {'subject_id': 56, 'subject_name': 'Biology', 'class_id': 9},
       // 8th cbse
+      {'subject_id': 57, 'subject_name': 'English', 'class_id': 10},
+      {'subject_id': 58, 'subject_name': 'Hindi', 'class_id': 10},
+      {'subject_id': 59, 'subject_name': 'Mathematics', 'class_id': 10},
+      {'subject_id': 60, 'subject_name': 'Social Science', 'class_id': 10},
+      {'subject_id': 61, 'subject_name': 'Physics', 'class_id': 10},
+      {'subject_id': 62, 'subject_name': 'Chemistry', 'class_id': 10},
+      {'subject_id': 63, 'subject_name': 'Biology', 'class_id': 10},
     ];
 
     List<Map<String, dynamic>> streamDataList = [
@@ -898,6 +936,21 @@ ORDER BY
       {'stream_id': 8, 'stream_name': '11th Bio-Hindi CBSE', 'class_id': 4},
       {'stream_id': 9, 'stream_name': '11th Bio-Math CBSE', 'class_id': 4},
       {'stream_id': 10, 'stream_name': '11th CS CBSE', 'class_id': 4},
+      //10th
+      //state
+      {'stream_id': 11, 'stream_name': '10th STATE', 'class_id': 5},
+      //cbse
+      {'stream_id': 12, 'stream_name': '10th CBSE', 'class_id': 6},
+      //9th
+      //state
+      {'stream_id': 13, 'stream_name': '9th STATE', 'class_id': 7},
+      //cbse
+      {'stream_id': 14, 'stream_name': '9th CBSE', 'class_id': 8},
+      //8th
+      //state
+      {'stream_id': 15, 'stream_name': '8th STATE', 'class_id': 9},
+      //cbse
+      {'stream_id': 16, 'stream_name': '8th CBSE', 'class_id': 10},
     ];
 
     List<Map<String, dynamic>> streamSubjectDataList = [
@@ -960,13 +1013,67 @@ ORDER BY
       {'stream_id': 10, 'subject_id': 16},
       {'stream_id': 10, 'subject_id': 17},
       {'stream_id': 10, 'subject_id': 18},
+
+      //10th STATE
+      {'stream_id': 11, 'subject_id': 21},
+      {'stream_id': 11, 'subject_id': 22},
+      {'stream_id': 11, 'subject_id': 23},
+      {'stream_id': 11, 'subject_id': 25},
+      {'stream_id': 11, 'subject_id': 26},
+      {'stream_id': 11, 'subject_id': 27},
+      {'stream_id': 11, 'subject_id': 28},
+
+      //10th CBSE
+      {'stream_id': 12, 'subject_id': 29},
+      {'stream_id': 12, 'subject_id': 30},
+      {'stream_id': 12, 'subject_id': 31},
+      {'stream_id': 12, 'subject_id': 32},
+      {'stream_id': 12, 'subject_id': 33},
+      {'stream_id': 12, 'subject_id': 34},
+      {'stream_id': 12, 'subject_id': 35},
+
+      //9th STATE
+      {'stream_id': 13, 'subject_id': 36},
+      {'stream_id': 13, 'subject_id': 37},
+      {'stream_id': 13, 'subject_id': 38},
+      {'stream_id': 13, 'subject_id': 39},
+      {'stream_id': 13, 'subject_id': 40},
+      {'stream_id': 13, 'subject_id': 41},
+      {'stream_id': 13, 'subject_id': 42},
+
+      //9th CBSE
+      {'stream_id': 14, 'subject_id': 43},
+      {'stream_id': 14, 'subject_id': 44},
+      {'stream_id': 14, 'subject_id': 45},
+      {'stream_id': 14, 'subject_id': 46},
+      {'stream_id': 14, 'subject_id': 47},
+      {'stream_id': 14, 'subject_id': 48},
+      {'stream_id': 14, 'subject_id': 49},
+
+      //8th STATE
+      {'stream_id': 15, 'subject_id': 50},
+      {'stream_id': 15, 'subject_id': 51},
+      {'stream_id': 15, 'subject_id': 52},
+      {'stream_id': 15, 'subject_id': 53},
+      {'stream_id': 15, 'subject_id': 54},
+      {'stream_id': 15, 'subject_id': 55},
+      {'stream_id': 15, 'subject_id': 56},
+
+      //8th CBSE
+      {'stream_id': 16, 'subject_id': 57},
+      {'stream_id': 16, 'subject_id': 58},
+      {'stream_id': 16, 'subject_id': 59},
+      {'stream_id': 16, 'subject_id': 60},
+      {'stream_id': 16, 'subject_id': 61},
+      {'stream_id': 16, 'subject_id': 62},
+      {'stream_id': 16, 'subject_id': 63},
     ];
 
     return await insertDynamicData(
         classDataList, subjectDataList, streamDataList, streamSubjectDataList);
   }
 
-  Future<List<Map<String, dynamic>>> getTestHistory() async {
+  Future<List<Map<String, dynamic>>> getTestHistory(int class_id) async {
     final db = await database;
     String query = '''SELECT DISTINCT
     t.id AS test_id,
@@ -984,18 +1091,21 @@ JOIN
     stream_table st ON ss.stream_id = st.id
 JOIN 
     class_table c ON st.class_id = c.id
-WHERE c.academic_year = ?
+WHERE c.id = ?
 ORDER BY 
     t.id DESC;  
 
 
 ''';
-    List<Map<String, dynamic>> results =
-        await db.rawQuery(query, [_acadamicYear]);
+    List<Map<String, dynamic>> results = await db.rawQuery(query, [class_id]);
 
     return results;
   }
 
+  Future<int> deleteFromTable(String tablename, int id) async {
+    final db = await database;
+    return await db.delete(tablename, where: 'id = ?', whereArgs: [id]);
+  }
   // Example CRUD operations
 //   Future<int> insertStudent(Map<String, dynamic> student) async {
 //     final db = await database;

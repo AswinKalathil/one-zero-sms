@@ -61,7 +61,7 @@ class _TestAnalyticsState extends State<TestAnalytics> {
     }
     // Get the list of test results for this subject
     List<Map<String, dynamic>> subjectTestResults =
-        widget.testResults[subjectIndex];
+        widget.testResults[subjectIndex].reversed.toList();
     List<ScoreDataPoints> dataPoints = [];
 
     // Iterate over the test results for the selected subject

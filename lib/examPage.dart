@@ -7,11 +7,13 @@ import 'package:one_zero/dataEntry.dart';
 import 'package:one_zero/database_helper.dart';
 
 class ExamScoreSheet extends StatefulWidget {
+  final int classId;
   final bool isClassTablesInitialized;
   final List<Map<String, dynamic>> classes;
   final bool isMenuExpanded;
   ExamScoreSheet(
       {super.key,
+      required this.classId,
       required this.isClassTablesInitialized,
       required this.classes,
       required this.isMenuExpanded});
@@ -31,6 +33,8 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
   List<Map<String, dynamic>> _studentList = [];
   int _testId = 0;
   List<String> _subjectForSuggestions = [];
+  List<String>? _subjectsOfClass = [];
+
   int _selectedClassid = 0;
   List<Map<String, dynamic>> _testHistory = [];
   DateTime _selectedDate = DateTime.now();
@@ -40,14 +44,36 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
   void initState() {
     // TODO: implement initState
     super.initState();
+    fetchSubjects(widget.classId);
+
     synchTestHistory();
+  }
+
+  void fetchSubjects(int classId) async {
+    _subjectsOfClass = await _dbHelper.getClassSubjects(widget.classId);
+
+    _selectedClassid = widget.classId;
+
+    if (_subjectsOfClass == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Class not found in the database'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } else {
+      setState(() {
+        _subjectForSuggestions = _subjectsOfClass ?? [];
+      });
+    }
+
+    return;
   }
 
   @override
   Widget build(BuildContext context) {
     List<FocusNode> focusNodes = List.generate(5, (_) => FocusNode());
 
-    List<String>? subjectsOfClass = [];
     return (widget.isClassTablesInitialized)
         ? SingleChildScrollView(
             child: Padding(
@@ -93,13 +119,22 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                       ),
                                     ),
                                     Spacer(),
-                                    ElevatedButton(
-                                      focusNode: focusNodes[4],
-                                      onPressed: () {
-                                        saveExam();
-                                      },
-                                      child: const Text('  Save  '),
-                                    ),
+
+                                    CustomButton(
+                                        text: "ADD",
+                                        onPressed: () {
+                                          saveExam();
+                                        },
+                                        width: 100,
+                                        height: 35,
+                                        textColor: Colors.white),
+                                    // ElevatedButton(
+                                    //   focusNode: focusNodes[4],
+                                    //   onPressed: () {
+                                    //     saveExam();
+                                    //   },
+                                    //   child: const Text('  Save  '),
+                                    // ),
                                   ],
                                 ),
                               ),
@@ -107,7 +142,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                   margin: const EdgeInsets.only(
                                       left: 10, bottom: 10),
                                   padding: const EdgeInsets.all(20),
-                                  height: 310,
+                                  height: 250,
                                   width:
                                       MediaQuery.of(context).size.width * 0.38,
                                   decoration: BoxDecoration(
@@ -129,76 +164,82 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                         mainAxisAlignment:
                                             MainAxisAlignment.start,
                                         children: [
+                                          // Container(
+                                          //   padding: const EdgeInsets.symmetric(
+                                          //       vertical: 5),
+                                          //   height: 70,
+                                          //   width: 200,
+                                          //   child: AutoFill(
+                                          //     key: ValueKey(
+                                          //         widget.classes.hashCode),
+                                          //     labelText: 'Class Name',
+                                          //     controller: _classNameController,
+                                          //     focusNode: focusNodes[0],
+                                          //     nextFocusNode: focusNodes[1],
+                                          //     optionsList: widget.classes
+                                          //         .map((e) => e['class_name']
+                                          //             .toString())
+                                          //         .toList(),
+                                          //     // onSubmitCallback: (value) async {
+                                          //     //   if (value.isNotEmpty) {
+
+                                          //     // },
+                                          //   ),
+                                          // ),
                                           Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 5),
-                                            height: 70,
+                                            padding: const EdgeInsets.only(
+                                                bottom: 10),
                                             width: 200,
-                                            child: AutoFill(
-                                              key: ValueKey(
-                                                  widget.classes.hashCode),
-                                              labelText: 'Class Name',
-                                              controller: _classNameController,
-                                              focusNode: focusNodes[0],
-                                              nextFocusNode: focusNodes[1],
-                                              optionsList: widget.classes
-                                                  .map((e) => e['class_name']
-                                                      .toString())
+                                            child: DropdownButtonFormField(
+                                              decoration: InputDecoration(
+                                                labelText: 'Subject Name',
+                                                filled: true,
+                                                fillColor: Theme.of(context)
+                                                    .canvasColor,
+                                                focusColor: Colors.grey,
+                                                contentPadding:
+                                                    const EdgeInsets.all(15.0),
+                                                border: OutlineInputBorder(
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                          4.0),
+                                                  borderSide: BorderSide(
+                                                      color: Colors.grey
+                                                          .withOpacity(.2),
+                                                      width: 0.4),
+                                                ),
+                                              ),
+                                              items: _subjectForSuggestions
+                                                  .map((subject) =>
+                                                      DropdownMenuItem(
+                                                        value: subject,
+                                                        child: Text(subject),
+                                                      ))
                                                   .toList(),
-                                              onSubmitCallback: (value) async {
-                                                if (value.isNotEmpty) {
-                                                  subjectsOfClass =
-                                                      await _dbHelper
-                                                          .getClassSubjects(
-                                                              value);
-
-                                                  _selectedClassid = widget
-                                                      .classes
-                                                      .firstWhere((element) =>
-                                                          element[
-                                                              'class_name'] ==
-                                                          value)['id'];
-
-                                                  if (subjectsOfClass == null) {
-                                                    ScaffoldMessenger.of(
-                                                            context)
-                                                        .showSnackBar(
-                                                      const SnackBar(
-                                                        content: Text(
-                                                            'Class not found in the database'),
-                                                        backgroundColor:
-                                                            Colors.red,
-                                                      ),
-                                                    );
-                                                  } else {
-                                                    setState(() {
-                                                      _subjectForSuggestions =
-                                                          subjectsOfClass ?? [];
-                                                    });
-                                                  }
-
-                                                  return;
-                                                }
+                                              onChanged: (value) {
+                                                _subjectNameController.text =
+                                                    value as String;
                                               },
                                             ),
                                           ),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                                vertical: 5),
-                                            height: 70,
-                                            width: 200,
-                                            child: AutoFill(
-                                              key: ValueKey(
-                                                  _subjectForSuggestions
-                                                      .hashCode),
-                                              labelText: 'Subject',
-                                              controller:
-                                                  _subjectNameController,
-                                              nextFocusNode: focusNodes[2],
-                                              optionsList:
-                                                  _subjectForSuggestions,
-                                            ),
-                                          ),
+                                          // Container(
+                                          //   padding: const EdgeInsets.symmetric(
+                                          //       vertical: 5),
+                                          //   height: 70,
+                                          //   width: 200,
+                                          //   child: AutoFill(
+                                          //     key: ValueKey(
+                                          //         _subjectForSuggestions
+                                          //             .hashCode),
+                                          //     labelText: 'Subject',
+                                          //     controller:
+                                          //         _subjectNameController,
+                                          //     nextFocusNode: focusNodes[2],
+                                          //     optionsList:
+                                          //         _subjectForSuggestions,
+                                          //   ),
+                                          // ),
+
                                           Container(
                                             padding: const EdgeInsets.only(
                                                 bottom: 10),
@@ -346,7 +387,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                           alignment: Alignment.topLeft,
                           child: Container(
                             width: MediaQuery.of(context).size.width * 0.4,
-                            height: _studentList.length * 50.0 + 300,
+                            height: _studentList.length * 50.0 + 350,
                             child: ExamEntry(
                                 test_id: _testId, key: ValueKey(_testId)),
                           ),
@@ -380,7 +421,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
   }
 
   void synchTestHistory() async {
-    _testHistory = await _dbHelper.getTestHistory();
+    _testHistory = await _dbHelper.getTestHistory(widget.classId);
 
     setState(() {});
   }
@@ -491,8 +532,8 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
   }
 
   saveExam() async {
-    if (_classNameController.text.isEmpty ||
-        _subjectNameController.text.isEmpty ||
+    // if (_classNameController.text.isEmpty ||
+    if (_subjectNameController.text.isEmpty ||
         _topicController.text.isEmpty ||
         _maxiMarkController.text.isEmpty) {
       // Show an error message if any field is empty
@@ -643,12 +684,13 @@ class _ExamEntryState extends State<ExamEntry> {
   Widget build(BuildContext context) {
     return rowTextEditingControllers.isNotEmpty
         ? buildDataTable() // Function that contains your DataTable widget
-        : const Center(child: CircularProgressIndicator());
+        : const Center(child: Text('No Students Found'));
   }
 
   Widget buildDataTable() {
     return Container(
       margin: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(4.0),
@@ -661,91 +703,123 @@ class _ExamEntryState extends State<ExamEntry> {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.only(left: 16.0, top: 16.0),
-            child: SizedBox(
-              width: 300,
-              child: Row(
-                children: [
-                  Text(
-                    "${testDetails['subject_name']} ",
-                    style: const TextStyle(
-                        fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    "${testDetails['topic']} ",
-                    style: const TextStyle(
-                        fontSize: 20, fontStyle: FontStyle.italic),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          SizedBox(
+            width: 550,
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Container(
-                    width: 400,
-                    child: Text(
-                        "${testDetails['test_date'].toString().substring(0, 10)}")),
-                ElevatedButton(
-                  onPressed: () async {
-                    bool abort = false;
-                    var data = rowTextEditingControllers.map((controller) {
-                      if (controller.text.isNotEmpty) {
-                        if (int.parse(controller.text) > maxScore ||
-                            int.parse(controller.text) < 0) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('Score should be within $maxScore'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                          abort = true;
-                          return "-";
-                        }
-                      }
-
-                      return controller.text.trim();
-                    }).toList();
-
-                    if (abort) return;
-                    DatabaseHelper dbHelper = DatabaseHelper();
-
-                    for (int i = 0; i < _studentScoreList.length; i++) {
-                      print(
-                          "${_studentScoreList[i]['test_score_id']} :${data[i]} ");
-
-                      var changes = await dbHelper.updateTestScore(
-                          _studentScoreList[i]['test_score_id'], {
-                        'score': data[i].toString(),
-                      });
-                      print("Changes $changes");
-                    }
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Data submitted successfully!'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  },
-                  child: const Text('Submit'),
+                Text(
+                  "${testDetails['subject_name']} ",
+                  style: const TextStyle(
+                      fontSize: 24, fontWeight: FontWeight.bold),
                 ),
+                Text(
+                  "${testDetails['topic']} ",
+                  style: const TextStyle(
+                      fontSize: 20, fontStyle: FontStyle.italic),
+                ),
+                Spacer(),
+                PopupMenuButton(itemBuilder: (context) {
+                  return [
+                    PopupMenuItem(
+                      child: Text("Edit"),
+                      value: "edit",
+                    ),
+                    PopupMenuItem(
+                      child: Text("Delete"),
+                      value: "delete",
+                    ),
+                  ];
+                }, onSelected: (value) {
+                  if (value == "delete") {
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: const Text('Delete Test'),
+                          content: const Text(
+                              'Are you sure you want to delete this test?'),
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () async {
+                                await dbHelper.deleteFromTable(
+                                    "test_table", widget.test_id);
+                                Navigator.of(context).pop();
+                                super.setState(() {});
+                              },
+                              child: const Text('Delete'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  } else if (value == "edit") {
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        return AlertDialog(
+                          title: const Text('Edit Test'),
+                          content: const Text(
+                              'Are you sure you want to edit this test?'),
+                          actions: <Widget>[
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop();
+                              },
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () async {
+                                Navigator.of(context).pop();
+                                // Navigator.of(context).pop();
+                              },
+                              child: const Text('Edit'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  }
+                }),
               ],
             ),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Container(
+                  width: 400,
+                  child: Text(
+                      "${testDetails['test_date'].toString().substring(0, 10)}")),
+            ],
           ),
           const SizedBox(height: 20),
           Divider(
             color: Theme.of(context).canvasColor, // Line color
             thickness: 2, // Line thickness
           ),
-          const SizedBox(height: 20),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 10, right: 30.0),
+              child: CustomButton(
+                  text: "SAVE",
+                  onPressed: () {
+                    saveExamScores();
+                  },
+                  width: 85,
+                  height: 35,
+                  textColor: Colors.white),
+            ),
+          ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 50),
+              padding: const EdgeInsets.symmetric(horizontal: 30),
               child: SingleChildScrollView(
                 scrollDirection: Axis.vertical,
                 child: DataTable(
@@ -817,6 +891,47 @@ class _ExamEntryState extends State<ExamEntry> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void saveExamScores() async {
+    bool abort = false;
+    var data = rowTextEditingControllers.map((controller) {
+      if (controller.text.isNotEmpty) {
+        if (int.parse(controller.text) > maxScore ||
+            int.parse(controller.text) < 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Score should be within $maxScore'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          abort = true;
+          return "-";
+        }
+      }
+
+      return controller.text.trim();
+    }).toList();
+
+    if (abort) return;
+    DatabaseHelper dbHelper = DatabaseHelper();
+
+    for (int i = 0; i < _studentScoreList.length; i++) {
+      print("${_studentScoreList[i]['test_score_id']} :${data[i]} ");
+
+      var changes = await dbHelper
+          .updateTestScore(_studentScoreList[i]['test_score_id'], {
+        'score': data[i].toString(),
+      });
+      print("Changes $changes");
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Data submitted successfully!'),
+        backgroundColor: Colors.green,
       ),
     );
   }

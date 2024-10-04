@@ -293,3 +293,35 @@ class _autoFillState extends State<autoFill2> {
     );
   }
 }
+
+Container CustomButton(
+    {required String text,
+    required Function onPressed,
+    required double width,
+    required double height,
+    required Color textColor}) {
+  return Container(
+    width: width,
+    height: height,
+    child: ElevatedButton(
+      onPressed: () {
+        onPressed();
+      },
+      child: FittedBox(
+        child: Text(
+          text,
+          style: TextStyle(color: textColor, fontSize: 30.0),
+        ),
+      ),
+      style: ButtonStyle(
+        backgroundColor:
+            MaterialStateProperty.all<Color>(Color.fromRGBO(86, 76, 124, 1.0)),
+        shape: MaterialStateProperty.all<RoundedRectangleBorder>(
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(5.0),
+          ),
+        ),
+      ),
+    ),
+  );
+}
