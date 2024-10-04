@@ -310,7 +310,7 @@ Container CustomButton(
       child: FittedBox(
         child: Text(
           text,
-          style: TextStyle(color: textColor, fontSize: 30.0),
+          style: TextStyle(color: textColor, fontSize: 16.0),
         ),
       ),
       style: ButtonStyle(

@@ -119,14 +119,14 @@ class _MyHomePageState extends State<MyHomePage> {
     _classes = await _dbHelper.getClasses('class_table');
     _isClassTablesInitialized = _classCount == 0 ? false : true;
 
-    appBarTitle = [
-      'Class Rooms',
-      'Reports for ${_classes[_selectedClass_index]['class_name']}',
-      'Add Students to ${_classes[_selectedClass_index]['class_name']}',
-      'Settings',
-      'Exam Entry for ${_classes[_selectedClass_index]['class_name']}',
-    ];
     setState(() {
+      appBarTitle = [
+        'Class Rooms',
+        'Reports for ${_classes[_selectedClass_index]['class_name']}',
+        'Add Students to ${_classes[_selectedClass_index]['class_name']}',
+        'Settings',
+        'Exam Entry for ${_classes[_selectedClass_index]['class_name']}',
+      ];
       _classes;
       _classCount = _classes.length;
     });
@@ -646,7 +646,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildClassRooms(BuildContext context) {
-    int crossAxisCount = (MediaQuery.of(context).size.width / 350).floor();
+    int crossAxisCount = (MediaQuery.of(context).size.width / 450).floor();
     return _isClassTablesInitialized
         ? Container(
             padding: const EdgeInsets.symmetric(horizontal: 150, vertical: 20),
