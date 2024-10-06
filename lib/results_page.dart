@@ -36,6 +36,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   List<Map<String, dynamic>> _studentsOfNameList = [];
   List<Map<String, dynamic>> _studentsOfClassList = [];
   List<Map<String, dynamic>> _studentsOfSubjectList = [];
+  String _resultTitle = '';
   int resultBoardIndex = 0;
   bool showGradeCard = false;
 
@@ -81,14 +82,18 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     value = value.trim();
     List<Map<String, dynamic>> fetchedStudentsList = [];
 
-    if (value.isNotEmpty) {
+    if (!widget.isDedicatedPage && value.isNotEmpty) {
+      print("one ----------");
       if (_selectedcriteria == 'Student') {
         fetchedStudentsList = await _dbHelper.getStudentsOfName(value);
+        _resultTitle = 'search results with  $value';
       } else if (_selectedcriteria == 'Class') {
         fetchedStudentsList =
             await _dbHelper.getStudentsOfClass(int.parse(value));
+        _resultTitle = 'students of class $value';
       } else if (_selectedcriteria == 'Subject') {
         fetchedStudentsList = await _dbHelper.getStudentsOfSubject(value);
+        _resultTitle = 'students of $value';
       }
 
       setState(() {
@@ -108,18 +113,26 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     }
 
     if (widget.isDedicatedPage && value == 'class') {
+      print("two ----${widget.classId}------");
+
       fetchedStudentsList = await _dbHelper.getStudentsOfClass(widget.classId);
       _studentsOfClassList = fetchedStudentsList;
       resultBoardIndex = 4;
       searchText = widget.className;
+      _resultTitle = 'students of class ${widget.className}';
       setState(() {});
-    } else if (widget.isDedicatedPage) {
+    } else if (_selectedcriteria == 'Student' && value.isNotEmpty) {
+      print("three --- $value----- ${widget.classId}--");
+
       fetchedStudentsList =
           await _dbHelper.getStudentsOfNameAndClass(value, widget.classId);
-      _studentsOfClassList = fetchedStudentsList;
-      resultBoardIndex = 3;
-      searchText = value;
-      setState(() {});
+
+      setState(() {
+        _resultTitle = 'search results with  $value';
+        _studentsOfNameList = fetchedStudentsList;
+        resultBoardIndex = 3;
+        searchText = value;
+      });
     }
   }
 
@@ -201,8 +214,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                     setState(() {
                                       searchTextfinal = value.trim();
                                     });
-                                    onSubmittedSerch(value);
-                                    serchButtonFocusNode.requestFocus();
+                                    onSubmittedSerch(searchTextfinal);
                                   },
                                 ),
                               ),

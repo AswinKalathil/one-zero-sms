@@ -174,7 +174,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
                     _selectdAcadamicYear =
                         textFieldController.text; // Set new year as selected
+                    _dbHelper.setAcadamicYear(_selectdAcadamicYear);
                   });
+                  _loadClasess();
 
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(

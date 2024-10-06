@@ -427,6 +427,7 @@ JOIN (SELECT id, student_name
         print("No student found with name: $studentName");
         return []; // Return an empty list if no student is found
       }
+      print("Rsults of calss with name $queryResults");
 
       return queryResults;
     } catch (e) {
