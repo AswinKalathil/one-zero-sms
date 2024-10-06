@@ -111,6 +111,13 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       fetchedStudentsList = await _dbHelper.getStudentsOfClass(widget.classId);
       _studentsOfClassList = fetchedStudentsList;
       resultBoardIndex = 4;
+      searchText = widget.className;
+      setState(() {});
+    } else if (widget.isDedicatedPage) {
+      fetchedStudentsList =
+          await _dbHelper.getStudentsOfNameAndClass(value, widget.classId);
+      _studentsOfClassList = fetchedStudentsList;
+      resultBoardIndex = 3;
       searchText = value;
       setState(() {});
     }
@@ -213,7 +220,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               scrollDirection: Axis.horizontal,
               child: Container(
                 margin: EdgeInsets.only(right: 50),
-                height: MediaQuery.of(context).size.height * .7,
+                height: 600,
                 width: 1350,
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.start,
@@ -238,18 +245,18 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                     padding: const EdgeInsets.all(10),
                                     child: switch (resultBoardIndex) {
                                       3 => Text(
-                                          "Search results with  '$searchText'",
+                                          "search results with  '$searchText'",
                                           style: const TextStyle(
-                                              fontSize: 24,
-                                              fontWeight: FontWeight.bold)),
-                                      4 => Text("$searchText Students",
+                                            fontSize: 20,
+                                          )),
+                                      4 => Text("students of class $searchText",
                                           style: const TextStyle(
-                                              fontSize: 24,
-                                              fontWeight: FontWeight.bold)),
-                                      5 => Text("Students of $searchText",
+                                            fontSize: 20,
+                                          )),
+                                      5 => Text("students of $searchText",
                                           style: const TextStyle(
-                                              fontSize: 24,
-                                              fontWeight: FontWeight.bold)),
+                                            fontSize: 20,
+                                          )),
                                       _ => const Text(""),
                                     },
                                   ),
@@ -377,7 +384,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   Widget studentsListView(List<Map<String, dynamic>> students) {
     double _screenHeight = MediaQuery.of(context).size.height;
     return SizedBox(
-      height: _screenHeight * .5,
+      height: 475,
       width: double.infinity,
       child: ListView.builder(
         physics: const BouncingScrollPhysics(),
@@ -657,8 +664,8 @@ class _GradeCardState extends State<GradeCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   SizedBox(
-                    width: MediaQuery.of(context).size.width * 0.06,
-                    height: MediaQuery.of(context).size.width * 0.065,
+                    width: 80,
+                    height: 100,
                     child: Image.asset(
                       photoUrl,
                       fit: BoxFit.fitHeight, // Fills the circular container
@@ -669,12 +676,13 @@ class _GradeCardState extends State<GradeCard> {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.only(left: 10.0, bottom: 10),
                     child: SizedBox(
-                      width: MediaQuery.of(context).size.width * 0.2,
-                      height: MediaQuery.of(context).size.width * 0.065,
+                      width: 300,
+                      height: 100,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.end,
                         children: [
                           Text(
                             studentName,

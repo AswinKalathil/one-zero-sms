@@ -84,6 +84,9 @@ flutter:
     - assets/one_zero-logo-1.png
     - assets/one-zero-logo-2.png
 
+    - assets/no-data-vector.png
+    - assets/missing-students.png
+
 
   fonts:
     - family: Revue  # Give a name to your font

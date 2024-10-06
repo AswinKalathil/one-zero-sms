@@ -135,6 +135,72 @@ class _MyHomePageState extends State<MyHomePage> {
 
   List<String> _academicYears = [];
   String _selectdAcadamicYear = '';
+  void newYearDialog() async {
+    TextEditingController textFieldController = TextEditingController();
+    textFieldController.text =
+        "${DateTime.now().year}-${(DateTime.now().year + 1).toString().substring(2)}";
+    await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Start New Acadamic Year'),
+          content: TextField(
+            controller: textFieldController,
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(null); // Dismiss without input
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                if (_academicYears.contains(textFieldController.text)) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Acadamic Year Already Exists'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  return;
+                }
+                if (await _dbHelper.startNewYear(textFieldController.text) ==
+                    1) {
+                  print(_academicYears);
+                  setState(() {
+                    _academicYears.add(textFieldController.text);
+                    _academicYears = _academicYears.toSet().toList();
+
+                    _selectdAcadamicYear =
+                        textFieldController.text; // Set new year as selected
+                  });
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('New Acadamic Year Created'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Error Creating New Acadamic Year'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+
+                Navigator.of(context)
+                    .pop(textFieldController.text); // Return input
+              },
+              child: Text('Submit'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -208,89 +274,16 @@ class _MyHomePageState extends State<MyHomePage> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: IconButton(
-                    icon: const Icon(Icons.new_label, color: Colors.white),
-                    tooltip: 'Start New Acadamic Year',
-                    onPressed: () async {
-                      TextEditingController textFieldController =
-                          TextEditingController();
-                      textFieldController.text =
-                          "${DateTime.now().year}-${(DateTime.now().year + 1).toString().substring(2)}";
-                      await showDialog<String>(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: Text('Start New Acadamic Year'),
-                            content: TextField(
-                              controller: textFieldController,
-                            ),
-                            actions: <Widget>[
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(context)
-                                      .pop(null); // Dismiss without input
-                                },
-                                child: Text('Cancel'),
-                              ),
-                              TextButton(
-                                onPressed: () async {
-                                  if (_academicYears
-                                      .contains(textFieldController.text)) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                            'Acadamic Year Already Exists'),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                    return;
-                                  }
-                                  if (await _dbHelper.startNewYear(
-                                          textFieldController.text) ==
-                                      1) {
-                                    print(_academicYears);
-                                    setState(() {
-                                      _academicYears
-                                          .add(textFieldController.text);
-                                      _academicYears =
-                                          _academicYears.toSet().toList();
-
-                                      _selectdAcadamicYear = textFieldController
-                                          .text; // Set new year as selected
-                                    });
-
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content:
-                                            Text('New Acadamic Year Created'),
-                                        backgroundColor: Colors.green,
-                                      ),
-                                    );
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                            'Error Creating New Acadamic Year'),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                  }
-
-                                  Navigator.of(context).pop(
-                                      textFieldController.text); // Return input
-                                },
-                                child: Text('Submit'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    },
-                  ),
+                      icon: const Icon(Icons.new_label, color: Colors.white),
+                      tooltip: 'Start New Acadamic Year',
+                      onPressed: () {
+                        newYearDialog();
+                      }),
                 ),
               ],
             1 => [
                 SizedBox(
-                  width: 400,
+                  width: 200,
                   height: 70,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
@@ -773,8 +766,31 @@ class _MyHomePageState extends State<MyHomePage> {
           )
         : Container(
             child: Center(
-              child: Text("No Class Data Found\n Please add class data"),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    newYearDialog();
+                  },
+                  child: Image.asset(
+                    'assets/no-data-vector.png', // Asset image path
+                    width: 300,
+                    height: 250,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                SizedBox(
+                  height: 30,
+                ),
+                Text(
+                  "Create New Batch",
+                  style: TextStyle(
+                      fontFamily: 'revue', color: Colors.grey, fontSize: 30),
+                )
+              ],
             ),
-          );
+          ));
   }
 }

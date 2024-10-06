@@ -393,7 +393,15 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                               width: 600,
                               height: 685,
                               child: ExamEntry(
-                                  test_id: _testId, key: ValueKey(_testId)),
+                                test_id: _testId,
+                                key: ValueKey(_testId),
+                                parentsetstate: () {
+                                  super.setState(() {
+                                    synchTestHistory();
+                                    _changeExist = true;
+                                  });
+                                },
+                              ),
                             ),
                           )
                         : SizedBox(),
@@ -622,11 +630,10 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
 
 class ExamEntry extends StatefulWidget {
   final int test_id;
+  Function parentsetstate;
 
-  ExamEntry({
-    Key? key,
-    required this.test_id,
-  }) : super(key: key);
+  ExamEntry({Key? key, required this.test_id, required this.parentsetstate})
+      : super(key: key);
 
   @override
   _ExamEntryState createState() => _ExamEntryState();
@@ -642,6 +649,8 @@ class _ExamEntryState extends State<ExamEntry> {
   int maxId = 0;
   DatabaseHelper dbHelper = DatabaseHelper();
   int maxScore = 100;
+  bool _isLoading = true;
+
   @override
   void initState() {
     headers = ['ID', 'Student Name', 'Score'];
@@ -649,17 +658,28 @@ class _ExamEntryState extends State<ExamEntry> {
 
     fetchStudents(widget.test_id);
     super.initState();
+
+    if (rowTextEditingControllers.isEmpty) {
+      // Delay for 2 seconds before showing the "No Students Found" message
+      Future.delayed(const Duration(seconds: 1), () {
+        setState(() {
+          _isLoading = false;
+        });
+      });
+    } else {
+      _isLoading = false;
+    }
     // _addNewRows();
   }
 
   void fetchStudents(int testId) async {
     DatabaseHelper dbHelper = DatabaseHelper();
-    print("Test id $testId");
+    // print("Test id $testId");
     // studentList = await dbHelper.getStudentIdsAndNamesByTestId(testId);
 
     _studentScoreList = await dbHelper.getTestDataSheetForUpdate(testId);
     testDetails = await dbHelper.getTestDetails(testId);
-    print(" Students length ${_studentScoreList.length}");
+    // print(" Students length ${_studentScoreList.length}");
 
     setState(() {
       rowTextEditingControllers =
@@ -689,7 +709,34 @@ class _ExamEntryState extends State<ExamEntry> {
   Widget build(BuildContext context) {
     return rowTextEditingControllers.isNotEmpty
         ? buildDataTable() // Function that contains your DataTable widget
-        : const Center(child: Text('No Students Found'));
+        : _isLoading
+            ? const Center(
+                child: SizedBox(
+                    width: 50, height: 50, child: CircularProgressIndicator()))
+            : Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Image.asset(
+                      'assets/missing-students.png', // Asset image path
+                      width: 100,
+                      height: 100,
+                      fit: BoxFit.cover,
+                    ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    Text(
+                      "No Students Found",
+                      style: TextStyle(
+                          fontFamily: 'revue',
+                          color: Colors.grey,
+                          fontSize: 20),
+                    )
+                  ],
+                ),
+              );
   }
 
   Widget buildDataTable() {
@@ -754,8 +801,9 @@ class _ExamEntryState extends State<ExamEntry> {
                               onPressed: () async {
                                 await dbHelper.deleteFromTable(
                                     "test_table", widget.test_id);
+                                widget.parentsetstate();
+
                                 Navigator.of(context).pop();
-                                super.setState(() {});
                               },
                               child: const Text('Delete'),
                             ),
@@ -780,6 +828,7 @@ class _ExamEntryState extends State<ExamEntry> {
                             ),
                             TextButton(
                               onPressed: () async {
+                                widget.parentsetstate();
                                 Navigator.of(context).pop();
                                 // Navigator.of(context).pop();
                               },

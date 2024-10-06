@@ -203,7 +203,6 @@ JOIN (SELECT id, student_name
 
     ''', [testId]);
 
-    print(testDataSheet);
     return testDataSheet;
   }
 
@@ -390,6 +389,51 @@ JOIN (SELECT id, student_name
     // "Test history for student ID: $studentId and subject ID: $subjectId:--->   $result");
 
     return result;
+  }
+
+  Future<List<Map<String, dynamic>>> getStudentsOfNameAndClass(
+      String studentName, int classId) async {
+    final db = await database;
+
+    try {
+      print("Student Name: $studentName");
+
+      // Query to get the student ID
+      final queryResults = await db.rawQuery(''' SELECT 
+      s.id,
+      s.student_name,
+      s.gender,
+      s.photo_id,
+      st.stream_name
+    FROM 
+      student_table s
+    INNER JOIN 
+      stream_table st ON s.stream_id = st.id
+    INNER JOIN 
+      class_table c ON st.class_id = c.id
+    WHERE 
+       LOWER(s.student_name) LIKE LOWER(?) AND c.id = ?
+    ORDER BY 
+    CASE 
+      WHEN  LOWER(s.student_name) LIKE LOWER(?) THEN 1  
+    ELSE 2                      
+    END, 
+    s.student_name;   
+       
+       ''', ['%$studentName%', classId, '$studentName%']);
+
+      // Check if the query returned any results
+      if (queryResults.isEmpty) {
+        print("No student found with name: $studentName");
+        return []; // Return an empty list if no student is found
+      }
+
+      return queryResults;
+    } catch (e) {
+      // Handle any exceptions that occur
+      print("Error occurred: $e");
+      return []; // Return an empty list or handle the error as needed
+    }
   }
 
   Future<List<Map<String, dynamic>>> getStudentsOfName(
