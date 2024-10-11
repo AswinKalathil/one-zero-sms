@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
@@ -27,6 +28,8 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
   TextEditingController _subjectNameController = TextEditingController();
   TextEditingController _topicController = TextEditingController();
   TextEditingController _maxiMarkController = TextEditingController();
+
+  final ScrollController _scrollController = ScrollController();
 
   bool _changeExist = true;
   bool reset = false;
@@ -77,335 +80,378 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
     return (widget.isClassTablesInitialized)
         ? SingleChildScrollView(
             scrollDirection: Axis.vertical,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Container(
-                width: 1330,
-                padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      margin: EdgeInsets.all(5),
-                      child: SizedBox(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: [
-                            Column(
+            child: Listener(
+              onPointerSignal: (pointerSignal) {
+                // Handle horizontal scrolling with mouse wheel
+                if (pointerSignal is PointerScrollEvent) {
+                  _scrollController.position.moveTo(
+                    _scrollController.offset +
+                        pointerSignal
+                            .scrollDelta.dy, // Adjusts scrolling to horizontal
+                  );
+                }
+              },
+              child: Scrollbar(
+                controller: _scrollController,
+                thumbVisibility: true,
+                trackVisibility: true,
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  scrollDirection: Axis.horizontal,
+                  child: Container(
+                    width: 1330,
+                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          margin: EdgeInsets.all(5),
+                          child: SizedBox(
+                            child: Column(
                               mainAxisAlignment: MainAxisAlignment.start,
-                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Container(
-                                  width: 600,
-                                  margin:
-                                      const EdgeInsets.only(left: 10, top: 10),
-                                  padding: const EdgeInsets.all(20),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).cardColor,
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(
-                                      color: Colors.grey.withOpacity(.5),
-                                      width: .5,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      Text(
-                                        'Add New Exam',
-                                        style: TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
+                                Column(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: 600,
+                                      margin: const EdgeInsets.only(
+                                          left: 10, top: 10),
+                                      padding: const EdgeInsets.all(20),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).cardColor,
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(
+                                          color: Colors.grey.withOpacity(.5),
+                                          width: .5,
                                         ),
                                       ),
-                                      Spacer(),
+                                      child: Row(
+                                        children: [
+                                          Text(
+                                            'Add New Exam',
+                                            style: TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          Spacer(),
 
-                                      CustomButton(
-                                          text: "ADD",
-                                          onPressed: () {
-                                            saveExam();
-                                          },
-                                          width: 100,
-                                          height: 35,
-                                          textColor: Colors.white),
-                                      // ElevatedButton(
-                                      //   focusNode: focusNodes[4],
-                                      //   onPressed: () {
-                                      //     saveExam();
-                                      //   },
-                                      //   child: const Text('  Save  '),
-                                      // ),
-                                    ],
-                                  ),
-                                ),
-                                Container(
-                                    margin: const EdgeInsets.only(
-                                        left: 10, bottom: 10),
-                                    padding: const EdgeInsets.all(20),
-                                    height: 250,
-                                    width: 600,
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(context).cardColor,
-                                      borderRadius: BorderRadius.circular(4),
-                                      border: Border.all(
-                                        color: Colors.grey.withOpacity(.5),
-                                        width: .5,
+                                          CustomButton(
+                                              text: "ADD",
+                                              onPressed: () {
+                                                saveExam();
+                                              },
+                                              width: 100,
+                                              height: 35,
+                                              textColor: Colors.white),
+                                          // ElevatedButton(
+                                          //   focusNode: focusNodes[4],
+                                          //   onPressed: () {
+                                          //     saveExam();
+                                          //   },
+                                          //   child: const Text('  Save  '),
+                                          // ),
+                                        ],
                                       ),
                                     ),
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        Column(
+                                    Container(
+                                        margin: const EdgeInsets.only(
+                                            left: 10, bottom: 10),
+                                        padding: const EdgeInsets.all(20),
+                                        height: 250,
+                                        width: 600,
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).cardColor,
+                                          borderRadius:
+                                              BorderRadius.circular(4),
+                                          border: Border.all(
+                                            color: Colors.grey.withOpacity(.5),
+                                            width: .5,
+                                          ),
+                                        ),
+                                        child: Row(
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           mainAxisAlignment:
                                               MainAxisAlignment.start,
                                           children: [
-                                            // Container(
-                                            //   padding: const EdgeInsets.symmetric(
-                                            //       vertical: 5),
-                                            //   height: 70,
-                                            //   width: 200,
-                                            //   child: AutoFill(
-                                            //     key: ValueKey(
-                                            //         widget.classes.hashCode),
-                                            //     labelText: 'Class Name',
-                                            //     controller: _classNameController,
-                                            //     focusNode: focusNodes[0],
-                                            //     nextFocusNode: focusNodes[1],
-                                            //     optionsList: widget.classes
-                                            //         .map((e) => e['class_name']
-                                            //             .toString())
-                                            //         .toList(),
-                                            //     // onSubmitCallback: (value) async {
-                                            //     //   if (value.isNotEmpty) {
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.start,
+                                              children: [
+                                                // Container(
+                                                //   padding: const EdgeInsets.symmetric(
+                                                //       vertical: 5),
+                                                //   height: 70,
+                                                //   width: 200,
+                                                //   child: AutoFill(
+                                                //     key: ValueKey(
+                                                //         widget.classes.hashCode),
+                                                //     labelText: 'Class Name',
+                                                //     controller: _classNameController,
+                                                //     focusNode: focusNodes[0],
+                                                //     nextFocusNode: focusNodes[1],
+                                                //     optionsList: widget.classes
+                                                //         .map((e) => e['class_name']
+                                                //             .toString())
+                                                //         .toList(),
+                                                //     // onSubmitCallback: (value) async {
+                                                //     //   if (value.isNotEmpty) {
 
-                                            //     // },
-                                            //   ),
-                                            // ),
-                                            Container(
-                                              padding: const EdgeInsets.only(
-                                                  bottom: 10),
-                                              width: 200,
-                                              child: DropdownButtonFormField(
-                                                decoration: InputDecoration(
-                                                  labelText: 'Subject Name',
-                                                  filled: true,
-                                                  fillColor: Theme.of(context)
-                                                      .canvasColor,
-                                                  focusColor: Colors.grey,
-                                                  contentPadding:
-                                                      const EdgeInsets.all(
-                                                          15.0),
-                                                  border: OutlineInputBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            4.0),
-                                                    borderSide: BorderSide(
-                                                        color: Colors.grey
-                                                            .withOpacity(.2),
-                                                        width: 0.4),
+                                                //     // },
+                                                //   ),
+                                                // ),
+                                                Container(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          bottom: 10),
+                                                  width: 200,
+                                                  child:
+                                                      DropdownButtonFormField(
+                                                    decoration: InputDecoration(
+                                                      labelText: 'Subject Name',
+                                                      filled: true,
+                                                      fillColor:
+                                                          Theme.of(context)
+                                                              .canvasColor,
+                                                      focusColor: Colors.grey,
+                                                      contentPadding:
+                                                          const EdgeInsets.all(
+                                                              15.0),
+                                                      border:
+                                                          OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(4.0),
+                                                        borderSide: BorderSide(
+                                                            color: Colors.grey
+                                                                .withOpacity(
+                                                                    .2),
+                                                            width: 0.4),
+                                                      ),
+                                                    ),
+                                                    items:
+                                                        _subjectForSuggestions
+                                                            .map((subject) =>
+                                                                DropdownMenuItem(
+                                                                  value:
+                                                                      subject,
+                                                                  child: Text(
+                                                                      subject),
+                                                                ))
+                                                            .toList(),
+                                                    onChanged: (value) {
+                                                      _subjectNameController
+                                                              .text =
+                                                          value as String;
+                                                    },
                                                   ),
                                                 ),
-                                                items: _subjectForSuggestions
-                                                    .map((subject) =>
-                                                        DropdownMenuItem(
-                                                          value: subject,
-                                                          child: Text(subject),
-                                                        ))
-                                                    .toList(),
-                                                onChanged: (value) {
-                                                  _subjectNameController.text =
-                                                      value as String;
-                                                },
-                                              ),
-                                            ),
-                                            // Container(
-                                            //   padding: const EdgeInsets.symmetric(
-                                            //       vertical: 5),
-                                            //   height: 70,
-                                            //   width: 200,
-                                            //   child: AutoFill(
-                                            //     key: ValueKey(
-                                            //         _subjectForSuggestions
-                                            //             .hashCode),
-                                            //     labelText: 'Subject',
-                                            //     controller:
-                                            //         _subjectNameController,
-                                            //     nextFocusNode: focusNodes[2],
-                                            //     optionsList:
-                                            //         _subjectForSuggestions,
-                                            //   ),
-                                            // ),
+                                                // Container(
+                                                //   padding: const EdgeInsets.symmetric(
+                                                //       vertical: 5),
+                                                //   height: 70,
+                                                //   width: 200,
+                                                //   child: AutoFill(
+                                                //     key: ValueKey(
+                                                //         _subjectForSuggestions
+                                                //             .hashCode),
+                                                //     labelText: 'Subject',
+                                                //     controller:
+                                                //         _subjectNameController,
+                                                //     nextFocusNode: focusNodes[2],
+                                                //     optionsList:
+                                                //         _subjectForSuggestions,
+                                                //   ),
+                                                // ),
 
-                                            Container(
-                                              padding: const EdgeInsets.only(
-                                                  bottom: 10),
-                                              width: 200,
-                                              child: TextField(
-                                                  focusNode: focusNodes[2],
-                                                  controller: _topicController,
-                                                  //new decoration
-                                                  decoration: InputDecoration(
-                                                    label: const Text(
-                                                        ' Chapter/Topic'),
-                                                    filled: true,
-                                                    fillColor: Theme.of(context)
-                                                        .canvasColor,
-                                                    focusColor: Colors.grey,
-                                                    contentPadding:
+                                                Container(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                          bottom: 10),
+                                                  width: 200,
+                                                  child: TextField(
+                                                      focusNode: focusNodes[2],
+                                                      controller:
+                                                          _topicController,
+                                                      //new decoration
+                                                      decoration:
+                                                          InputDecoration(
+                                                        label: const Text(
+                                                            ' Chapter/Topic'),
+                                                        filled: true,
+                                                        fillColor:
+                                                            Theme.of(context)
+                                                                .canvasColor,
+                                                        focusColor: Colors.grey,
+                                                        contentPadding:
+                                                            const EdgeInsets
+                                                                .all(15.0),
+                                                        border:
+                                                            OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(
+                                                                      4.0),
+                                                          borderSide: BorderSide(
+                                                              color: Colors.grey
+                                                                  .withOpacity(
+                                                                      .2),
+                                                              width: 0.4),
+                                                        ),
+                                                      ),
+                                                      onSubmitted: (value) {
+                                                        setState(() {
+                                                          _changeExist = true;
+                                                        });
+                                                        focusNodes[3]
+                                                            .requestFocus();
+                                                      }),
+                                                ),
+                                                Container(
+                                                  padding: const EdgeInsets
+                                                      .symmetric(vertical: 10),
+                                                  width: 200,
+                                                  child: TextField(
+                                                    inputFormatters: [
+                                                      FilteringTextInputFormatter
+                                                          .digitsOnly
+                                                    ],
+                                                    focusNode: focusNodes[3],
+                                                    controller:
+                                                        _maxiMarkController,
+                                                    decoration: InputDecoration(
+                                                      label: const Text(
+                                                          'Max Mark'),
+                                                      filled: true,
+                                                      fillColor:
+                                                          Theme.of(context)
+                                                              .canvasColor,
+                                                      focusColor: Colors.grey,
+                                                      contentPadding:
+                                                          const EdgeInsets.all(
+                                                              15.0),
+                                                      border:
+                                                          OutlineInputBorder(
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(4.0),
+                                                        borderSide: BorderSide(
+                                                            color: Colors.grey
+                                                                .withOpacity(
+                                                                    .2),
+                                                            width: 0.4),
+                                                      ),
+                                                    ),
+                                                    onSubmitted: (value) {
+                                                      focusNodes[4]
+                                                          .requestFocus();
+
+                                                      setState(() {
+                                                        _changeExist = true;
+                                                      });
+                                                    },
+                                                  ),
+                                                ),
+                                                const Row(
+                                                  children: [],
+                                                ),
+                                              ],
+                                            ),
+
+                                            //second column --------
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.end,
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.start,
+                                              children: [
+                                                GestureDetector(
+                                                  onTap: () =>
+                                                      _pickDate(context),
+                                                  child: Container(
+                                                    padding:
                                                         const EdgeInsets.all(
-                                                            15.0),
-                                                    border: OutlineInputBorder(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                              4.0),
-                                                      borderSide: BorderSide(
-                                                          color: Colors.grey
-                                                              .withOpacity(.2),
-                                                          width: 0.4),
+                                                            22.0),
+                                                    child: Row(
+                                                      children: [
+                                                        Text(
+                                                          "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}  ", // Default to today's date
+                                                          style: const TextStyle(
+                                                              fontSize: 16,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
+                                                        ),
+                                                        const Icon(Icons
+                                                            .calendar_today),
+                                                      ],
                                                     ),
                                                   ),
-                                                  onSubmitted: (value) {
-                                                    setState(() {
-                                                      _changeExist = true;
-                                                    });
-                                                    focusNodes[3]
-                                                        .requestFocus();
-                                                  }),
-                                            ),
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      vertical: 10),
-                                              width: 200,
-                                              child: TextField(
-                                                inputFormatters: [
-                                                  FilteringTextInputFormatter
-                                                      .digitsOnly
-                                                ],
-                                                focusNode: focusNodes[3],
-                                                controller: _maxiMarkController,
-                                                decoration: InputDecoration(
-                                                  label: const Text('Max Mark'),
-                                                  filled: true,
-                                                  fillColor: Theme.of(context)
-                                                      .canvasColor,
-                                                  focusColor: Colors.grey,
-                                                  contentPadding:
-                                                      const EdgeInsets.all(
-                                                          15.0),
-                                                  border: OutlineInputBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            4.0),
-                                                    borderSide: BorderSide(
-                                                        color: Colors.grey
-                                                            .withOpacity(.2),
-                                                        width: 0.4),
-                                                  ),
                                                 ),
-                                                onSubmitted: (value) {
-                                                  focusNodes[4].requestFocus();
-
-                                                  setState(() {
-                                                    _changeExist = true;
-                                                  });
-                                                },
-                                              ),
-                                            ),
-                                            const Row(
-                                              children: [],
+                                              ],
                                             ),
                                           ],
+                                        )),
+                                  ],
+                                ),
+                                Column(
+                                  children: [
+                                    Container(
+                                      margin: const EdgeInsets.only(
+                                          left: 10, top: 10),
+                                      padding: const EdgeInsets.all(20),
+                                      width: 600,
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).cardColor,
+                                        borderRadius: BorderRadius.circular(4),
+                                        border: Border.all(
+                                          color: Colors.grey.withOpacity(.5),
+                                          width: .5,
                                         ),
-
-                                        //second column --------
-                                        Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.end,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          children: [
-                                            GestureDetector(
-                                              onTap: () => _pickDate(context),
-                                              child: Container(
-                                                padding:
-                                                    const EdgeInsets.all(22.0),
-                                                child: Row(
-                                                  children: [
-                                                    Text(
-                                                      "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}  ", // Default to today's date
-                                                      style: const TextStyle(
-                                                          fontSize: 16,
-                                                          fontWeight:
-                                                              FontWeight.bold),
-                                                    ),
-                                                    const Icon(
-                                                        Icons.calendar_today),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ],
+                                      ),
+                                      child: Text(
+                                        'Recent Tests ',
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
                                         ),
-                                      ],
-                                    )),
+                                      ),
+                                    ),
+                                    showTestHistory(),
+                                  ],
+                                ),
                               ],
                             ),
-                            Column(
-                              children: [
-                                Container(
-                                  margin:
-                                      const EdgeInsets.only(left: 10, top: 10),
-                                  padding: const EdgeInsets.all(20),
+                          ),
+                        ),
+                        !_changeExist
+                            ? Align(
+                                alignment: Alignment.topLeft,
+                                child: Container(
                                   width: 600,
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).cardColor,
-                                    borderRadius: BorderRadius.circular(4),
-                                    border: Border.all(
-                                      color: Colors.grey.withOpacity(.5),
-                                      width: .5,
-                                    ),
-                                  ),
-                                  child: Text(
-                                    'Recent Tests ',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                  height: 685,
+                                  child: ExamEntry(
+                                    test_id: _testId,
+                                    key: ValueKey(_testId),
+                                    parentsetstate: () {
+                                      super.setState(() {
+                                        synchTestHistory();
+                                        _changeExist = true;
+                                      });
+                                    },
                                   ),
                                 ),
-                                showTestHistory(),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
+                              )
+                            : SizedBox(),
+                      ],
                     ),
-                    !_changeExist
-                        ? Align(
-                            alignment: Alignment.topLeft,
-                            child: Container(
-                              width: 600,
-                              height: 685,
-                              child: ExamEntry(
-                                test_id: _testId,
-                                key: ValueKey(_testId),
-                                parentsetstate: () {
-                                  super.setState(() {
-                                    synchTestHistory();
-                                    _changeExist = true;
-                                  });
-                                },
-                              ),
-                            ),
-                          )
-                        : SizedBox(),
-                  ],
+                  ),
                 ),
               ),
             ),

@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:one_zero/constants.dart';
@@ -37,6 +38,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   List<Map<String, dynamic>> _studentsOfClassList = [];
   List<Map<String, dynamic>> _studentsOfSubjectList = [];
   String _resultTitle = '';
+  final ScrollController _scrollController = ScrollController();
   int resultBoardIndex = 0;
   bool showGradeCard = false;
 
@@ -228,87 +230,110 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               ),
             ),
             Divider(),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Container(
-                margin: EdgeInsets.only(right: 50),
-                height: 600,
-                width: 1350,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: 550,
-                      child: searchText.isNotEmpty
-                          ? Container(
-                              // decoration: BoxDecoration(
-                              //   borderRadius: BorderRadius.circular(10),
-                              //   border: Border.all(
-                              //     color: Colors.grey.withOpacity(.5),
-                              //     width: .5,
-                              //   ),
-                              // ),
-                              margin: const EdgeInsets.all(10),
+            Listener(
+              onPointerSignal: (pointerSignal) {
+                // Handle horizontal scrolling with mouse wheel
+                if (pointerSignal is PointerScrollEvent) {
+                  _scrollController.position.moveTo(
+                    _scrollController.offset +
+                        pointerSignal
+                            .scrollDelta.dy, // Adjusts scrolling to horizontal
+                  );
+                }
+              },
+              child: Scrollbar(
+                controller: _scrollController,
+                thumbVisibility: true,
+                trackVisibility: true,
+                child: SingleChildScrollView(
+                  controller: _scrollController,
+                  scrollDirection: Axis.horizontal,
+                  child: Container(
+                    margin: EdgeInsets.only(right: 50),
+                    height: 600,
+                    width: 1350,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 550,
+                          child: searchText.isNotEmpty
+                              ? Container(
+                                  // decoration: BoxDecoration(
+                                  //   borderRadius: BorderRadius.circular(10),
+                                  //   border: Border.all(
+                                  //     color: Colors.grey.withOpacity(.5),
+                                  //     width: .5,
+                                  //   ),
+                                  // ),
+                                  margin: const EdgeInsets.all(10),
 
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(10),
-                                    child: switch (resultBoardIndex) {
-                                      3 => Text(
-                                          "search results with  '$searchText'",
-                                          style: const TextStyle(
-                                            fontSize: 20,
-                                          )),
-                                      4 => Text("students of class $searchText",
-                                          style: const TextStyle(
-                                            fontSize: 20,
-                                          )),
-                                      5 => Text("students of $searchText",
-                                          style: const TextStyle(
-                                            fontSize: 20,
-                                          )),
-                                      _ => const Text(""),
-                                    },
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Padding(
+                                        padding: const EdgeInsets.all(10),
+                                        child: switch (resultBoardIndex) {
+                                          3 => Text(
+                                              "search results with  '$searchText'",
+                                              style: const TextStyle(
+                                                fontSize: 20,
+                                              )),
+                                          4 => Text(
+                                              "students of class $searchText",
+                                              style: const TextStyle(
+                                                fontSize: 20,
+                                              )),
+                                          5 => Text("students of $searchText",
+                                              style: const TextStyle(
+                                                fontSize: 20,
+                                              )),
+                                          _ => const Text(""),
+                                        },
+                                      ),
+                                      switch (resultBoardIndex) {
+                                        3 => _studentsOfNameList == []
+                                            ? const CircleAvatar() //need updation
+                                            : studentsListView(
+                                                _studentsOfNameList),
+                                        4 => studentsListView(
+                                            _studentsOfClassList),
+                                        5 => studentsListView(
+                                            _studentsOfSubjectList),
+                                        _ => Container(),
+                                      },
+                                    ],
                                   ),
-                                  switch (resultBoardIndex) {
-                                    3 => _studentsOfNameList == []
-                                        ? const CircleAvatar() //need updation
-                                        : studentsListView(_studentsOfNameList),
-                                    4 => studentsListView(_studentsOfClassList),
-                                    5 =>
-                                      studentsListView(_studentsOfSubjectList),
-                                    _ => Container(),
-                                  },
-                                ],
-                              ),
-                            )
-                          : SizedBox(),
-                    ),
-                    SizedBox(
-                      width: 750,
-                      child: Container(
-                        child: showGradeCard
-                            ? Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    flex: 2,
-                                    child: GradeCard(
-                                      key: UniqueKey(),
-                                      studentId: _studentId,
-                                    ),
+                                )
+                              : SizedBox(),
+                        ),
+                        SizedBox(
+                          width: 750,
+                          child: Container(
+                            child: showGradeCard
+                                ? Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        flex: 2,
+                                        child: GradeCard(
+                                          key: UniqueKey(),
+                                          studentId: _studentId,
+                                        ),
+                                      ),
+                                    ],
+                                  )
+                                : Center(
+                                    child: getLogo(30, .05),
                                   ),
-                                ],
-                              )
-                            : Center(
-                                child: getLogo(30, .05),
-                              ),
-                      ),
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
