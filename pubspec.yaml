@@ -32,7 +32,8 @@ dependencies:
     sdk: flutter
 
   sqflite: ^2.0.0+4
-  path: ^1.8.3
+  path: ^1.8.0
+
   sqflite_common_ffi: ^2.1.0
   bitsdojo_window: ^0.1.2+1
   stroke_text: any
