@@ -91,8 +91,8 @@ class _DataEntryPageState extends State<DataEntryPage> {
     // Insert data to the database
 
     if (widget.metadata.tableName == 'class_table') {
-      var check1 = 0;
-      var check2 = 0;
+      var check1 = -1;
+      var check2 = -1;
       // prepare data for class table
       var subjectId = await dbHelper.getMaxId('subject_table');
       for (var row in data) {
@@ -114,7 +114,7 @@ class _DataEntryPageState extends State<DataEntryPage> {
           subjectId++;
         }
       }
-      if (check1 == 0 && check2 == 0) {
+      if (check1 == -1 && check2 == -1) {
         insertionSuccess = 0;
       } else {
         insertionSuccess = 1;
@@ -141,10 +141,10 @@ class _DataEntryPageState extends State<DataEntryPage> {
           'parent_phone': row['Parent Phone']!,
           'school_name': row['School Name']!,
         };
-        var check = 0;
+        var check = -1;
         check = await dbHelper.insertToTable('student_table', studentData);
 
-        if (check == 0) {
+        if (check == -1) {
           insertionSuccess = 0;
         } else {
           insertionSuccess = 1;
@@ -167,13 +167,13 @@ class _DataEntryPageState extends State<DataEntryPage> {
           backgroundColor: Colors.green,
         ),
       );
-    }
 
-    setState(() {
-      rowTextEditingControllers.clear();
-      focusNodes.clear();
-      _addNewRow();
-    });
+      setState(() {
+        rowTextEditingControllers.clear();
+        focusNodes.clear();
+        _addNewRow();
+      });
+    }
   }
 
   void _handleKeyEvent(FocusNode currentFocus, FocusNode? nextFocus) {

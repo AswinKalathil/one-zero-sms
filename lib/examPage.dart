@@ -546,11 +546,32 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Text(
-                          DateFormat('yyyy-MM-dd – kk:mm').format(
-                                  DateTime.parse(_testHistory[index]
-                                          ['test_date']
-                                      .replaceAll(' ', 'T'))) ??
-                              "--/--/--",
+                          _testHistory[index]['test_date'] != null
+                              ? (() {
+                                  final testDate =
+                                      _testHistory[index]['test_date'];
+                                  if (testDate is DateTime) {
+                                    // If it's already a DateTime, format it directly
+                                    return DateFormat('yyyy-MM-dd – kk:mm')
+                                        .format(testDate);
+                                  } else if (testDate is String) {
+                                    // If it's a String, replace spaces and parse
+                                    try {
+                                      return DateFormat('yyyy-MM-dd – kk:mm')
+                                          .format(
+                                        DateTime.parse(
+                                            testDate.replaceAll(' ', 'T')),
+                                      );
+                                    } catch (e) {
+                                      // Handle parsing error
+                                      return "--/--/--"; // Return a default value on error
+                                    }
+                                  } else {
+                                    // Handle unexpected types
+                                    return "--/--/--"; // Return a default value
+                                  }
+                                }())
+                              : "--/--/--", // Handle null case
                           style: TextStyle(
                             fontSize: 10,
                           ),
@@ -640,7 +661,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
         'test_date': newTest['date'],
       };
       print(test);
-      if (await _dbHelper.insertToTable('test_table', test) != 0) {
+      if (await _dbHelper.insertToTable('test_table', test) != -1) {
         synchTestHistory();
         _studentList =
             await _dbHelper.getStudentIdsAndNamesByTestId(test['id']);

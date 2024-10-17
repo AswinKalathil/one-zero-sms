@@ -610,9 +610,22 @@ class _GradeCardState extends State<GradeCard> {
       int? maxMark = test['max_mark'] is int ? test['max_mark'] : null;
 
       // Handle test_date
-      DateTime? testDate = test['test_date'] != null
-          ? DateTime.tryParse(test['test_date'] as String)
-          : null;
+      DateTime? testDate;
+
+      if (test['test_date'] != null) {
+        // Check if the test_date is already a DateTime
+        if (test['test_date'] is DateTime) {
+          testDate = test['test_date']
+              as DateTime; // Directly assign if it's already a DateTime
+        } else if (test['test_date'] is String) {
+          // If it's a String, parse it to DateTime
+          testDate = DateTime.tryParse(test['test_date'] as String);
+        } else {
+          // Handle unexpected types
+          print(
+              'Unexpected type for test_date: ${test['test_date'].runtimeType}');
+        }
+      }
 
       // Mark the subject as processed
       subjectsSet.add(subject);

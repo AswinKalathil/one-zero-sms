@@ -11,47 +11,28 @@ class DatabaseHelper {
 
   DatabaseHelper._internal();
 
-  // Ensure only one connection is created during the app's lifetime
   Future<MySqlConnection> get connection async {
-    if (_connection != null) {
-      try {
-        // Try to execute a simple query to check if the connection is still valid
-        await _connection!.query('SELECT 1');
-        return _connection!;
-      } catch (e) {
-        // If an error occurs, reinitialize the connection
-        print('Connection is closed or invalid, reinitializing: $e');
-      }
-    }
+    if (_connection != null) return _connection!;
 
-    // Initialize the connection if it doesn't exist or is invalid
     _connection = await _initDatabase();
     return _connection!;
   }
 
-  // Initialize the database connection (called only once)
   Future<MySqlConnection> _initDatabase() async {
     var settings = ConnectionSettings(
       host: 'localhost', // Update with your host
       port: 3306, // Default MySQL port
-      user: 'root', // Update with your MySQL username
-      password: '123', // Update with your MySQL password
-      db: 'test1', // Update with your MySQL database name
-      timeout:
-          Duration(seconds: 1), // Connection timeout (default is 30 seconds)
+      user: 'your_username', // Update with your MySQL username
+      password: 'your_password', // Update with your MySQL password
+      db: 'your_database_name', // Update with your MySQL database name
     );
 
-    try {
-      MySqlConnection conn = await MySqlConnection.connect(settings);
-      print('Database connection established.');
-      return conn;
-    } catch (e) {
-      print('Error establishing database connection: $e');
-      rethrow;
-    }
+    return await MySqlConnection.connect(settings);
   }
 
-  String _academicYear = "2023-2024";
+  String _academicYear = DateTime.now().year.toString() +
+      "-" +
+      (DateTime.now().year + 1).toString().substring(2);
 
   void setAcademicYear(String academicYear) {
     _academicYear = academicYear;
@@ -63,87 +44,30 @@ class DatabaseHelper {
     // Other table creation queries can be executed here
   }
 
-  // Future<int> insertToTable(
-  //     String tableName, Map<String, dynamic> values) async {
-  //   final conn = await connection;
-  //   try {
-  //     var result = await conn.query('INSERT INTO $tableName ?', [values]);
-  //     return result.insertId ?? -1; // returns the ID of the inserted row
-  //   } catch (e) {
-  //     print("Error occurred while inserting data: $e");
-  //     return 0; // Return 0 or an error code if insertion fails
-  //   }
-  // }
-
-  Future<int> insertToTable(
+  Future<int?> insertToTable(
       String tableName, Map<String, dynamic> values) async {
     final conn = await connection;
     try {
-      // Construct the columns and values from the `values` map
-      String columns = values.keys.join(', ');
-      String placeholders = values.keys.map((_) => '?').join(', ');
-
-      // Prepare the query string with placeholders for the values
-      String query = 'INSERT INTO $tableName ($columns) VALUES ($placeholders)';
-
-      // Execute the query with the actual values
-      var result = await conn.query(query, values.values.toList());
-      if (result.insertId != null) {
-        // print("inserted id: ${result.insertId}");
-        return 1;
-      } else {
-        return -1;
-      }
+      var result = await conn.query('INSERT INTO $tableName SET ?', [values]);
+      return result.insertId; // returns the ID of the inserted row
     } catch (e) {
       print("Error occurred while inserting data: $e");
-      return -1; // Return 0 or an error code if insertion fails
+      return 0; // Return 0 or an error code if insertion fails
     }
   }
 
-//mysql tested : not
   Future<List<String>> getAcademicYears() async {
     final conn = await connection;
     try {
       var results =
-          await conn.query('SELECT DISTINCT academic_year FROM class_table');
-
-      // Convert each value to a String using toString() to avoid type issues
-      List<String> years =
-          results.map((row) => row['academic_year'].toString()).toList();
-      print(results);
-
-      _academicYear = years.isNotEmpty ? years.last : '';
-      print("Academic years: $years");
-
+          await conn.query('SELECT DISTINCT academic_year FROM class_table;');
+      List<String> years = results.map((row) => row[0] as String).toList();
+      print(years);
       return years;
-      // return ["2023-2024"];
     } catch (e) {
       print("Error occurred while fetching academic years: $e");
       return [];
     }
-  }
-
-//mysql tested :  OK
-
-  Future<List<Map<String, dynamic>>> getClasses(String tableName) async {
-    final conn = await connection;
-    String query = 'SELECT * FROM $tableName WHERE academic_year = ?';
-
-    // print("getClasses  : $query $_academicYear");
-    var results = await conn.query(
-      query,
-      [_academicYear],
-    );
-
-    // print("getClasses result2: $result2");
-    return results.map((row) {
-      return {
-        'id': row[0],
-        'class_name': row[1],
-        'academic_year': row[2],
-        'section': row[3],
-      };
-    }).toList();
   }
 
   Future<Map<String, dynamic>> getTestDetails(int testId) async {
@@ -182,6 +106,23 @@ class DatabaseHelper {
       print("Error occurred while fetching stream names: $e");
       return [];
     }
+  }
+
+  Future<List<Map<String, dynamic>>> getClasses(String tableName) async {
+    final conn = await connection;
+
+    var results = await conn.query(
+      'SELECT * FROM $tableName WHERE academic_year = ?',
+      [_academicYear],
+    );
+
+    return results.map((row) {
+      return {
+        'column1': row[0], // replace 'column1' with actual column names
+        'column2': row[1],
+        // Add other columns here
+      };
+    }).toList();
   }
 
   Future<List<Map<String, dynamic>>> getStudentIdsAndNamesByTestId(
@@ -845,91 +786,155 @@ class DatabaseHelper {
   }
 
   Future<int> insertDynamicData(
-    List<Map<String, dynamic>> classDataList,
-    List<Map<String, dynamic>> subjectDataList,
-    List<Map<String, dynamic>> streamDataList,
-    List<Map<String, dynamic>> streamSubjectDataList,
-  ) async {
-    MySqlConnection? conn;
+      List<Map<String, dynamic>> classDataList,
+      List<Map<String, dynamic>> subjectDataList,
+      List<Map<String, dynamic>> streamDataList,
+      List<Map<String, dynamic>> streamSubjectDataList) async {
     try {
-      conn = await connection;
-      await conn.query('START TRANSACTION;');
+      final conn = await connection;
 
-      Map<int, int> classIdMap = {};
-      Map<int, int> subjectIdMap = {};
-      Map<int, int> streamIdMap = {};
+      await conn.transaction((txn) async {
+        Map<int, int> classIdMap = {}; // Maps class_id to generated id
+        Map<int, int> subjectIdMap = {}; // Maps subject_id to generated id
+        Map<int, int> streamIdMap = {}; // Maps stream_id to generated id
 
-      // Insert classes and store their IDs
-      for (var classData in classDataList) {
-        var result = await conn.query(
-          'INSERT INTO class_table (class_name, academic_year, section) VALUES (?, ?, ?)',
-          [
-            classData['class_name'],
-            // classData['academic_year'],
-            _academicYear,
-            classData['section']
-          ],
-        );
-        int classId = result.insertId!;
-        classIdMap[classData['class_id']] = classId;
-      }
+        // Insert classes and store their IDs
+        for (var classData in classDataList) {
+          int classId = (await getMaxIdTX(txn, 'class_table')) + 1;
+          await txn.query(
+              'INSERT INTO class_table (id, class_name, academic_year, section) VALUES (?, ?, ?, ?)',
+              [
+                classId,
+                classData['class_name'],
+                classData['academic_year'],
+                classData['section']
+              ]);
+          classIdMap[classData['class_id']] = classId;
+        }
 
-      // Insert subjects and store their IDs
-      for (var subjectData in subjectDataList) {
-        int classId = classIdMap[subjectData['class_id']] ?? 0;
-        var result = await conn.query(
-          'INSERT INTO subject_table (subject_name, class_id) VALUES (?, ?)',
-          [subjectData['subject_name'], classId],
-        );
-        int subjectId = result.insertId!;
-        subjectIdMap[subjectData['subject_id']] = subjectId;
-      }
+        // Insert subjects and store their IDs
+        for (var subjectData in subjectDataList) {
+          int classId = classIdMap[subjectData['class_id']] ?? 0;
+          int subjectId = (await getMaxIdTX(txn, 'subject_table')) + 1;
+          await txn.query(
+              'INSERT INTO subject_table (id, subject_name, class_id) VALUES (?, ?, ?)',
+              [
+                subjectId,
+                subjectData['subject_name'],
+                classId,
+              ]);
+          subjectIdMap[subjectData['subject_id']] = subjectId;
+        }
 
-      // Insert streams and store their IDs
-      for (var streamData in streamDataList) {
-        int classId = classIdMap[streamData['class_id']] ?? 0;
-        var result = await conn.query(
-          'INSERT INTO stream_table (stream_name, class_id) VALUES (?, ?)',
-          [streamData['stream_name'], classId],
-        );
-        int streamId = result.insertId!;
-        streamIdMap[streamData['stream_id']] = streamId;
-      }
+        // Insert streams and store their IDs
+        for (var streamData in streamDataList) {
+          int classId = classIdMap[streamData['class_id']] ?? 0;
+          int streamId = (await getMaxIdTX(txn, 'stream_table')) + 1;
+          await txn.query(
+              'INSERT INTO stream_table (id, stream_name, class_id) VALUES (?, ?, ?)',
+              [
+                streamId,
+                streamData['stream_name'],
+                classId,
+              ]);
+          streamIdMap[streamData['stream_id']] = streamId;
+        }
 
-      // Insert stream-subject mappings
-      for (var streamSubjectData in streamSubjectDataList) {
-        int streamId = streamIdMap[streamSubjectData['stream_id']] ?? 0;
-        int subjectId = subjectIdMap[streamSubjectData['subject_id']] ?? 0;
-        await conn.query(
-          'INSERT INTO stream_subjects_table (stream_id, subject_id) VALUES (?, ?)',
-          [streamId, subjectId],
-        );
-      }
+        // Insert stream-subject mappings
+        for (var streamSubjectData in streamSubjectDataList) {
+          int streamId = streamIdMap[streamSubjectData['stream_id']] ?? 0;
+          int subjectId = subjectIdMap[streamSubjectData['subject_id']] ?? 0;
+          int streamSubjectId =
+              (await getMaxIdTX(txn, 'stream_subjects_table')) + 1;
+          await txn.query(
+              'INSERT INTO stream_subjects_table (id, stream_id, subject_id) VALUES (?, ?, ?)',
+              [
+                streamSubjectId,
+                streamId,
+                subjectId,
+              ]);
+        }
+      });
 
-      await conn.query('COMMIT;');
       print("Data successfully inserted into all tables.");
       return 1;
     } catch (e) {
-      if (conn != null) {
-        await conn.query('ROLLBACK;');
-      }
       print("Transaction failed: $e");
       return 0;
-    } finally {
-      if (conn != null) {
-        await conn.close();
-      }
     }
   }
 
   Future<int> startNewYear(String academicYear) async {
-    _academicYear = academicYear;
-    return await insertDynamicData(
-      classDataList,
-      subjectDataList,
-      streamDataList,
-      streamSubjectDataList,
-    );
+    var conn = await connection;
+    try {
+      await conn.transaction((txn) async {
+        List<Map<String, dynamic>> classDataList = [
+          // ... (same class data as before)
+        ];
+
+        List<Map<String, dynamic>> subjectDataList = [
+          // ... (same subject data as before)
+        ];
+
+        List<Map<String, dynamic>> streamDataList = [
+          // ... (same stream data as before)
+        ];
+
+        List<Map<String, dynamic>> streamSubjectDataList = [
+          // ... (same stream subject data as before)
+        ];
+
+        // Insert class data
+        for (var classData in classDataList) {
+          await txn.query(
+              'INSERT INTO class_table (class_id, class_name, academic_year, section) VALUES (?, ?, ?, ?)',
+              [
+                classData['class_id'],
+                classData['class_name'],
+                academicYear,
+                classData['section']
+              ]);
+        }
+
+        // Insert subject data
+        for (var subjectData in subjectDataList) {
+          await txn.query(
+              'INSERT INTO subject_table (subject_id, subject_name, class_id) VALUES (?, ?, ?)',
+              [
+                subjectData['subject_id'],
+                subjectData['subject_name'],
+                subjectData['class_id']
+              ]);
+        }
+
+        // Insert stream data
+        for (var streamData in streamDataList) {
+          await txn.query(
+              'INSERT INTO stream_table (stream_id, stream_name, class_id) VALUES (?, ?, ?)',
+              [
+                streamData['stream_id'],
+                streamData['stream_name'],
+                streamData['class_id']
+              ]);
+        }
+
+        // Insert stream-subject mapping
+        for (var streamSubjectData in streamSubjectDataList) {
+          await txn.query(
+              'INSERT INTO stream_subjects_table (stream_id, subject_id) VALUES (?, ?)',
+              [
+                streamSubjectData['stream_id'],
+                streamSubjectData['subject_id']
+              ]);
+        }
+      });
+      return 1; // Return success
+    } catch (e) {
+      print('Error during transaction: $e');
+      return 0; // Return failure
+    } finally {
+      await conn.close();
+    }
   }
 
   Future<List<Map<String, dynamic>>> getTestHistory(int class_id) async {
@@ -972,7 +977,7 @@ class DatabaseHelper {
       print('Error retrieving test history: $e');
       return [];
     } finally {
-      // await conn.close();
+      await conn.close();
     }
   }
 
@@ -986,7 +991,7 @@ class DatabaseHelper {
       print('Error deleting from table: $e');
       return 0; // Return failure
     } finally {
-      // await conn.close();
+      await conn.close();
     }
   }
 }

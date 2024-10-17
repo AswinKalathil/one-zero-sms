@@ -7,15 +7,15 @@ import 'package:one_zero/examPage.dart';
 import 'package:one_zero/results_page.dart';
 import 'package:one_zero/dataEntry.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+// import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:stroke_text/stroke_text.dart';
 
 void main() async {
   // Initialize the FFI
-  sqfliteFfiInit();
+  // sqfliteFfiInit();
 
-  // Set the database factory
-  databaseFactory = databaseFactoryFfi;
+  // // Set the database factory
+  // databaseFactory = databaseFactoryFfi;
 
   runApp(MyApp());
 }
@@ -110,7 +110,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _loadClasess() async {
-    _academicYears = await _dbHelper.getAcadamicYears();
+    _academicYears = await _dbHelper.getAcademicYears();
 
     if (_academicYears.isEmpty) {
       return;
@@ -174,7 +174,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
                     _selectdAcadamicYear =
                         textFieldController.text; // Set new year as selected
-                    _dbHelper.setAcadamicYear(_selectdAcadamicYear);
+                    _dbHelper.setAcademicYear(_selectdAcadamicYear);
                   });
                   _loadClasess();
 
@@ -266,7 +266,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       onChanged: (value) {
                         setState(() {
                           _selectdAcadamicYear = value!;
-                          _dbHelper.setAcadamicYear(_selectdAcadamicYear);
+                          _dbHelper.setAcademicYear(_selectdAcadamicYear);
 
                           _loadClasess();
                           _pageNumber = 0;
