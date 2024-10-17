@@ -232,6 +232,12 @@ class _MyHomePageState extends State<MyHomePage> {
           backgroundColor: Theme.of(context).primaryColor,
           actions: switch (_pageNumber) {
             0 => [
+                IconButton(
+                  icon: Icon(Icons.refresh_rounded, color: Colors.white),
+                  onPressed: () {
+                    setState(() {});
+                  },
+                ),
                 Container(
                     color: Theme.of(context).primaryColor,
                     padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -284,6 +290,12 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ],
             1 => [
+                IconButton(
+                  icon: Icon(Icons.refresh_rounded, color: Colors.white),
+                  onPressed: () {
+                    setState(() {});
+                  },
+                ),
                 SizedBox(
                   width: 200,
                   height: 70,

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:one_zero/constants.dart';
 import 'package:one_zero/custom-widgets.dart';
 import 'package:one_zero/database_helper.dart';
+import 'package:one_zero/pieChart.dart';
 import 'package:one_zero/testAnalytics.dart';
 
 class ClassDetailPage extends StatefulWidget {
@@ -253,7 +255,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                     height: 600,
                     width: 1350,
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
                         SizedBox(
                           width: 550,
@@ -319,10 +321,11 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                     children: [
                                       Expanded(
                                         flex: 2,
-                                        child: GradeCard(
-                                          key: UniqueKey(),
-                                          studentId: _studentId,
-                                        ),
+                                        child: profileCard(),
+                                        // child: GradeCard(
+                                        //   key: UniqueKey(),
+                                        //   studentId: _studentId,
+                                        // ),
                                       ),
                                     ],
                                   )
@@ -339,8 +342,20 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
             ),
             Divider(),
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [],
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: MediaQuery.of(context).size.width * .4,
+                  height: MediaQuery.of(context).size.width * .5,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: GradeCard(
+                      key: UniqueKey(),
+                      studentId: _studentId,
+                    ),
+                  ),
+                ),
+              ],
             ),
             Divider(),
             _testResults.isNotEmpty && _allSubjects.isNotEmpty
@@ -493,6 +508,18 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       ),
     );
   }
+
+  Widget profileCard() {
+    return Container(
+      width: 500,
+      height: 500,
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(8.0),
+        color: Theme.of(context).cardColor,
+      ),
+    );
+  }
 }
 
 class GradeCard extends StatefulWidget {
@@ -511,6 +538,7 @@ class _GradeCardState extends State<GradeCard> {
   String photoUrl = '';
   String schoolName = '';
   List<Map<String, dynamic>> subjects = [];
+  List<Map<String, dynamic>> _radarData = [];
 
   @override
   void initState() {
@@ -543,6 +571,29 @@ class _GradeCardState extends State<GradeCard> {
     }
 
     if (results.isNotEmpty) {
+      // Using a standard for loop to handle async operations correctly
+      for (var element in results) {
+        int marks = element['score'] ?? 0;
+        int maxMarks = element['max_mark'] ?? 0;
+
+        // Fetch the average score for the current subject
+        var avg = await dbHelper.getStudentSubjectAverage(
+            widget.studentId, element['subject_id'] as int);
+
+        // Ensure avg is a double and handle null values
+        double averageScore = (avg is double)
+            ? avg
+            : 0.0; // Default to 0.0 if avg is null or not a double
+        double currentPercentage = (marks * 100 / maxMarks);
+        // Update _radarData with the new average score
+        _radarData.add({
+          'subject': element['subject_name'],
+          'marks': [averageScore, currentPercentage],
+        });
+      }
+
+// Once the loop is done, you can safely print the data
+
       setState(() {
         subjects = results.map((row) {
           final subjectName = row['subject_name'] as String? ?? '-';
@@ -564,9 +615,7 @@ class _GradeCardState extends State<GradeCard> {
           DateTime? date =
               DateTime.tryParse(row['test_date']?.toString() ?? '');
 
-          print(row['test_date']);
-
-// Check if the date is not null
+          // Check if the date is not null
           if (date != null) {
             // Format the date as 'dd-MM-yyyy'
             dateFormatted =
@@ -587,6 +636,10 @@ class _GradeCardState extends State<GradeCard> {
         }).toList();
       });
     }
+
+    setState(() {
+      _radarData;
+    });
   }
 
   List<Map<String, dynamic>> getLatestScores(List<Map<String, dynamic>> tests) {
@@ -595,11 +648,7 @@ class _GradeCardState extends State<GradeCard> {
 
     for (var test in tests) {
       String subject = test['subject_name'];
-      String studentName = test['student_name'];
-      String photoPath = test['photo_path'];
-      String gender = test['gender'];
-      String className = test['class_name'];
-      String academicYear = test['academic_year'];
+      int subjectId = test['subject_id'] ?? -1;
       int testId = test['test_id'] ?? 0;
       // Handle score as an int, either from int or parsed from string
       int? score = test['score'] is int
@@ -639,12 +688,8 @@ class _GradeCardState extends State<GradeCard> {
             existingEntry['test_date'] == null ||
             testId > existingEntry['test_id']) {
           latestScores[subject] = {
-            'student_name': studentName,
-            'photo_path': photoPath,
-            'gender': gender,
-            'class_name': className,
-            'academic_year': academicYear,
             'subject_name': subject,
+            'subject_id': subjectId,
             'score': score, // Keep score as int
             'max_mark': maxMark, // Keep max_mark as int or null
             'test_date': testDate.toIso8601String(),
@@ -658,12 +703,9 @@ class _GradeCardState extends State<GradeCard> {
     for (String subject in subjectsSet) {
       if (!latestScores.containsKey(subject)) {
         latestScores[subject] = {
-          'student_name': 'N/A', // Placeholder for no test conducted
-          'photo_path': 'N/A', // Placeholder for no test conducted
-          'gender': 'N/A', // Placeholder for no test conducted
-          'class_name': 'N/A', // Placeholder for no test conducted
-          'academic_year': 'N/A', // Placeholder for no test conducted
+          // Placeholder for no test conducted
           'subject_name': subject,
+          'subject_id': -1, // Indicate no test conducted
           'score': '-', // Indicate no test conducted
           'max_mark': '-', // Indicate no test conducted
           'test_date': null // No date available
@@ -685,6 +727,7 @@ class _GradeCardState extends State<GradeCard> {
     // print('Score: $score, Max Mark: $maxMark');
 
     double percentage = (score / maxMark) * 100;
+
     if (percentage >= 90) return 'A+';
     if (percentage >= 80) return 'A';
     if (percentage >= 70) return 'B+';
@@ -694,12 +737,51 @@ class _GradeCardState extends State<GradeCard> {
     return 'F';
   }
 
+  List<Map<String, dynamic>> subjectsData = [
+    {
+      'subject': 'Maths',
+      'marks': [80, 30]
+    },
+    {
+      'subject': 'Science',
+      'marks': [60, 45]
+    },
+    {
+      'subject': 'English',
+      'marks': [70, 60]
+    },
+    {
+      'subject': 'History',
+      'marks': [90, 53]
+    },
+    {
+      'subject': 'Geography',
+      'marks': [85, 50]
+    },
+    // {
+    //   'subject': 'Computer',
+    //   'marks': [75, 46]
+    // },
+    {
+      'subject': 'Maths',
+      'marks': [80, 30]
+    },
+    {
+      'subject': 'Science',
+      'marks': [60, 45]
+    },
+    {
+      'subject': 'English',
+      'marks': [70, 60]
+    },
+  ];
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       child: AspectRatio(
-        aspectRatio: 210 / 297,
-        // aspectRatio: 297 / 210, // A4 aspect ratio (210mm x 297mm)
+        aspectRatio: 1, // A4 aspect ratio (210mm x 297mm)
+        // aspectRatio: 297 / 210,
         child: Container(
           padding: const EdgeInsets.all(30.0),
           decoration: BoxDecoration(
@@ -709,6 +791,7 @@ class _GradeCardState extends State<GradeCard> {
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -761,7 +844,8 @@ class _GradeCardState extends State<GradeCard> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8.0),
-              Expanded(
+              SizedBox(
+                height: 50 + subjects.length * 30.0,
                 child: Table(
                   border: TableBorder.all(color: Colors.grey),
                   columnWidths: const {
@@ -860,6 +944,44 @@ class _GradeCardState extends State<GradeCard> {
                   ],
                 ),
               ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  Container(
+                    width: 15,
+                    height: 15,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.green, // Assign color
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text('Average'),
+                  const SizedBox(width: 20),
+                  Container(
+                    width: 15,
+                    height: 15,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.blue, // Assign color
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text('Current'),
+                ],
+              ),
+              Container(
+                height: MediaQuery.of(context).size.width * .14,
+                width: MediaQuery.of(context).size.width * .4,
+                child: Center(
+                  child: _radarData.length > 0
+                      ? RadarChartWidget(
+                          subjectsData: _radarData,
+                        )
+                      : const SizedBox(),
+                ),
+              ),
+              Spacer(),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [

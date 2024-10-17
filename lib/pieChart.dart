@@ -1,168 +1,78 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_radar_chart/flutter_radar_chart.dart';
+import 'dart:math';
 
-// // Sample subjects data
-// List<Map<String, dynamic>> subjectsData = [
-//   {
-//     "subject": "Mathematics",
-//     "maxMarks": 80,
-//     "marks": 76,
-//     "grade": "A+",
-//     "date": "30-09-2024"
-//   },
-//   {
-//     "subject": "Physics",
-//     "maxMarks": 100,
-//     "marks": 35,
-//     "grade": "F",
-//     "date": "30-09-2024"
-//   },
-//   {
-//     "subject": "Chemistry",
-//     "maxMarks": 50,
-//     "marks": 26,
-//     "grade": "C+",
-//     "date": "30-09-2024"
-//   },
-//   {
-//     "subject": "Botany",
-//     "maxMarks": 30,
-//     "marks": 26,
-//     "grade": "A",
-//     "date": "30-09-2024"
-//   },
-//   {
-//     "subject": "Zoology",
-//     "maxMarks": 100,
-//     "marks": 83,
-//     "grade": "A",
-//     "date": "30-09-2024"
-//   }
-// ];
+class RadarChartWidget extends StatelessWidget {
+  // Ticks for the chart
+  final List<Map<String, dynamic>> subjectsData;
+  const RadarChartWidget({
+    Key? key,
+    required this.subjectsData,
+  }) : super(key: key);
 
-class AppColors {
-  static const Color contentColorBlue = Color(0xFF00BFFF);
-  static const Color contentColorYellow = Color(0xFFFFD700);
-  static const Color contentColorPurple = Color(0xFF800080);
-  static const Color contentColorGreen = Color(0xFF008000);
-  static const Color mainTextColor1 = Colors.white;
-}
+  Map<String, dynamic> convertSubjectsData(List<Map<String, dynamic>> data) {
+    print(data);
+    // Extract features and marks
+    List<String> features =
+        subjectsData.map((subject) => subject['subject'] as String).toList();
 
-class PieChartSample2 extends StatefulWidget {
-  List<Map<String, dynamic>> subjectsData;
-  PieChartSample2({required this.subjectsData, super.key});
+    // Create a valueData list with one entry for each subject
+    List<List<double>> valueData = [];
 
-  @override
-  State<StatefulWidget> createState() => PieChart2State();
-}
-
-class PieChart2State extends State<PieChartSample2> {
-  int touchedIndex = -1;
+    // Assuming each subject has the same number of marks
+    for (int i = 0; i < subjectsData[0]['marks'].length; i++) {
+      List<double> marksForEntry = subjectsData
+          .map((subject) => (subject['marks'][i] as num).toDouble())
+          .toList();
+      valueData.add(marksForEntry);
+    }
+    print(valueData);
+    return {
+      'features': features,
+      'valueData': valueData,
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: 1.3,
-      child: Row(
-        children: <Widget>[
-          const SizedBox(height: 18),
-          Expanded(
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: PieChart(
-                PieChartData(
-                  pieTouchData: PieTouchData(
-                    touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                      setState(() {
-                        if (!event.isInterestedForInteractions ||
-                            pieTouchResponse == null ||
-                            pieTouchResponse.touchedSection == null) {
-                          touchedIndex = -1;
-                          return;
-                        }
-                        touchedIndex = pieTouchResponse
-                            .touchedSection!.touchedSectionIndex;
-                      });
-                    },
-                  ),
-                  borderData: FlBorderData(show: false),
-                  sectionsSpace: 0,
-                  centerSpaceRadius: 40,
-                  sections: showingSections(),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 28),
-          _buildLegend(),
-          const SizedBox(width: 28),
-        ],
-      ),
-    );
-  }
+    Map<String, dynamic> data = convertSubjectsData(subjectsData);
 
-  List<PieChartSectionData> showingSections() {
-    double totalMarks =
-        widget.subjectsData.fold(0, (sum, item) => sum + item['marks']);
+    List<int> ticks = []; // Ticks for the chart
 
-    return List.generate(widget.subjectsData.length, (i) {
-      final isTouched = i == touchedIndex;
-      final fontSize = isTouched ? 25.0 : 16.0;
-      final radius = isTouched ? 60.0 : 50.0;
-      const shadows = [Shadow(color: Colors.black, blurRadius: 2)];
-
-      final subject = widget.subjectsData[i];
-      final double percentage = (subject['marks'] / totalMarks) * 100;
-
-      return PieChartSectionData(
-        color: _getColorForSubject(subject['subject']),
-        value: percentage,
-        title: '${percentage.toStringAsFixed(1)}%',
-        radius: radius,
-        titleStyle: TextStyle(
-          fontSize: fontSize,
-          fontWeight: FontWeight.bold,
-          color: AppColors.mainTextColor1,
-          shadows: shadows,
-        ),
-      );
-    });
-  }
-
-  Color _getColorForSubject(String subject) {
-    switch (subject) {
-      case 'Mathematics':
-        return AppColors.contentColorBlue;
-      case 'Physics':
-        return AppColors.contentColorYellow;
-      case 'Chemistry':
-        return AppColors.contentColorPurple;
-      case 'Botany':
-        return AppColors.contentColorGreen;
-      case 'Zoology':
-        return Colors.orange; // Custom color for Zoology
+    switch (data['features'].length) {
+      case 3:
+        ticks = [50, 100];
+        break;
+      case 5:
+        ticks = [25, 50, 75, 100];
+        break;
+      case 7:
+        ticks = [25, 50, 75, 100];
+        break;
       default:
-        return Colors.grey;
+        ticks = [50, 100];
     }
-  }
 
-  Widget _buildLegend() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: widget.subjectsData.map((subject) {
-        return Row(
-          children: [
-            Container(
-              width: 16,
-              height: 16,
-              color: _getColorForSubject(subject['subject']),
-            ),
-            const SizedBox(width: 8),
-            Text(subject['subject']),
-          ],
-        );
-      }).toList(),
+    return Container(
+      color: Colors.white,
+      child: Center(
+        child: RadarChart(
+          ticks: ticks,
+          features: data['features'],
+          data: data['valueData'],
+          outlineColor: Colors.grey,
+          sides: data['features'].length, // Number of sides in the chart
+          featuresTextStyle: TextStyle(
+            fontSize: 15,
+            color: Colors.grey.shade700,
+          ),
+          key: UniqueKey(),
+          ticksTextStyle: TextStyle(
+            fontSize: 10,
+            color: Colors.grey.shade700,
+          ),
+        ),
+      ),
     );
   }
 }

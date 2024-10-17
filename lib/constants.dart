@@ -3,6 +3,24 @@ import 'package:flutter/material.dart';
 import 'package:one_zero/database_helper.dart';
 // import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:stroke_text/stroke_text.dart';
+import 'package:mysql1/mysql1.dart';
+
+ConnectionSettings dbSettingLocal = ConnectionSettings(
+  host: 'localhost', // Update with your host
+  port: 3306, // Default MySQL port
+  user: 'root', // Update with your MySQL username
+  password: '123', // Update with your MySQL password
+  db: 'test1', // Update with your MySQL database name
+  timeout: Duration(seconds: 1), // Connection timeout (default is 30 seconds)
+);
+ConnectionSettings dbSettingRemote = ConnectionSettings(
+  host: 'sql.freedb.tech', // Update with your host
+  port: 3306, // Default MySQL port
+  user: 'freedb_tester_main', // Update with your MySQL username
+  password: r'$whBv@c2Z8Trd@#', // Update with your MySQL password
+  db: 'freedb_one_zero_test_remote_db', // Update with your MySQL database name
+  timeout: Duration(seconds: 1), // Connection timeout (default is 30 seconds)
+);
 
 final List<Color> cardBackgroundColors = [
   Color.fromARGB(255, 176, 213, 226), // Light Blue

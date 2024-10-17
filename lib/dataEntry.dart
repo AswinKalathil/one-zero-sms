@@ -427,6 +427,13 @@ class _DataEntryPageState extends State<DataEntryPage> {
                             );
                           } else if (header == 'Stream Name') {
                             int cellIndex = headers.indexOf(header);
+                            if (rowTextEditingControllers[rowIndex][header]!
+                                    .text
+                                    .isEmpty &&
+                                STREAM_NAMES.length > 0) {
+                              rowTextEditingControllers[rowIndex][header]!
+                                  .text = STREAM_NAMES[0];
+                            }
 
                             return DataCell(
                               Container(

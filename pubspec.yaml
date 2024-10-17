@@ -48,6 +48,7 @@ dependencies:
   flutter_typeahead: ^5.0.0
   syncfusion_flutter_charts: ^27.1.50
   fl_chart: ^0.69.0
+  flutter_radar_chart: ^0.2.1
 
 dev_dependencies:
   flutter_test:

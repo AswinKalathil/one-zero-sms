@@ -31,15 +31,7 @@ class DatabaseHelper {
 
   // Initialize the database connection (called only once)
   Future<MySqlConnection> _initDatabase() async {
-    var settings = ConnectionSettings(
-      host: 'localhost', // Update with your host
-      port: 3306, // Default MySQL port
-      user: 'root', // Update with your MySQL username
-      password: '123', // Update with your MySQL password
-      db: 'test1', // Update with your MySQL database name
-      timeout:
-          Duration(seconds: 1), // Connection timeout (default is 30 seconds)
-    );
+    var settings = dbSettingLocal;
 
     try {
       MySqlConnection conn = await MySqlConnection.connect(settings);
@@ -652,21 +644,57 @@ class DatabaseHelper {
     }
   }
 
+  Future<double> getStudentSubjectAverage(int studentId, int subjectId) async {
+    final conn = await connection;
+
+    String query = '''
+ SELECT 
+    COALESCE(ROUND(AVG((ts.score * 100.0) / tt.max_mark), 2), 0) AS average_percentage
+FROM 
+    test_score_table ts
+JOIN 
+    test_table tt ON ts.test_id = tt.id
+WHERE 
+    ts.student_id = ? 
+    AND tt.subject_id = ?
+    AND ts.score IS NOT NULL 
+    AND tt.max_mark IS NOT NULL 
+    AND tt.max_mark > 0; -- Ensure max_mark is greater than zero to avoid division by zero
+
+
+  ''';
+
+    try {
+      // Execute the query and get the result
+      var results = await conn.query(query, [studentId, subjectId]);
+
+      // Check if the result is empty
+      if (results.isEmpty) {
+        throw ArgumentError("No student found with the given ID");
+      }
+
+      return results.first[0] as double;
+    } catch (e) {
+      // Handle any exceptions that occur
+      print("Error occurred while fetching student data: $e");
+      throw Exception(
+          "Failed to retrieve student data. Please try again later.");
+    }
+  }
+
   Future<List<Map<String, dynamic>>> getGradeCard(int studentId) async {
     final conn = await connection;
 
     String query = '''
   SELECT 
-      s.student_name,
-      s.photo_id AS photo_path,
-      s.gender,
-      c.class_name,
-      c.academic_year,
+  
       sub.subject_name,
       COALESCE(ts.score, '-') AS score,
       t.max_mark,
       t.test_date,
-      t.id AS test_id
+      t.id AS test_id,
+      sub.id AS subject_id
+
   FROM 
       student_table s
   LEFT JOIN 
@@ -715,16 +743,12 @@ class DatabaseHelper {
 
       return results
           .map((row) => {
-                'student_name': row[0],
-                'photo_path': row[1],
-                'gender': row[2],
-                'class_name': row[3],
-                'academic_year': row[4],
-                'subject_name': row[5],
-                'score': row[6],
-                'max_mark': row[7],
-                'test_date': row[8],
-                'test_id': row[9],
+                'subject_name': row[0],
+                'score': row[1],
+                'max_mark': row[2],
+                'test_date': row[3],
+                'test_id': row[4],
+                'subject_id': row[5],
               })
           .toList();
     } catch (e) {

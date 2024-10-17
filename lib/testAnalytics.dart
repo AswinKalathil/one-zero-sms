@@ -438,6 +438,12 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                                                             ? null
                                                             : exam.y,
                                                 name: 'Percentage Score',
+                                                markerSettings: MarkerSettings(
+                                                    isVisible: true,
+                                                    width: 4,
+                                                    height: 4,
+                                                    shape:
+                                                        DataMarkerType.circle),
                                                 dataLabelSettings:
                                                     DataLabelSettings(
                                                   isVisible: true,
@@ -519,6 +525,11 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                               width: 3,
                               // Define the style of the line
                               // Dotted line between points
+                              markerSettings: MarkerSettings(
+                                  isVisible: true,
+                                  width: 4,
+                                  height: 4,
+                                  shape: DataMarkerType.circle),
 
                               dataSource: graphListMap[subject],
                               xValueMapper: (ScoreDataPoints exam, _) => exam.x,
