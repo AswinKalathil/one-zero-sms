@@ -104,7 +104,7 @@ class DatabaseHelper {
           results.map((row) => row['academic_year'].toString()).toList();
       print(results);
 
-      _academicYear = years.isNotEmpty ? years.last : '';
+      // _academicYear = years.isNotEmpty ? years.last : '';
       print("Academic years: $years");
 
       return years;

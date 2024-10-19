@@ -102,16 +102,24 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   void initState() {
+    _loadYears();
     _loadClasess();
-    _selectdAcadamicYear =
-        (_academicYears.isNotEmpty ? _academicYears.last : '2024-25')!;
+    print("Academic at masin $_academicYears");
 
     super.initState();
   }
 
-  void _loadClasess() async {
+  void _loadYears() async {
     _academicYears = await _dbHelper.getAcademicYears();
+    _selectdAcadamicYear =
+        (_academicYears.isNotEmpty ? _academicYears.last : '-')!;
+    setState(() {
+      _selectdAcadamicYear;
+      _academicYears;
+    });
+  }
 
+  void _loadClasess() async {
     if (_academicYears.isEmpty) {
       return;
     }

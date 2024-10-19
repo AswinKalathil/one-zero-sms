@@ -351,8 +351,7 @@ class _DataEntryPageState extends State<DataEntryPage> {
                                   onChanged: (value) {
                                     if (value.length == 10) {
                                       // Move to the next focus node if input is valid (10 digits)
-                                      focusNodes[rowIndex][cellIndex + 1]
-                                          .requestFocus();
+                                      focusNodes[rowIndex][cellIndex].unfocus();
                                     }
                                   },
                                   onSubmitted: (value) {
