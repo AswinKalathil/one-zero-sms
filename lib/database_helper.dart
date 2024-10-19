@@ -117,25 +117,44 @@ class DatabaseHelper {
 
 //mysql tested :  OK
 
-  Future<List<Map<String, dynamic>>> getClasses(String tableName) async {
+  Future<List<Map<String, dynamic>>> getClasses(String selected_year) async {
     final conn = await connection;
-    String query = 'SELECT * FROM $tableName WHERE academic_year = ?';
+    String query = 'SELECT * FROM class_table WHERE academic_year = ?';
 
-    // print("getClasses  : $query $_academicYear");
+    // Fetching the classes from the table for the specified academic year
     var results = await conn.query(
       query,
-      [_academicYear],
+      [selected_year],
     );
 
-    // print("getClasses result2: $result2");
-    return results.map((row) {
+    String sQuery =
+        '''SELECT COUNT(*) as count FROM student_table s WHERE s.stream_id IN (SELECT id FROM stream_table st WHERE st.class_id = ? );
+  ''';
+
+    // Map the results and handle asynchronous count fetching for each row
+    var mappedResults = await Future.wait(results.map((row) async {
+      // Fetch student count for the current class
+      var countResult = await conn.query(
+        sQuery,
+        [row[0]], // Assuming row[0] is the class_id
+      );
+
+      // Extract the count from the query result
+      var studentsCount =
+          countResult.first[0]; // Assuming count is in the first column
+      print(studentsCount);
+
+      // Return the mapped data, including studentsCount
       return {
         'id': row[0],
         'class_name': row[1],
         'academic_year': row[2],
         'section': row[3],
+        'studentsCount': studentsCount, // Add the students count
       };
-    }).toList();
+    }).toList());
+
+    return mappedResults;
   }
 
   Future<Map<String, dynamic>> getTestDetails(int testId) async {
@@ -167,7 +186,7 @@ class DatabaseHelper {
     final conn = await connection;
     try {
       var results = await conn.query(
-          'SELECT stream_name FROM stream_table WHERE class_id = ?;',
+          'SELECT stream_name ,id as stream_id FROM stream_table WHERE class_id = ?;',
           [classId]);
       return results.map((row) => row[0] as String).toList();
     } catch (e) {
@@ -727,14 +746,13 @@ WHERE
                 AND latest_test.latest_test_date = t.test_date
   WHERE 
       s.id = ?
-      AND c.academic_year = ?
+     
   ORDER BY 
       sub.id; ''';
 
     try {
       // Execute the query and get the result
-      var results =
-          await conn.query(query, [studentId, studentId, _academicYear]);
+      var results = await conn.query(query, [studentId, studentId]);
 
       // Check if the result is empty
       if (results.isEmpty) {

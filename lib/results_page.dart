@@ -345,8 +345,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 SizedBox(
-                  width: MediaQuery.of(context).size.width * .4,
-                  height: MediaQuery.of(context).size.width * .5,
+                  width: 600,
+                  height: 760,
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: GradeCard(
@@ -573,8 +573,19 @@ class _GradeCardState extends State<GradeCard> {
     if (results.isNotEmpty) {
       // Using a standard for loop to handle async operations correctly
       for (var element in results) {
-        int marks = element['score'] ?? 0;
-        int maxMarks = element['max_mark'] ?? 0;
+        int marks;
+        int maxMarks;
+
+        if (element['score'] == '-') {
+          marks = 0;
+        } else {
+          marks = element['score'] ?? 0;
+        }
+        if (element['max_mark'] == '-') {
+          maxMarks = 0;
+        } else {
+          maxMarks = element['max_mark'] ?? 0;
+        }
 
         // Fetch the average score for the current subject
         var avg = await dbHelper.getStudentSubjectAverage(
@@ -736,45 +747,6 @@ class _GradeCardState extends State<GradeCard> {
     if (percentage >= 40) return 'C';
     return 'F';
   }
-
-  List<Map<String, dynamic>> subjectsData = [
-    {
-      'subject': 'Maths',
-      'marks': [80, 30]
-    },
-    {
-      'subject': 'Science',
-      'marks': [60, 45]
-    },
-    {
-      'subject': 'English',
-      'marks': [70, 60]
-    },
-    {
-      'subject': 'History',
-      'marks': [90, 53]
-    },
-    {
-      'subject': 'Geography',
-      'marks': [85, 50]
-    },
-    // {
-    //   'subject': 'Computer',
-    //   'marks': [75, 46]
-    // },
-    {
-      'subject': 'Maths',
-      'marks': [80, 30]
-    },
-    {
-      'subject': 'Science',
-      'marks': [60, 45]
-    },
-    {
-      'subject': 'English',
-      'marks': [70, 60]
-    },
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -971,8 +943,8 @@ class _GradeCardState extends State<GradeCard> {
                 ],
               ),
               Container(
-                height: MediaQuery.of(context).size.width * .14,
-                width: MediaQuery.of(context).size.width * .4,
+                height: 225,
+                width: 500,
                 child: Center(
                   child: _radarData.length > 0
                       ? RadarChartWidget(

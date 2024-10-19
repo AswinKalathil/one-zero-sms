@@ -123,6 +123,7 @@ class _DataEntryPageState extends State<DataEntryPage> {
       print("Student table data $data");
       for (var row in data) {
         int straemId = await dbHelper.getStreamId(row['Stream Name']!);
+
         if (straemId == 0) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -136,7 +137,7 @@ class _DataEntryPageState extends State<DataEntryPage> {
           'id': row['ID']!,
           'student_name': row['Student Name']!,
           'stream_id': straemId,
-          'photo_id': row['Photo Path']!,
+          'photo_id': '-',
           'gender': (row['Gender']!),
           'parent_phone': row['Parent Phone']!,
           'school_name': row['School Name']!,

@@ -148,7 +148,6 @@ Map<String, InputTableMetadata> tableMetadataMap = {
       "School Name",
       "Gender",
       "Parent Phone",
-      "Photo Path",
       "Remove"
     ],
     columnLengths: [
@@ -158,7 +157,6 @@ Map<String, InputTableMetadata> tableMetadataMap = {
       150,
       100,
       150,
-      100,
       100,
       50,
     ],

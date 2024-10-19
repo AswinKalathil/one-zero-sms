@@ -116,7 +116,8 @@ class _MyHomePageState extends State<MyHomePage> {
       return;
     }
 
-    _classes = await _dbHelper.getClasses('class_table');
+    _classes = await _dbHelper.getClasses(_selectdAcadamicYear);
+
     _isClassTablesInitialized = _classCount == 0 ? false : true;
 
     setState(() {
@@ -747,6 +748,18 @@ class _MyHomePageState extends State<MyHomePage> {
                                   ),
                                 ),
                               ),
+                              Positioned(
+                                  bottom: 20,
+                                  left: 20,
+                                  child: Text(
+                                    '\n ${_classes[index]['studentsCount']} Students',
+                                    style: const TextStyle(
+                                      fontSize:
+                                          12, // Smaller font size for the second line
+
+                                      color: Color.fromRGBO(59, 57, 57, .5),
+                                    ),
+                                  )),
                               Positioned(
                                   bottom: 10,
                                   right: 60,
