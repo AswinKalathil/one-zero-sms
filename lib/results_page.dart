@@ -87,7 +87,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     List<Map<String, dynamic>> fetchedStudentsList = [];
 
     if (!widget.isDedicatedPage && value.isNotEmpty) {
-      print("one ----------");
       if (_selectedcriteria == 'Student') {
         fetchedStudentsList = await _dbHelper.getStudentsOfName(value);
         _resultTitle = 'search results with  $value';
@@ -117,8 +116,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     }
 
     if (widget.isDedicatedPage && value == 'class') {
-      print("two ----${widget.classId}------");
-
       fetchedStudentsList = await _dbHelper.getStudentsOfClass(widget.classId);
       _studentsOfClassList = fetchedStudentsList;
       resultBoardIndex = 4;
@@ -126,8 +123,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       _resultTitle = 'students of class ${widget.className}';
       setState(() {});
     } else if (_selectedcriteria == 'Student' && value.isNotEmpty) {
-      print("three --- $value----- ${widget.classId}--");
-
       fetchedStudentsList =
           await _dbHelper.getStudentsOfNameAndClass(value, widget.classId);
 
@@ -341,22 +336,24 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               ),
             ),
             Divider(),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: 600,
-                  height: 760,
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: GradeCard(
-                      key: UniqueKey(),
-                      studentId: _studentId,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            showGradeCard
+                ? Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 600,
+                        height: 760,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: GradeCard(
+                            key: UniqueKey(),
+                            studentId: _studentId,
+                          ),
+                        ),
+                      ),
+                    ],
+                  )
+                : SizedBox(),
             Divider(),
             _testResults.isNotEmpty && _allSubjects.isNotEmpty
                 ? Expanded(
@@ -548,9 +545,14 @@ class _GradeCardState extends State<GradeCard> {
   }
 
   Future<void> fetchStudentData() async {
+    if (widget.studentId == 0) {
+      print("Student id is 0");
+      return;
+    }
     DatabaseHelper dbHelper = DatabaseHelper();
     List<Map<String, dynamic>> studentData =
         await dbHelper.getStudentData(widget.studentId);
+
     List<Map<String, dynamic>> resultsfromDb =
         await dbHelper.getGradeCard(widget.studentId);
     if (resultsfromDb.isEmpty) {

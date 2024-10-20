@@ -1046,7 +1046,7 @@ class _ExamEntryState extends State<ExamEntry> {
           .updateTestScore(_studentScoreList[i]['test_score_id'], {
         'score': data[i].toString(),
       });
-      print("Changes $changes");
+      // print("Changes $changes");
     }
 
     ScaffoldMessenger.of(context).showSnackBar(

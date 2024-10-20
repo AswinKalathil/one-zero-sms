@@ -11,7 +11,6 @@ class RadarChartWidget extends StatelessWidget {
   }) : super(key: key);
 
   Map<String, dynamic> convertSubjectsData(List<Map<String, dynamic>> data) {
-    print(data);
     // Extract features and marks
     List<String> features =
         subjectsData.map((subject) => subject['subject'] as String).toList();
@@ -26,7 +25,7 @@ class RadarChartWidget extends StatelessWidget {
           .toList();
       valueData.add(marksForEntry);
     }
-    print(valueData);
+
     return {
       'features': features,
       'valueData': valueData,

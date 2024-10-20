@@ -7,15 +7,15 @@ import 'package:one_zero/examPage.dart';
 import 'package:one_zero/results_page.dart';
 import 'package:one_zero/dataEntry.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-// import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:stroke_text/stroke_text.dart';
 
 void main() async {
   // Initialize the FFI
-  // sqfliteFfiInit();
+  sqfliteFfiInit();
 
-  // // Set the database factory
-  // databaseFactory = databaseFactoryFfi;
+  // Set the database factory
+  databaseFactory = databaseFactoryFfi;
 
   runApp(MyApp());
 }
@@ -104,8 +104,6 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     _loadYears();
     _loadClasess();
-    print("Academic at masin $_academicYears");
-
     super.initState();
   }
 
@@ -139,7 +137,6 @@ class _MyHomePageState extends State<MyHomePage> {
       _classes;
       _classCount = _classes.length;
     });
-    print("class count: $_classCount");
   }
 
   List<String> _academicYears = [];
@@ -215,6 +212,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    bool _isDarkMode = Theme.of(context).brightness == Brightness.dark;
     if (!_isClassTablesInitialized) _loadClasess();
 
     return Scaffold(
@@ -662,6 +660,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildClassRooms(BuildContext context) {
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     int crossAxisCount = (MediaQuery.of(context).size.width / 400).floor() + 1;
     return _isClassTablesInitialized
         ? Container(
@@ -700,7 +699,8 @@ class _MyHomePageState extends State<MyHomePage> {
                               Container(
                                 decoration: BoxDecoration(
                                   color: cardBackgroundColors[
-                                      index % cardBackgroundColors.length],
+                                          index % cardBackgroundColors.length]
+                                      .withOpacity(isDarkMode ? .8 : 1),
                                   borderRadius: const BorderRadius.only(
                                       topLeft: Radius.circular(4),
                                       topRight: Radius.circular(4),
@@ -757,17 +757,40 @@ class _MyHomePageState extends State<MyHomePage> {
                                 ),
                               ),
                               Positioned(
-                                  bottom: 20,
-                                  left: 20,
-                                  child: Text(
-                                    '\n ${_classes[index]['studentsCount']} Students',
-                                    style: const TextStyle(
-                                      fontSize:
-                                          12, // Smaller font size for the second line
+                                bottom: 20,
+                                left: 20,
+                                child: SizedBox(
+                                  width: 50,
+                                  height: 25,
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.people_sharp,
+                                        color: Color.fromRGBO(59, 57, 57, .5),
+                                      ),
+                                      Text(
+                                        ' ${_classes[index]['studentsCount']}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize:
+                                              14, // Smaller font size for the second line
 
-                                      color: Color.fromRGBO(59, 57, 57, .5),
-                                    ),
-                                  )),
+                                          color: Color.fromRGBO(59, 57, 57, .5),
+                                        ),
+                                      )
+                                    ],
+                                  ),
+                                ),
+                                // child: Text(
+                                //   '\n ${_classes[index]['studentsCount']} Students',
+                                //   style: const TextStyle(
+                                //     fontSize:
+                                //         12, // Smaller font size for the second line
+
+                                //     color: Color.fromRGBO(59, 57, 57, .5),
+                                //   ),
+                                // ),
+                              ),
                               Positioned(
                                   bottom: 10,
                                   right: 60,

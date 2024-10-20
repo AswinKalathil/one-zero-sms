@@ -1,9 +1,10 @@
-import 'package:mysql1/mysql1.dart';
 import 'package:one_zero/constants.dart';
+import 'package:path/path.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
-  static MySqlConnection? _connection;
+  static Database? _database;
 
   factory DatabaseHelper() {
     return _instance;
@@ -11,118 +12,113 @@ class DatabaseHelper {
 
   DatabaseHelper._internal();
 
-  // Ensure only one connection is created during the app's lifetime
-  Future<MySqlConnection> get connection async {
-    if (_connection != null) {
-      try {
-        // Try to execute a simple query to check if the connection is still valid
-        await _connection!.query('SELECT 1');
-        return _connection!;
-      } catch (e) {
-        // If an error occurs, reinitialize the connection
-        print('Connection is closed or invalid, reinitializing: $e');
-      }
-    }
+  Future<Database> get database async {
+    if (_database != null) return _database!;
 
-    // Initialize the connection if it doesn't exist or is invalid
-    _connection = await _initDatabase();
-    return _connection!;
+    _database = await _initDatabase();
+    return _database!;
   }
 
-  // Initialize the database connection (called only once)
-  Future<MySqlConnection> _initDatabase() async {
-    var settings = dbSettingLocal;
+  Future<Database> _initDatabase() async {
+    String path = join(await getDatabasesPath(), 'one_zero_sqlite_db_file.db');
 
-    try {
-      MySqlConnection conn = await MySqlConnection.connect(settings);
-      print('Database connection established.');
-      return conn;
-    } catch (e) {
-      print('Error establishing database connection: $e');
-      rethrow;
-    }
+    // Open the database and enable foreign key support
+    var db = await openDatabase(
+      path,
+      version: 1,
+      onCreate: _onCreate,
+      onOpen: _onOpen, // Call _onOpen when the database is opened
+    );
+
+    return db;
   }
 
-  String _academicYear = "2023-2024";
+  String _acadamicYear = DateTime.now().year.toString() +
+      "-" +
+      (DateTime.now().year + 1).toString().substring(2);
 
-  void setAcademicYear(String academicYear) {
-    _academicYear = academicYear;
-    print("New Academic year private: $_academicYear");
+  void setAcademicYear(String acadamicYear) {
+    _acadamicYear = acadamicYear;
+    // print("New Academic year private: $_acadamicYear");
   }
 
-  Future<void> _onCreate(MySqlConnection conn) async {
-    await conn.query(createQuery); // Use your create table query here
+  Future<void> _onCreate(Database db, int version) async {
+    await db.execute(createQuery);
     // Other table creation queries can be executed here
   }
 
-  // Future<int> insertToTable(
-  //     String tableName, Map<String, dynamic> values) async {
-  //   final conn = await connection;
-  //   try {
-  //     var result = await conn.query('INSERT INTO $tableName ?', [values]);
-  //     return result.insertId ?? -1; // returns the ID of the inserted row
-  //   } catch (e) {
-  //     print("Error occurred while inserting data: $e");
-  //     return 0; // Return 0 or an error code if insertion fails
-  //   }
-  // }
+  Future<void> _onOpen(Database db) async {
+    // Enable foreign key support
+    await db.execute('PRAGMA foreign_keys = ON;');
+  }
 
   Future<int> insertToTable(
       String tableName, Map<String, dynamic> values) async {
-    final conn = await connection;
+    final db = await database;
     try {
-      // Construct the columns and values from the `values` map
-      String columns = values.keys.join(', ');
-      String placeholders = values.keys.map((_) => '?').join(', ');
-
-      // Prepare the query string with placeholders for the values
-      String query = 'INSERT INTO $tableName ($columns) VALUES ($placeholders)';
-
-      // Execute the query with the actual values
-      var result = await conn.query(query, values.values.toList());
-      if (result.insertId != null) {
-        // print("inserted id: ${result.insertId}");
-        return 1;
-      } else {
-        return -1;
-      }
+      return await db.insert(tableName, values);
     } catch (e) {
       print("Error occurred while inserting data: $e");
-      return -1; // Return 0 or an error code if insertion fails
+      return 0; // Return 0 or an error code if insertion fails
     }
   }
 
-//mysql tested : not
+  // Additional methods for querying, updating, and deleting can be added here
+
   Future<List<String>> getAcademicYears() async {
-    final conn = await connection;
+    final db = await database;
     try {
-      var results =
-          await conn.query('SELECT DISTINCT academic_year FROM class_table');
+      String query = '''SELECT DISTINCT academic_year FROM class_table;''';
+      final List<Map<String, dynamic>> result = await db.rawQuery(query);
+      List<String> ss =
+          result.map((e) => e['academic_year'] as String).toList();
 
-      // Convert each value to a String using toString() to avoid type issues
-      List<String> years =
-          results.map((row) => row['academic_year'].toString()).toList();
-      print(results);
-
-      // _academicYear = years.isNotEmpty ? years.last : '';
-      print("Academic years: $years");
-
-      return years;
-      // return ["2023-2024"];
+      // print("Academic years: $ss");
+      return ss;
     } catch (e) {
-      print("Error occurred while fetching academic years: $e");
+      print("Error occurred while fetching stream names: $e");
       return [];
     }
   }
 
-//mysql tested :  OK
+  Future<Map<String, dynamic>> getTestDetails(int testId) async {
+    final db = await database;
+    try {
+      String query =
+          '''  Select s.subject_name,tt.test_date,tt.topic,tt.max_mark from test_table tt JOIN subject_table s ON tt.subject_id = s.id  where tt.id = ?''';
+      final List<Map<String, dynamic>> result =
+          await db.rawQuery(query, [testId]);
+      return result[0];
+    } catch (e) {
+      print("Error occurred while fetching test details: $e");
+      return {};
+    }
+  }
+
+  Future<List<String>> getStreamNames(int class_id) async {
+    // print("Acadamic year private: $_acadamicYear");
+
+    final db = await database;
+    try {
+      String query =
+          '''SELECT stream_name FROM stream_table  where class_id  = ? ;''';
+      final List<Map<String, dynamic>> result =
+          await db.rawQuery(query, [class_id]);
+      List<String> ss = result.map((e) => e['stream_name'] as String).toList();
+
+      return ss;
+    } catch (e) {
+      print("Error occurred while fetching stream names: $e");
+      return [];
+    }
+  }
 
   Future<List<Map<String, dynamic>>> getClasses(String selected_year) async {
-    final conn = await connection;
+    final db = await database;
     String query = 'SELECT * FROM class_table WHERE academic_year = ?';
 
     // Fetching the classes from the table for the specified academic year
-    var results = await conn.query(
+    var results = await db.rawQuery(
       query,
       [selected_year],
     );
@@ -133,23 +129,23 @@ class DatabaseHelper {
 
     // Map the results and handle asynchronous count fetching for each row
     var mappedResults = await Future.wait(results.map((row) async {
+      int classId = row['id'] as int;
       // Fetch student count for the current class
-      var countResult = await conn.query(
+      var countResult = await db.rawQuery(
         sQuery,
-        [row[0]], // Assuming row[0] is the class_id
+        [classId], // Assuming row[0] is the class_id
       );
 
       // Extract the count from the query result
       var studentsCount =
-          countResult.first[0]; // Assuming count is in the first column
-      print(studentsCount);
+          countResult.first['count']; // Assuming count is in the first column
 
       // Return the mapped data, including studentsCount
+
       return {
-        'id': row[0],
-        'class_name': row[1],
-        'academic_year': row[2],
-        'section': row[3],
+        'id': row['id'],
+        'class_name': row['class_name'],
+        'academic_year': row['academic_year'],
         'studentsCount': studentsCount, // Add the students count
       };
     }).toList());
@@ -157,120 +153,107 @@ class DatabaseHelper {
     return mappedResults;
   }
 
-  Future<Map<String, dynamic>> getTestDetails(int testId) async {
-    final conn = await connection;
-    try {
-      var results = await conn.query(
-          'SELECT s.subject_name, tt.test_date, tt.topic, tt.max_mark '
-          'FROM test_table tt '
-          'JOIN subject_table s ON tt.subject_id = s.id '
-          'WHERE tt.id = ?',
-          [testId]);
-      if (results.isNotEmpty) {
-        return {
-          'subject_name': results.first[0],
-          'test_date': results.first[1],
-          'topic': results.first[2],
-          'max_mark': results.first[3],
-        };
-      }
-      return {};
-    } catch (e) {
-      print("Error occurred while fetching test details: $e");
-      return {};
-    }
-  }
+  // Future<List<Map<String, dynamic>>> getClasses(String tableName) async {
+  //   final db = await database;
 
-  Future<List<String>> getStreamNames(int classId) async {
-    print("class id in getStreamNames function $classId");
-    final conn = await connection;
-    try {
-      var results = await conn.query(
-          'SELECT stream_name ,id as stream_id FROM stream_table WHERE class_id = ?;',
-          [classId]);
-      return results.map((row) => row[0] as String).toList();
-    } catch (e) {
-      print("Error occurred while fetching stream names: $e");
-      return [];
-    }
-  }
+  //   return await db.query(tableName,
+  //       where: 'academic_year = ?', whereArgs: [_acadamicYear]);
+  // }
+
+  // Assuming you already have an instance of your database (db)
+  // Future<void> insertTest1(Map<String, dynamic> newTest) async {
+  //   // Step 1: Fetch the subject_id using the subject_name
+  //   final db = await database;
+  //   final List<Map<String, dynamic>> subjectList = await db.query(
+  //     'subject_table',
+  //     columns: ['id'],
+  //     where: 'subject_name = ?',
+  //     whereArgs: [newTest['subject_name']],
+  //   );
+
+  //   if (subjectList.isNotEmpty) {
+  //     final int subjectId = subjectList.first['id'];
+
+  //     // Step 2: Prepare the data for insertion into the test_table
+  //     Map<String, dynamic> test = {
+  //       'id': newTest['test_id'],
+  //       'subject_id': subjectId,
+  //       'topic': newTest['topic'],
+  //       'max_mark': int.parse(newTest['maxMark']),
+  //       'test_date': newTest['date'],
+  //     };
+
+  //     // Step 3: Insert the data into the test_table
+  //     await db.insert('test_table', test);
+
+  //     print('Test data inserted successfully');
+  //   } else {
+  //     print('Subject not found');
+  //   }
+  // }
 
   Future<List<Map<String, dynamic>>> getStudentIdsAndNamesByTestId(
       int testId) async {
-    final conn = await connection;
+    // print("test id in getStudentIdsAndNamesByTestId function $testId");
+    final db = await database;
 
     // Get the subject_id from the test_id
-    var subjectIdResult = await conn.query(
-      'SELECT subject_id FROM test_table WHERE id = ?',
-      [testId],
-    );
+    final List<Map<String, dynamic>> subjectIdResult = await db.rawQuery('''
+      SELECT subject_id FROM test_table WHERE id = ?
+    ''', [testId]);
 
     if (subjectIdResult.isEmpty) return [];
 
-    final subjectId = subjectIdResult.first[0]; // Access the subject_id
+    final subjectId = subjectIdResult.first['subject_id'];
+    // print("subject id in getStudentIdsAndNamesByTestId function $subjectId");
 
     // Get students related to that subject
-    var studentResult = await conn.query('''
+    final List<Map<String, dynamic>> studentResult = await db.rawQuery('''
       SELECT DISTINCT s.id AS student_id, s.student_name
       FROM student_table s
       INNER JOIN stream_subjects_table ss ON s.stream_id = ss.stream_id
       WHERE ss.subject_id = ?
       ORDER BY s.student_name ASC;
     ''', [subjectId]);
-
-    return studentResult.map((row) {
-      return {
-        'student_id': row[0],
-        'student_name': row[1],
-      };
-    }).toList();
+    // print(
+    //     "students list result in getStudentIdsAndNamesByTestId function $studentResult");
+    return studentResult;
   }
 
   Future<List<Map<String, dynamic>>> getTestDataSheetForUpdate(
       int testId) async {
-    final conn = await connection;
+    // print("test id in getStudentIdsAndNamesByTestId function $testId");
+    final db = await database;
 
-    // Get the test data sheet
-    var testDataSheet = await conn.query('''
+    // Get the subject_id from the test_id
+    final List<Map<String, dynamic>> testDataSheet = await db.rawQuery('''
       SELECT s.student_name, 
-             ts.student_id, 
-             ts.test_id, 
-             ts.id AS test_score_id, 
-             ts.score
-      FROM (SELECT student_id, test_id, id, score 
-            FROM test_score_table 
-            WHERE test_id = ?) ts
-      JOIN (SELECT id, student_name 
-            FROM student_table) s 
-      ON ts.student_id = s.id
-      ORDER BY s.student_name ASC;
+       ts.student_id, 
+       ts.test_id, 
+       ts.id AS test_score_id, 
+       ts.score
+FROM (SELECT student_id, test_id, id, score 
+      FROM test_score_table 
+      WHERE test_id = ?) ts
+JOIN (SELECT id, student_name 
+      FROM student_table) s 
+  ON ts.student_id = s.id;
+
+  ORDER BY s.student_name ASC;
+
     ''', [testId]);
 
-    return testDataSheet.map((row) {
-      return {
-        'student_name': row[0],
-        'student_id': row[1],
-        'test_id': row[2],
-        'test_score_id': row[3],
-        'score': row[4],
-      };
-    }).toList();
+    return testDataSheet;
   }
 
   Future<int> updateTestScore(int id, Map<String, dynamic> testScore) async {
-    final conn = await connection;
-
-    // Prepare the values for the update
-    var result = await conn.query(
-      'UPDATE test_score_table SET score = ? WHERE id = ?',
-      [testScore['score'], id],
-    );
-
-    return result.affectedRows ?? 0; // Return the number of affected rows
+    final db = await database;
+    return await db.update('test_score_table', testScore,
+        where: 'id = ?', whereArgs: [id]);
   }
 
   Future<int?> getStudentId(String studentName) async {
-    final conn = await connection;
+    final db = await database;
 
     // Check if studentName is null or empty
     if (studentName.isEmpty) {
@@ -278,12 +261,13 @@ class DatabaseHelper {
     }
 
     String query = '''
-    SELECT id FROM student_table WHERE LOWER(student_name) = LOWER(?);
+    SELECT id FROM student_table WHERE   LOWER(student_name) = LOWER(?);;
   ''';
 
     try {
       // Execute the query and get the result
-      var result = await conn.query(query, [studentName]);
+      List<Map<String, dynamic>> result =
+          await db.rawQuery(query, [studentName]);
 
       // Check if the result is empty and return null if no student is found
       if (result.isEmpty) {
@@ -291,7 +275,7 @@ class DatabaseHelper {
       }
 
       // Return the student ID
-      return result.first[0] as int; // Access the first column
+      return result[0]['id'] as int?;
     } catch (e) {
       // Handle any exceptions that occur
       print("Error occurred while fetching student ID: $e");
@@ -300,10 +284,10 @@ class DatabaseHelper {
   }
 
   Future<List<String>?> getClassSubjects(int classId) async {
-    final conn = await connection;
+    final db = await database;
     String query = '''
     SELECT 
-      DISTINCT sub.id AS subject_id, sub.subject_name,
+      Distinct sub.id as subject_id,sub.subject_name,
       c.id AS class_id
     FROM 
       subject_table sub
@@ -314,23 +298,24 @@ class DatabaseHelper {
     JOIN 
       class_table c ON st.class_id = c.id
     WHERE 
-      c.id = ?;
+    c.id = ?;
   ''';
 
     try {
       // Execute the query and get the result
-      var results = await conn.query(query, [classId]);
+      List<Map<String, dynamic>> result = await db.rawQuery(query, [
+        classId,
+      ]);
 
       // Check if the result is empty and return null if no subjects are found
-      if (results.isEmpty) {
+      if (result.isEmpty) {
         print("No subjects found for class: $classId");
         return [];
       }
 
       // Return the list of subjects
-      List<String> subjects = results
-          .map((row) => row[1] as String)
-          .toList(); // Use index 1 for subject_name
+      List<String> subjects =
+          result.map((e) => e['subject_name'] as String).toList();
       return subjects;
     } catch (e) {
       // Handle any exceptions that occur
@@ -339,17 +324,15 @@ class DatabaseHelper {
     }
   }
 
-  // Fetch students of a subject
+// fetch students of a subject---------------------------need check
   Future<List<Map<String, dynamic>>> getStudentsOfSubject(
       String subjectName) async {
-    final conn = await connection;
+    final db = await database;
 
     try {
-      print("Subject Name: $subjectName");
-
       // Query to get the subject ID
-      final queryResults = await conn.query(
-          'SELECT id FROM subject_table WHERE LOWER(subject_name) = LOWER(?);',
+      final queryResults = await db.rawQuery(
+          'SELECT id FROM subject_table WHERE LOWER(subject_name) = (?);',
           [subjectName]);
 
       // Check if the query returned any results
@@ -359,8 +342,7 @@ class DatabaseHelper {
       }
 
       // Get the subject ID from the result
-      int subjectId = queryResults.first[0] as int; // Use index 0 for id
-      print("Subject ID: $subjectId");
+      int subjectId = queryResults[0]['id'] as int;
 
       // Query to get students of the subject
       String query = '''
@@ -379,19 +361,11 @@ class DatabaseHelper {
       JOIN 
         subject_table sub ON ss.subject_id = sub.id
       WHERE 
-        sub.id = ?;
+        sub.id =?;
     ''';
 
-      final result = await conn.query(query, [subjectId]);
-      return result
-          .map((row) => {
-                'id': row[0],
-                'student_name': row[1],
-                'gender': row[2],
-                'photo_id': row[3],
-                'stream_name': row[4],
-              })
-          .toList();
+      final result = await db.rawQuery(query, [subjectId]);
+      return result;
     } catch (e) {
       // Handle any exceptions that occur
       print("Error occurred: $e");
@@ -402,11 +376,11 @@ class DatabaseHelper {
   Future<List<Map<String, dynamic>>> getSubjectsOfStudentID(
       int studentId) async {
     try {
-      final conn = await connection;
+      final db = await database;
 
       String query = '''
       SELECT 
-        sub.id AS subject_id, 
+        sub.id as subject_id, 
         sub.subject_name 
       FROM 
         stream_subjects_table ss
@@ -416,13 +390,8 @@ class DatabaseHelper {
         ss.stream_id = (SELECT stream_id FROM student_table WHERE id = ?);
     ''';
 
-      final result = await conn.query(query, [studentId]);
-      return result
-          .map((row) => {
-                'subject_id': row[0],
-                'subject_name': row[1],
-              })
-          .toList();
+      final result = await db.rawQuery(query, [studentId]);
+      return result;
     } catch (e) {
       // Handle any exceptions that occur
       print("Error occurred: $e");
@@ -432,7 +401,7 @@ class DatabaseHelper {
 
   Future<List<Map<String, dynamic>>> getTestHistoryForSubjectOfStudentID(
       int studentId, int subjectId) async {
-    final conn = await connection;
+    final db = await database;
 
     String query = '''
     SELECT 
@@ -451,28 +420,21 @@ class DatabaseHelper {
     ORDER BY t.test_date DESC;
   ''';
 
-    final result = await conn.query(query, [studentId, subjectId]);
+    final result = await db.rawQuery(query, [studentId, subjectId]);
 
-    return result
-        .map((row) => {
-              'test_id': row[0],
-              'topic': row[1],
-              'max_mark': row[2],
-              'test_date': row[3],
-              'score': row[4],
-            })
-        .toList();
+    // print(
+    // "Test history for student ID: $studentId and subject ID: $subjectId:--->   $result");
+
+    return result;
   }
 
   Future<List<Map<String, dynamic>>> getStudentsOfNameAndClass(
       String studentName, int classId) async {
-    final conn = await connection;
+    final db = await database;
 
     try {
-      print("Student Name: $studentName");
-
       // Query to get the student ID
-      final queryResults = await conn.query(''' SELECT 
+      final queryResults = await db.rawQuery(''' SELECT 
       s.id,
       s.student_name,
       s.gender,
@@ -488,10 +450,11 @@ class DatabaseHelper {
        LOWER(s.student_name) LIKE LOWER(?) AND c.id = ?
     ORDER BY 
     CASE 
-      WHEN LOWER(s.student_name) LIKE LOWER(?) THEN 1  
-      ELSE 2                      
+      WHEN  LOWER(s.student_name) LIKE LOWER(?) THEN 1  
+    ELSE 2                      
     END, 
     s.student_name;   
+       
        ''', ['%$studentName%', classId, '$studentName%']);
 
       // Check if the query returned any results
@@ -499,17 +462,8 @@ class DatabaseHelper {
         print("No student found with name: $studentName");
         return []; // Return an empty list if no student is found
       }
-      print("Results of class with name $queryResults");
 
-      return queryResults
-          .map((row) => {
-                'id': row[0],
-                'student_name': row[1],
-                'gender': row[2],
-                'photo_id': row[3],
-                'stream_name': row[4],
-              })
-          .toList();
+      return queryResults;
     } catch (e) {
       // Handle any exceptions that occur
       print("Error occurred: $e");
@@ -519,13 +473,11 @@ class DatabaseHelper {
 
   Future<List<Map<String, dynamic>>> getStudentsOfName(
       String studentName) async {
-    final conn = await connection;
+    final db = await database;
 
     try {
-      print("Student Name: $studentName");
-
       // Query to get the student ID
-      final queryResults = await conn.query(''' SELECT 
+      final queryResults = await db.rawQuery(''' SELECT 
       s.id,
       s.student_name,
       s.gender,
@@ -541,11 +493,12 @@ class DatabaseHelper {
        LOWER(s.student_name) LIKE LOWER(?) AND c.academic_year = ?
     ORDER BY 
     CASE 
-      WHEN LOWER(s.student_name) LIKE LOWER(?) THEN 1  
-      ELSE 2                      
+      WHEN  LOWER(s.student_name) LIKE LOWER(?) THEN 1  
+    ELSE 2                      
     END, 
     s.student_name;   
-       ''', ['%$studentName%', _academicYear, '$studentName%']);
+       
+       ''', ['%$studentName%', _acadamicYear, '$studentName%']);
 
       // Check if the query returned any results
       if (queryResults.isEmpty) {
@@ -553,15 +506,7 @@ class DatabaseHelper {
         return []; // Return an empty list if no student is found
       }
 
-      return queryResults
-          .map((row) => {
-                'id': row[0],
-                'student_name': row[1],
-                'gender': row[2],
-                'photo_id': row[3],
-                'stream_name': row[4],
-              })
-          .toList();
+      return queryResults;
     } catch (e) {
       // Handle any exceptions that occur
       print("Error occurred: $e");
@@ -569,9 +514,12 @@ class DatabaseHelper {
     }
   }
 
-  Future<List<Map<String, dynamic>>> getStudentsOfClass(int classId) async {
-    print("Class id : $classId academic year: $_academicYear");
-    final conn = await connection;
+  Future<List<Map<String, dynamic>>> getStudentsOfClass(int class_id) async {
+    final db = await database;
+
+    // Query to get the class ID
+
+    // Get the class ID from the result
 
     // Query to get students of the class
     String query = '''
@@ -589,86 +537,144 @@ class DatabaseHelper {
       class_table c ON st.class_id = c.id
     WHERE 
       c.id = ?
-    ORDER BY s.student_name ASC;  
+    ORDER BY s.student_name ASC ;  
   ''';
 
     // Execute the query
-    try {
-      var results = await conn.query(query, [classId]);
-      print("result of getStudentsOfClass: $results");
+    final result = await db.rawQuery(query, [class_id]);
 
-      return results
-          .map((row) => {
-                'id': row[0],
-                'student_name': row[1],
-                'gender': row[2],
-                'photo_id': row[3],
-                'stream_name': row[4],
-              })
-          .toList();
-    } catch (e) {
-      print("Error occurred while fetching students: $e");
-      return []; // Return an empty list or handle the error as needed
-    }
+    return result;
   }
 
+  // Future<List<Map<String, dynamic>>> getGradeCard(String studentName) async {
+  //   final db = await database;
+  //   print("student id for grade card $studentName");
+  //   // Check if studentId is correctly passed and is not empty
+  //   if (studentName.isEmpty) {
+  //     throw ArgumentError("Student Name cannot be empty");
+  //   }
+  //   final sudentIdResults = await db.rawQuery(
+  //       'SELECT id FROM student_table WHERE LOWER(student_name) = LOWER(?);',
+  //       [studentName]);
+  //   // Check if the query returned any results
+  //   if (sudentIdResults.isEmpty) {
+  //     print("No student Name found with name: $studentName !");
+  //     return []; // Return an empty list if no class is found
+  //   }
+  //   // Get the class ID from the result
+  //   int studentId = sudentIdResults[0]['id'] as int;
+
   Future<List<Map<String, dynamic>>> getStudentData(int studentId) async {
-    final conn = await connection;
+    final db = await database;
 
-    print("student id: $studentId");
-
-    String query = '''
-    SELECT 
-      s.student_name,
-      s.photo_id AS photo_path,
-      s.gender,
-      s.school_name,
-      c.class_name,
-      c.academic_year,
-      st.stream_name
-    FROM 
-      student_table s
-    LEFT JOIN 
-      stream_table st ON s.stream_id = st.id
-    LEFT JOIN 
-      class_table c ON st.class_id = c.id
-    WHERE 
-      s.id = ?;''';
+    String query = ''' SELECT 
+    s.student_name,
+    s.photo_id AS photo_path,
+    s.gender,
+    s.school_name,
+    c.class_name,
+    c.academic_year,
+   st.stream_name
+FROM 
+    student_table s
+LEFT JOIN 
+    stream_table st ON s.stream_id = st.id
+LEFT JOIN 
+    class_table c ON st.class_id = c.id
+WHERE 
+    s.id = ?''';
 
     try {
       // Execute the query and get the result
-      var results = await conn.query(query, [studentId]);
+      List<Map<String, dynamic>> result = await db.rawQuery(query, [
+        studentId,
+      ]);
 
       // Check if the result is empty
-      if (results.isEmpty) {
+      if (result.isEmpty) {
         throw ArgumentError("No student found with the given ID");
       }
 
-      return results
-          .map((row) => {
-                'student_name': row[0],
-                'photo_path': row[1],
-                'gender': row[2],
-                'school_name': row[3],
-                'class_name': row[4],
-                'academic_year': row[5],
-                'stream_name': row[6],
-              })
-          .toList();
+      return result;
     } catch (e) {
       // Handle any exceptions that occur
-      print("Error occurred while fetching student data: $e");
+      print("Error occurred while fetching grade card: $e");
       throw Exception(
-          "Failed to retrieve student data. Please try again later.");
+          "Failed to retrieve grade card data. Please try again later.");
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getGradeCard(int studentId) async {
+    final db = await database;
+
+    String query = ''' SELECT 
+      sub.subject_name,
+      COALESCE(ts.score, '-') AS score,
+      t.max_mark,
+      t.test_date,
+      t.id AS test_id,
+      sub.id AS subject_id
+FROM 
+    student_table s
+LEFT JOIN 
+    stream_table st ON s.stream_id = st.id
+LEFT JOIN 
+    class_table c ON st.class_id = c.id
+LEFT JOIN 
+    stream_subjects_table ss ON st.id = ss.stream_id
+LEFT JOIN 
+    subject_table sub ON ss.subject_id = sub.id
+LEFT JOIN 
+    test_table t ON sub.id = t.subject_id
+LEFT JOIN 
+    test_score_table ts ON t.id = ts.test_id AND ts.student_id = s.id
+LEFT JOIN (
+    SELECT 
+        ts.student_id,
+        t.subject_id,
+        t.id AS test_id,
+        MAX(t.test_date) AS latest_test_date
+    FROM 
+        test_table t
+    JOIN 
+        test_score_table ts ON t.id = ts.test_id
+    WHERE 
+        ts.student_id = ?
+    GROUP BY 
+        ts.student_id, t.subject_id, t.id
+) latest_test ON latest_test.subject_id = t.subject_id 
+              AND latest_test.latest_test_date = t.test_date
+WHERE 
+    s.id = ?
+    AND c.academic_year = ?
+ORDER BY 
+    sub.id; ''';
+
+    try {
+      // Execute the query and get the result
+      List<Map<String, dynamic>> result =
+          await db.rawQuery(query, [studentId, studentId, _acadamicYear]);
+
+      // Check if the result is empty
+      if (result.isEmpty) {
+        throw ArgumentError("No student found with the given ID");
+      }
+
+      return result;
+    } catch (e) {
+      // Handle any exceptions that occur
+      print("Error occurred while fetching grade card: $e");
+      throw Exception(
+          "Failed to retrieve grade card data. Please try again later.");
     }
   }
 
   Future<double> getStudentSubjectAverage(int studentId, int subjectId) async {
-    final conn = await connection;
+    final db = await database;
 
     String query = '''
  SELECT 
-    COALESCE(ROUND(AVG((ts.score * 100.0) / tt.max_mark), 2), 0) AS average_percentage
+    COALESCE(ROUND(AVG((ts.score * 100.0) / tt.max_mark), 2), 0.0) AS average_percentage
 FROM 
     test_score_table ts
 JOIN 
@@ -685,14 +691,16 @@ WHERE
 
     try {
       // Execute the query and get the result
-      var results = await conn.query(query, [studentId, subjectId]);
+      var results = await db.rawQuery(query, [studentId, subjectId]);
 
       // Check if the result is empty
       if (results.isEmpty) {
         throw ArgumentError("No student found with the given ID");
       }
 
-      return results.first[0] as double;
+      double avg = results[0]['average_percentage'] as double;
+
+      return avg;
     } catch (e) {
       // Handle any exceptions that occur
       print("Error occurred while fetching student data: $e");
@@ -701,131 +709,48 @@ WHERE
     }
   }
 
-  Future<List<Map<String, dynamic>>> getGradeCard(int studentId) async {
-    final conn = await connection;
-
-    String query = '''
-  SELECT 
-  
-      sub.subject_name,
-      COALESCE(ts.score, '-') AS score,
-      t.max_mark,
-      t.test_date,
-      t.id AS test_id,
-      sub.id AS subject_id
-
-  FROM 
-      student_table s
-  LEFT JOIN 
-      stream_table st ON s.stream_id = st.id
-  LEFT JOIN 
-      class_table c ON st.class_id = c.id
-  LEFT JOIN 
-      stream_subjects_table ss ON st.id = ss.stream_id
-  LEFT JOIN 
-      subject_table sub ON ss.subject_id = sub.id
-  LEFT JOIN 
-      test_table t ON sub.id = t.subject_id
-  LEFT JOIN 
-      test_score_table ts ON t.id = ts.test_id AND ts.student_id = s.id
-  LEFT JOIN (
-      SELECT 
-          ts.student_id,
-          t.subject_id,
-          t.id AS test_id,
-          MAX(t.test_date) AS latest_test_date
-      FROM 
-          test_table t
-      JOIN 
-          test_score_table ts ON t.id = ts.test_id
-      WHERE 
-          ts.student_id = ?
-      GROUP BY 
-          ts.student_id, t.subject_id
-  ) latest_test ON latest_test.subject_id = t.subject_id 
-                AND latest_test.latest_test_date = t.test_date
-  WHERE 
-      s.id = ?
-     
-  ORDER BY 
-      sub.id; ''';
-
-    try {
-      // Execute the query and get the result
-      var results = await conn.query(query, [studentId, studentId]);
-
-      // Check if the result is empty
-      if (results.isEmpty) {
-        throw ArgumentError("No student found with the given ID");
-      }
-
-      return results
-          .map((row) => {
-                'subject_name': row[0],
-                'score': row[1],
-                'max_mark': row[2],
-                'test_date': row[3],
-                'test_id': row[4],
-                'subject_id': row[5],
-              })
-          .toList();
-    } catch (e) {
-      print("Error occurred while fetching grade card: $e");
-      throw Exception(
-          "Failed to retrieve grade card data. Please try again later.");
-    }
-  }
-
   Future<int> getMaxId(String tableName) async {
-    final conn = await connection;
+    final db = await database;
 
     String query = 'SELECT MAX(id) AS max_id FROM $tableName;';
 
-    var results = await conn.query(query);
+    List<Map<String, dynamic>> result = await db.rawQuery(query);
 
-    if (results.isNotEmpty && results.first[0] != null) {
-      return results.first[0] as int;
+    if (result.isNotEmpty && result[0]['max_id'] != null) {
+      return result[0]['max_id'] as int;
     } else {
-      // Define base max IDs for different tables
       int maxId = 0;
-      switch (tableName) {
-        case 'class_table':
-          maxId = 1000;
-          break;
-        case 'subject_table':
-          maxId = 2000;
-          break;
-        case 'stream_table':
-          maxId = 3000;
-          break;
-        case 'student_table':
-          maxId = 4000;
-          break;
-        case 'test_table':
-          maxId = 5000;
-          break;
-        case 'test_score_table':
-          maxId = 6000;
-          break;
-        case 'stream_subjects_table':
-          maxId = 7000;
-          break;
-        default:
-          maxId = 0;
+
+      if (tableName == 'class_table') {
+        maxId = 1000;
+      } else if (tableName == 'subject_table') {
+        maxId = 2000;
+      } else if (tableName == 'stream_table') {
+        maxId = 3000;
+      } else if (tableName == 'student_table') {
+        maxId = 4000;
+      } else if (tableName == 'test_table') {
+        maxId = 5000;
+      } else if (tableName == 'test_score_table') {
+        maxId = 6000;
+      } else if (tableName == 'stream_subjects_table') {
+        maxId = 7000;
+      } else {
+        maxId = 0;
       }
+
       return maxId;
     }
   }
 
-  Future<int> getMaxIdTX(dynamic txn, String tableName) async {
-    var results = await txn.query('SELECT MAX(id) AS max_id FROM $tableName');
-    return results.isNotEmpty
-        ? results.first['max_id'] ?? 0
-        : 0; // Returns 0 if there are no rows
+  Future<int> getMaxIdTX(Transaction txn, String tableName) async {
+    final List<Map<String, dynamic>> result =
+        await txn.rawQuery('SELECT MAX(id) as maxId FROM $tableName');
+    return result.first['maxId'] ?? 0; // Returns 0 if there are no rows
   }
 
-  Future<int> getSubjectId(String subjectName, int classId) async {
-    final conn = await connection;
+  Future<int> getSubjectId(String subjectName, int classid) async {
+    final db = await database;
 
     // Ensure that subjectName is not null or empty
     if (subjectName.isEmpty) {
@@ -834,28 +759,30 @@ WHERE
 
     // Query to get the subject ID
     String query = '''
-  SELECT id FROM subject_table WHERE subject_name = ? AND class_id = ?;
+    SELECT id FROM subject_table  WHERE subject_name = ? AND class_id = ? ;
   ''';
 
     try {
       // Execute the query and get the result
-      var results = await conn.query(query, [subjectName, classId]);
+      List<Map<String, dynamic>> result =
+          await db.rawQuery(query, [subjectName, classid]);
 
-      // Check if the result is empty and return 0 if no subject is found
-      if (results.isEmpty) {
+      // Check if the result is empty and return null if no subject is found
+      if (result.isEmpty) {
         return 0; // Return 0 if no subject is found
       }
 
       // Return the subject ID
-      return results.first['id'] as int;
+      return result[0]['id'] as int;
     } catch (e) {
+      // Handle any exceptions that occur
       print("Error occurred while fetching subject ID: $e");
       throw Exception("Failed to retrieve subject ID. Please try again later.");
     }
   }
 
   Future<int> getStreamId(String streamName) async {
-    final conn = await connection;
+    final db = await database;
 
     // Ensure that streamName is not null or empty
     if (streamName.isEmpty) {
@@ -864,171 +791,452 @@ WHERE
 
     // Query to get the stream ID
     String query = '''
-  SELECT st.id FROM stream_table st 
-  JOIN class_table c ON st.class_id = c.id 
-  WHERE st.stream_name = ? AND c.academic_year = ?;
+    SELECT st.id FROM stream_table st join class_table c ON st.class_id = c.id WHERE st.stream_name = ? AND c.academic_year = ?;
   ''';
 
     try {
       // Execute the query and get the result
-      var results = await conn.query(query, [streamName, _academicYear]);
+      List<Map<String, dynamic>> result =
+          await db.rawQuery(query, [streamName, _acadamicYear]);
 
-      // Check if the result is empty and return 0 if no stream is found
-      if (results.isEmpty) {
+      // Check if the result is empty and return null if no stream is found
+      if (result.isEmpty) {
         return 0; // Return 0 if no stream is found
       }
 
       // Return the stream ID
-      return results.first['id'] as int;
+      return result[0]['id'] as int;
     } catch (e) {
+      // Handle any exceptions that occur
       print("Error occurred while fetching stream ID: $e");
       throw Exception("Failed to retrieve stream ID. Please try again later.");
     }
   }
 
   Future<int> insertDynamicData(
-    List<Map<String, dynamic>> classDataList,
-    List<Map<String, dynamic>> subjectDataList,
-    List<Map<String, dynamic>> streamDataList,
-    List<Map<String, dynamic>> streamSubjectDataList,
-  ) async {
-    MySqlConnection? conn;
+      List<Map<String, dynamic>> classDataList,
+      List<Map<String, dynamic>> subjectDataList,
+      List<Map<String, dynamic>> streamDataList,
+      List<Map<String, dynamic>> streamSubjectDataList) async {
     try {
-      conn = await connection;
-      await conn.query('START TRANSACTION;');
+      Database db = await database;
+      await db.transaction((txn) async {
+        Map<int, int> classIdMap = {}; // Maps class_id to generated id
+        Map<int, int> subjectIdMap = {}; // Maps subject_id to generated id
+        Map<int, int> streamIdMap = {}; // Maps stream_id to generated id
 
-      Map<int, int> classIdMap = {};
-      Map<int, int> subjectIdMap = {};
-      Map<int, int> streamIdMap = {};
+        // Insert classes and store their IDs
+        for (var classData in classDataList) {
+          int classId = (await getMaxIdTX(txn, 'class_table')) + 1;
+          await txn.insert('class_table', {
+            'id': classId,
+            'class_name': classData['class_name'],
+            'academic_year': classData['academic_year'],
+            'section': classData['section']
+          });
+          classIdMap[classData['class_id']] = classId;
+        }
 
-      // Insert classes and store their IDs
-      for (var classData in classDataList) {
-        var result = await conn.query(
-          'INSERT INTO class_table (class_name, academic_year, section) VALUES (?, ?, ?)',
-          [
-            classData['class_name'],
-            // classData['academic_year'],
-            _academicYear,
-            classData['section']
-          ],
-        );
-        int classId = result.insertId!;
-        classIdMap[classData['class_id']] = classId;
-      }
+        // Insert subjects and store their IDs
+        for (var subjectData in subjectDataList) {
+          int classId = classIdMap[subjectData['class_id']] ?? 0;
+          int subjectId = (await getMaxIdTX(txn, 'subject_table')) + 1;
+          await txn.insert('subject_table', {
+            'id': subjectId,
+            'subject_name': subjectData['subject_name'],
+            'class_id': classId,
+          });
+          subjectIdMap[subjectData['subject_id']] = subjectId;
+        }
 
-      // Insert subjects and store their IDs
-      for (var subjectData in subjectDataList) {
-        int classId = classIdMap[subjectData['class_id']] ?? 0;
-        var result = await conn.query(
-          'INSERT INTO subject_table (subject_name, class_id) VALUES (?, ?)',
-          [subjectData['subject_name'], classId],
-        );
-        int subjectId = result.insertId!;
-        subjectIdMap[subjectData['subject_id']] = subjectId;
-      }
+        // Insert streams and store their IDs
+        for (var streamData in streamDataList) {
+          int classId = classIdMap[streamData['class_id']] ?? 0;
+          int streamId = (await getMaxIdTX(txn, 'stream_table')) + 1;
+          await txn.insert('stream_table', {
+            'id': streamId,
+            'stream_name': streamData['stream_name'],
+            'class_id': classId,
+          });
+          streamIdMap[streamData['stream_id']] = streamId;
+        }
 
-      // Insert streams and store their IDs
-      for (var streamData in streamDataList) {
-        int classId = classIdMap[streamData['class_id']] ?? 0;
-        var result = await conn.query(
-          'INSERT INTO stream_table (stream_name, class_id) VALUES (?, ?)',
-          [streamData['stream_name'], classId],
-        );
-        int streamId = result.insertId!;
-        streamIdMap[streamData['stream_id']] = streamId;
-      }
+        // Insert stream-subject mappings
+        for (var streamSubjectData in streamSubjectDataList) {
+          int streamId = streamIdMap[streamSubjectData['stream_id']] ?? 0;
+          int subjectId = subjectIdMap[streamSubjectData['subject_id']] ?? 0;
+          int streamSubjectId =
+              (await getMaxIdTX(txn, 'stream_subjects_table')) + 1;
+          await txn.insert('stream_subjects_table', {
+            'id': streamSubjectId,
+            'stream_id': streamId,
+            'subject_id': subjectId,
+          });
+        }
+      });
 
-      // Insert stream-subject mappings
-      for (var streamSubjectData in streamSubjectDataList) {
-        int streamId = streamIdMap[streamSubjectData['stream_id']] ?? 0;
-        int subjectId = subjectIdMap[streamSubjectData['subject_id']] ?? 0;
-        await conn.query(
-          'INSERT INTO stream_subjects_table (stream_id, subject_id) VALUES (?, ?)',
-          [streamId, subjectId],
-        );
-      }
-
-      await conn.query('COMMIT;');
-      print("Data successfully inserted into all tables.");
       return 1;
     } catch (e) {
-      if (conn != null) {
-        await conn.query('ROLLBACK;');
-      }
       print("Transaction failed: $e");
       return 0;
-    } finally {
-      if (conn != null) {
-        await conn.close();
-      }
     }
   }
 
   Future<int> startNewYear(String academicYear) async {
-    _academicYear = academicYear;
+    List<Map<String, dynamic>> classDataList = [
+      {
+        'class_id': 1,
+        'class_name': 'Plus Two STATE',
+        'academic_year': academicYear,
+        'section': 'HSS'
+      },
+      {
+        'class_id': 2,
+        'class_name': 'Plus Two CBSE',
+        'academic_year': academicYear,
+        'section': 'HSS'
+      },
+      {
+        'class_id': 3,
+        'class_name': 'Plus One STATE',
+        'academic_year': academicYear,
+        'section': 'HSS'
+      },
+      {
+        'class_id': 4,
+        'class_name': 'Plus One CBSE',
+        'academic_year': academicYear,
+        'section': 'HSS'
+      },
+      {
+        'class_id': 5,
+        'class_name': '10th STATE',
+        'academic_year': academicYear,
+        'section': 'HSS'
+      },
+      {
+        'class_id': 6,
+        'class_name': '10th CBSE',
+        'academic_year': academicYear,
+        'section': 'HS'
+      },
+      {
+        'class_id': 7,
+        'class_name': '9th STATE',
+        'academic_year': academicYear,
+        'section': 'HS'
+      },
+      {
+        'class_id': 8,
+        'class_name': '9th CBSE',
+        'academic_year': academicYear,
+        'section': 'HS'
+      },
+      {
+        'class_id': 9,
+        'class_name': '8th STATE',
+        'academic_year': academicYear,
+        'section': 'HS'
+      },
+      {
+        'class_id': 10,
+        'class_name': '8th CBSE',
+        'academic_year': academicYear,
+        'section': 'HS'
+      },
+    ];
+
+    List<Map<String, dynamic>> subjectDataList = [
+//plus two state
+
+      {'subject_id': 1, 'subject_name': 'Mathematics', 'class_id': 1},
+      {'subject_id': 2, 'subject_name': 'Physics', 'class_id': 1},
+      {'subject_id': 3, 'subject_name': 'Chemistry', 'class_id': 1},
+      {'subject_id': 4, 'subject_name': 'Botany', 'class_id': 1},
+      {'subject_id': 5, 'subject_name': 'Zoology', 'class_id': 1},
+
+// plus two cbse
+
+      {'subject_id': 6, 'subject_name': 'Mathematics', 'class_id': 2},
+      {'subject_id': 7, 'subject_name': 'Physics', 'class_id': 2},
+      {'subject_id': 8, 'subject_name': 'Chemistry', 'class_id': 2},
+      {'subject_id': 9, 'subject_name': 'Botany', 'class_id': 2},
+      {'subject_id': 10, 'subject_name': 'Zoology', 'class_id': 2},
+
+// plus one state
+
+      {'subject_id': 11, 'subject_name': 'Mathematics', 'class_id': 3},
+      {'subject_id': 12, 'subject_name': 'Physics', 'class_id': 3},
+      {'subject_id': 13, 'subject_name': 'Chemistry', 'class_id': 3},
+      {'subject_id': 14, 'subject_name': 'Botany', 'class_id': 3},
+      {'subject_id': 15, 'subject_name': 'Zoology', 'class_id': 3},
+
+// plus one cbse
+
+      {'subject_id': 16, 'subject_name': 'Mathematics', 'class_id': 4},
+      {'subject_id': 17, 'subject_name': 'Physics', 'class_id': 4},
+      {'subject_id': 18, 'subject_name': 'Chemistry', 'class_id': 4},
+      {'subject_id': 19, 'subject_name': 'Botany', 'class_id': 4},
+      {'subject_id': 20, 'subject_name': 'Zoology', 'class_id': 4},
+
+      // // 10th state
+      {'subject_id': 21, 'subject_name': 'English', 'class_id': 5},
+      {'subject_id': 22, 'subject_name': 'Hindi', 'class_id': 5},
+      {'subject_id': 23, 'subject_name': 'Mathematics', 'class_id': 5},
+      {'subject_id': 25, 'subject_name': 'Social Science', 'class_id': 5},
+      {'subject_id': 26, 'subject_name': 'Physics', 'class_id': 5},
+      {'subject_id': 27, 'subject_name': 'Chemistry', 'class_id': 5},
+      {'subject_id': 28, 'subject_name': 'Biology', 'class_id': 5},
+
+      // 10th cbse
+      {'subject_id': 29, 'subject_name': 'English', 'class_id': 6},
+      {'subject_id': 30, 'subject_name': 'Hindi', 'class_id': 6},
+      {'subject_id': 31, 'subject_name': 'Mathematics', 'class_id': 6},
+      {'subject_id': 32, 'subject_name': 'Social Science', 'class_id': 6},
+      {'subject_id': 33, 'subject_name': 'Physics', 'class_id': 6},
+      {'subject_id': 34, 'subject_name': 'Chemistry', 'class_id': 6},
+      {'subject_id': 35, 'subject_name': 'Biology', 'class_id': 6},
+
+      // 9th state
+      {'subject_id': 36, 'subject_name': 'English', 'class_id': 7},
+      {'subject_id': 37, 'subject_name': 'Hindi', 'class_id': 7},
+      {'subject_id': 38, 'subject_name': 'Mathematics', 'class_id': 7},
+      {'subject_id': 39, 'subject_name': 'Social Science', 'class_id': 7},
+      {'subject_id': 40, 'subject_name': 'Physics', 'class_id': 7},
+      {'subject_id': 41, 'subject_name': 'Chemistry', 'class_id': 7},
+      {'subject_id': 42, 'subject_name': 'Biology', 'class_id': 7},
+      // 9th cbse
+      {'subject_id': 43, 'subject_name': 'English', 'class_id': 8},
+      {'subject_id': 44, 'subject_name': 'Hindi', 'class_id': 8},
+      {'subject_id': 45, 'subject_name': 'Mathematics', 'class_id': 8},
+      {'subject_id': 46, 'subject_name': 'Social Science', 'class_id': 8},
+      {'subject_id': 47, 'subject_name': 'Physics', 'class_id': 8},
+      {'subject_id': 48, 'subject_name': 'Chemistry', 'class_id': 8},
+      {'subject_id': 49, 'subject_name': 'Biology', 'class_id': 8},
+      // 8th state
+      {'subject_id': 50, 'subject_name': 'English', 'class_id': 9},
+      {'subject_id': 51, 'subject_name': 'Hindi', 'class_id': 9},
+      {'subject_id': 52, 'subject_name': 'Mathematics', 'class_id': 9},
+      {'subject_id': 53, 'subject_name': 'Social Science', 'class_id': 9},
+      {'subject_id': 54, 'subject_name': 'Physics', 'class_id': 9},
+      {'subject_id': 55, 'subject_name': 'Chemistry', 'class_id': 9},
+      {'subject_id': 56, 'subject_name': 'Biology', 'class_id': 9},
+      // 8th cbse
+      {'subject_id': 57, 'subject_name': 'English', 'class_id': 10},
+      {'subject_id': 58, 'subject_name': 'Hindi', 'class_id': 10},
+      {'subject_id': 59, 'subject_name': 'Mathematics', 'class_id': 10},
+      {'subject_id': 60, 'subject_name': 'Social Science', 'class_id': 10},
+      {'subject_id': 61, 'subject_name': 'Physics', 'class_id': 10},
+      {'subject_id': 62, 'subject_name': 'Chemistry', 'class_id': 10},
+      {'subject_id': 63, 'subject_name': 'Biology', 'class_id': 10},
+    ];
+
+    List<Map<String, dynamic>> streamDataList = [
+      //12th
+      //state
+      {'stream_id': 1, 'stream_name': '12th Bio STATE', 'class_id': 1},
+      {'stream_id': 2, 'stream_name': '12th CS STATE', 'class_id': 1},
+      //cbse
+      {'stream_id': 3, 'stream_name': '12th Bio-Hindi CBSE', 'class_id': 2},
+      {'stream_id': 4, 'stream_name': '12th Bio-Math CBSE', 'class_id': 2},
+      {'stream_id': 5, 'stream_name': '12th CS CBSE', 'class_id': 2},
+      //11th
+      //state
+      {'stream_id': 6, 'stream_name': '11th Bio STATE', 'class_id': 3},
+      {'stream_id': 7, 'stream_name': '11th CS STATE', 'class_id': 3},
+      //cbse
+      {'stream_id': 8, 'stream_name': '11th Bio-Hindi CBSE', 'class_id': 4},
+      {'stream_id': 9, 'stream_name': '11th Bio-Math CBSE', 'class_id': 4},
+      {'stream_id': 10, 'stream_name': '11th CS CBSE', 'class_id': 4},
+      //10th
+      //state
+      {'stream_id': 11, 'stream_name': '10th STATE', 'class_id': 5},
+      //cbse
+      {'stream_id': 12, 'stream_name': '10th CBSE', 'class_id': 6},
+      //9th
+      //state
+      {'stream_id': 13, 'stream_name': '9th STATE', 'class_id': 7},
+      //cbse
+      {'stream_id': 14, 'stream_name': '9th CBSE', 'class_id': 8},
+      //8th
+      //state
+      {'stream_id': 15, 'stream_name': '8th STATE', 'class_id': 9},
+      //cbse
+      {'stream_id': 16, 'stream_name': '8th CBSE', 'class_id': 10},
+    ];
+
+    List<Map<String, dynamic>> streamSubjectDataList = [
+      // 12th BIO STATE
+      {'stream_id': 1, 'subject_id': 1},
+      {'stream_id': 1, 'subject_id': 2},
+      {'stream_id': 1, 'subject_id': 3},
+      {'stream_id': 1, 'subject_id': 4},
+      {'stream_id': 1, 'subject_id': 5},
+
+      // 12th CS STATE
+      {'stream_id': 2, 'subject_id': 1},
+      {'stream_id': 2, 'subject_id': 2},
+      {'stream_id': 2, 'subject_id': 3},
+
+      //12th bio-hindi cbse
+      {'stream_id': 3, 'subject_id': 7},
+      {'stream_id': 3, 'subject_id': 8},
+      {'stream_id': 3, 'subject_id': 9},
+      {'stream_id': 3, 'subject_id': 10},
+
+      //12th bio-math cbse
+      {'stream_id': 4, 'subject_id': 6},
+      {'stream_id': 4, 'subject_id': 7},
+      {'stream_id': 4, 'subject_id': 8},
+      {'stream_id': 4, 'subject_id': 9},
+      {'stream_id': 4, 'subject_id': 10},
+
+      //12th cs cbse
+      {'stream_id': 5, 'subject_id': 6},
+      {'stream_id': 5, 'subject_id': 7},
+      {'stream_id': 5, 'subject_id': 8},
+
+      // 11th BIO STATE
+      {'stream_id': 6, 'subject_id': 11},
+      {'stream_id': 6, 'subject_id': 12},
+      {'stream_id': 6, 'subject_id': 13},
+      {'stream_id': 6, 'subject_id': 14},
+      {'stream_id': 6, 'subject_id': 15},
+
+      // 11th CS STATE
+      {'stream_id': 7, 'subject_id': 11},
+      {'stream_id': 7, 'subject_id': 12},
+      {'stream_id': 7, 'subject_id': 13},
+
+      //11th bio-hindi cbse
+      {'stream_id': 8, 'subject_id': 17},
+      {'stream_id': 8, 'subject_id': 18},
+      {'stream_id': 8, 'subject_id': 19},
+      {'stream_id': 8, 'subject_id': 20},
+
+      //11th bio-math cbse
+      {'stream_id': 9, 'subject_id': 16},
+      {'stream_id': 9, 'subject_id': 17},
+      {'stream_id': 9, 'subject_id': 18},
+      {'stream_id': 9, 'subject_id': 19},
+      {'stream_id': 9, 'subject_id': 20},
+
+      //11th cs cbse
+      {'stream_id': 10, 'subject_id': 16},
+      {'stream_id': 10, 'subject_id': 17},
+      {'stream_id': 10, 'subject_id': 18},
+
+      //10th STATE
+      {'stream_id': 11, 'subject_id': 21},
+      {'stream_id': 11, 'subject_id': 22},
+      {'stream_id': 11, 'subject_id': 23},
+      {'stream_id': 11, 'subject_id': 25},
+      {'stream_id': 11, 'subject_id': 26},
+      {'stream_id': 11, 'subject_id': 27},
+      {'stream_id': 11, 'subject_id': 28},
+
+      //10th CBSE
+      {'stream_id': 12, 'subject_id': 29},
+      {'stream_id': 12, 'subject_id': 30},
+      {'stream_id': 12, 'subject_id': 31},
+      {'stream_id': 12, 'subject_id': 32},
+      {'stream_id': 12, 'subject_id': 33},
+      {'stream_id': 12, 'subject_id': 34},
+      {'stream_id': 12, 'subject_id': 35},
+
+      //9th STATE
+      {'stream_id': 13, 'subject_id': 36},
+      {'stream_id': 13, 'subject_id': 37},
+      {'stream_id': 13, 'subject_id': 38},
+      {'stream_id': 13, 'subject_id': 39},
+      {'stream_id': 13, 'subject_id': 40},
+      {'stream_id': 13, 'subject_id': 41},
+      {'stream_id': 13, 'subject_id': 42},
+
+      //9th CBSE
+      {'stream_id': 14, 'subject_id': 43},
+      {'stream_id': 14, 'subject_id': 44},
+      {'stream_id': 14, 'subject_id': 45},
+      {'stream_id': 14, 'subject_id': 46},
+      {'stream_id': 14, 'subject_id': 47},
+      {'stream_id': 14, 'subject_id': 48},
+      {'stream_id': 14, 'subject_id': 49},
+
+      //8th STATE
+      {'stream_id': 15, 'subject_id': 50},
+      {'stream_id': 15, 'subject_id': 51},
+      {'stream_id': 15, 'subject_id': 52},
+      {'stream_id': 15, 'subject_id': 53},
+      {'stream_id': 15, 'subject_id': 54},
+      {'stream_id': 15, 'subject_id': 55},
+      {'stream_id': 15, 'subject_id': 56},
+
+      //8th CBSE
+      {'stream_id': 16, 'subject_id': 57},
+      {'stream_id': 16, 'subject_id': 58},
+      {'stream_id': 16, 'subject_id': 59},
+      {'stream_id': 16, 'subject_id': 60},
+      {'stream_id': 16, 'subject_id': 61},
+      {'stream_id': 16, 'subject_id': 62},
+      {'stream_id': 16, 'subject_id': 63},
+    ];
+
     return await insertDynamicData(
-      classDataList,
-      subjectDataList,
-      streamDataList,
-      streamSubjectDataList,
-    );
+        classDataList, subjectDataList, streamDataList, streamSubjectDataList);
   }
 
   Future<List<Map<String, dynamic>>> getTestHistory(int class_id) async {
-    var conn = await connection;
-    try {
-      String query = '''
-        SELECT DISTINCT
-          t.id AS test_id,
-          s.subject_name,
-          t.topic,
-          c.class_name,
-          t.test_date
-        FROM 
-          test_table t
-        JOIN 
-          subject_table s ON t.subject_id = s.id
-        JOIN 
-          stream_subjects_table ss ON s.id = ss.subject_id
-        JOIN 
-          stream_table st ON ss.stream_id = st.id
-        JOIN 
-          class_table c ON st.class_id = c.id
-        WHERE 
-          c.id = ?
-        ORDER BY 
-          t.id DESC;
-      ''';
+    final db = await database;
+    String query = '''SELECT DISTINCT
+    t.id AS test_id,
+    s.subject_name,
+    t.topic,
+    c.class_name,
+    t.test_date
+FROM 
+    test_table t
+JOIN 
+    subject_table s ON t.subject_id = s.id
+JOIN 
+    stream_subjects_table ss ON s.id = ss.subject_id
+JOIN 
+    stream_table st ON ss.stream_id = st.id
+JOIN 
+    class_table c ON st.class_id = c.id
+WHERE c.id = ?
+ORDER BY 
+    t.id DESC;  
 
-      Results results = await conn.query(query, [class_id]);
-      return results.map((row) {
-        return {
-          'test_id': row[0],
-          'subject_name': row[1],
-          'topic': row[2],
-          'class_name': row[3],
-          'test_date': row[4],
-        };
-      }).toList();
-    } catch (e) {
-      print('Error retrieving test history: $e');
-      return [];
-    } finally {
-      // await conn.close();
-    }
+
+''';
+    List<Map<String, dynamic>> results = await db.rawQuery(query, [class_id]);
+
+    return results;
   }
 
   Future<int> deleteFromTable(String tablename, int id) async {
-    var conn = await connection;
-    try {
-      String query = 'DELETE FROM $tablename WHERE id = ?';
-      var result = await conn.query(query, [id]);
-      return result.affectedRows ?? 0; // Return number of affected rows
-    } catch (e) {
-      print('Error deleting from table: $e');
-      return 0; // Return failure
-    } finally {
-      // await conn.close();
-    }
+    final db = await database;
+    return await db.delete(tablename, where: 'id = ?', whereArgs: [id]);
   }
+  // Example CRUD operations
+//   Future<int> insertStudent(Map<String, dynamic> student) async {
+//     final db = await database;
+//     return await db.insert('students', student);
+//   }
+
+//   Future<List<Map<String, dynamic>>> getStudents() async {
+//     final db = await database;
+//     return await db.query('students');
+//   }
+
+//   Future<int> updateStudent(int id, Map<String, dynamic> student) async {
+//     final db = await database;
+//     return await db
+//         .update('students', student, where: 'id = ?', whereArgs: [id]);
+//   }
+
+//   Future<int> deleteStudent(int id) async {
+//     final db = await database;
+//     return await db.delete('students', where: 'id = ?', whereArgs: [id]);
+//   }
 }

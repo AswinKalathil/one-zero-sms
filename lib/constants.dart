@@ -102,9 +102,7 @@ Column getLogoColored(double fontSize, double opacity) {
 DatabaseHelper dbHelperForConstants = DatabaseHelper();
 
 Future<void> initializeStreamNames(int class_id) async {
-  print("initializeStreamNames class_id: $class_id");
   STREAM_NAMES = await dbHelperForConstants.getStreamNames(class_id);
-  print(STREAM_NAMES);
 }
 
 List<String> STREAM_NAMES = [];
