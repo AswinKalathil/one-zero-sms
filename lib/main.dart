@@ -9,6 +9,7 @@ import 'package:one_zero/dataEntry.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:stroke_text/stroke_text.dart';
+import 'dart:async';
 
 void main() async {
   // Initialize the FFI
@@ -80,7 +81,8 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyHomePageState extends State<MyHomePage>
+    with SingleTickerProviderStateMixin {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   DatabaseHelper _dbHelper = DatabaseHelper();
   int _pageNumber = 0;
@@ -89,19 +91,27 @@ class _MyHomePageState extends State<MyHomePage> {
   int _classCount = 0;
   bool _isMenuExpanded = false;
   bool _isClassTablesInitialized = false;
+  List<Map<String, dynamic>> _classes = [];
+  List<String> _academicYears = [];
+  String _selectdAcadamicYear = '';
+  late AnimationController _animationController;
+  bool _isSyncing = false;
   List<String> appBarTitle = [
     'Class Rooms',
-    'Class Details',
-    'Add Students',
-    'Reports',
-    'Exam Entry',
-    'Settings'
+    'Reports for ',
+    'Add Students to',
+    'not used',
+    'Exam Entry for ',
+    'Settings',
   ];
-
-  List<Map<String, dynamic>> _classes = [];
 
   @override
   void initState() {
+    _animationController = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 2), // Duration for one complete rotation
+    );
+    _startSync();
     _loadYears();
     _loadClasess();
     super.initState();
@@ -131,16 +141,15 @@ class _MyHomePageState extends State<MyHomePage> {
         'Class Rooms',
         'Reports for ${_classes[_selectedClass_index]['class_name']}',
         'Add Students to ${_classes[_selectedClass_index]['class_name']}',
-        'Settings',
+        'not used',
         'Exam Entry for ${_classes[_selectedClass_index]['class_name']}',
+        'Settings',
       ];
       _classes;
       _classCount = _classes.length;
     });
   }
 
-  List<String> _academicYears = [];
-  String _selectdAcadamicYear = '';
   void newYearDialog() async {
     TextEditingController textFieldController = TextEditingController();
     textFieldController.text =
@@ -211,8 +220,29 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _startSync() async {
+    setState(() {
+      _isSyncing = true;
+    });
+
+    _animationController.repeat(); // Start the spinning animation
+
+    // Simulate a sync operation (replace this with actual sync logic)
+    await Future.delayed(Duration(seconds: 3));
+
+    _animationController.stop(); // Stop the animation
+    setState(() {
+      _isSyncing = false;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    bool _isDarkMode = Theme.of(context).brightness == Brightness.dark;
     if (!_isClassTablesInitialized) _loadClasess();
 
     return Scaffold(
@@ -239,11 +269,18 @@ class _MyHomePageState extends State<MyHomePage> {
           backgroundColor: Theme.of(context).primaryColor,
           actions: switch (_pageNumber) {
             0 => [
-                IconButton(
-                  icon: Icon(Icons.refresh_rounded, color: Colors.white),
-                  onPressed: () {
-                    setState(() {});
-                  },
+                Padding(
+                  padding: EdgeInsets.only(right: 16.0),
+                  child: RotationTransition(
+                    turns: _animationController,
+                    child: IconButton(
+                      icon: Icon(Icons.sync, color: Colors.white),
+                      onPressed: _isSyncing
+                          ? null
+                          : _startSync, // Disable button during sync
+                      tooltip: 'Sync data',
+                    ),
+                  ),
                 ),
                 Container(
                     color: Theme.of(context).primaryColor,
@@ -297,11 +334,18 @@ class _MyHomePageState extends State<MyHomePage> {
                 ),
               ],
             1 => [
-                IconButton(
-                  icon: Icon(Icons.refresh_rounded, color: Colors.white),
-                  onPressed: () {
-                    setState(() {});
-                  },
+                Padding(
+                  padding: EdgeInsets.only(right: 16.0),
+                  child: RotationTransition(
+                    turns: _animationController,
+                    child: IconButton(
+                      icon: Icon(Icons.sync, color: Colors.white),
+                      onPressed: _isSyncing
+                          ? null
+                          : _startSync, // Disable button during sync
+                      tooltip: 'Sync data',
+                    ),
+                  ),
                 ),
                 SizedBox(
                   width: 200,
@@ -385,137 +429,97 @@ class _MyHomePageState extends State<MyHomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _pageNumber == 0
-                    ? Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: IconButton(
-                          icon: _isMenuExpanded
-                              ? Icon(Icons.menu_open, color: Colors.white)
-                              : Icon(Icons.menu, color: Colors.white),
-                          onPressed: () {
-                            setState(() {
-                              super.setState(() {
-                                _isMenuExpanded = !_isMenuExpanded;
-                              });
-                            });
-                          },
-                        ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: IconButton(
+                    icon: _isMenuExpanded
+                        ? Icon(Icons.menu_open, color: Colors.white)
+                        : Icon(Icons.menu, color: Colors.white),
+                    onPressed: () {
+                      setState(() {
+                        super.setState(() {
+                          _isMenuExpanded = !_isMenuExpanded;
+                        });
+                      });
+                    },
+                  ),
+                ),
+                _pageNumber != 0 && _pageNumber != 5
+                    ? CustomDrawerItem(
+                        icon: Icons.analytics_outlined,
+                        selectedIcon: Icons.analytics,
+                        label: 'Reports',
+                        page: 1,
+                        selectedPage: _pageNumber,
+                        onTap: () {
+                          setState(() {
+                            _pageNumber = 1;
+                          });
+                        },
+                        isMenuExpanded: _isMenuExpanded,
                       )
                     : SizedBox(),
-                Container(
-                  // color: Colors.amber,
-                  height: MediaQuery.of(context).size.height - 126,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _pageNumber > 0
-                          ? SizedBox(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Padding(
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: IconButton(
-                                      icon: _isMenuExpanded
-                                          ? Icon(Icons.menu_open,
-                                              color: Colors.white)
-                                          : Icon(Icons.menu,
-                                              color: Colors.white),
-                                      onPressed: () {
-                                        setState(() {
-                                          super.setState(() {
-                                            _isMenuExpanded = !_isMenuExpanded;
-                                          });
-                                        });
-                                      },
-                                    ),
-                                  ),
-                                  CustomDrawerItem(
-                                    icon: Icons.analytics_outlined,
-                                    selectedIcon: Icons.analytics,
-                                    label: 'Reports',
-                                    page: 1,
-                                    selectedPage: _pageNumber,
-                                    onTap: () {
-                                      setState(() {
-                                        _pageNumber = 1;
-                                      });
-                                    },
-                                    isMenuExpanded: _isMenuExpanded,
-                                  ),
-                                  CustomDrawerItem(
-                                    icon: Icons.group_add_outlined,
-                                    selectedIcon: Icons.group_add_rounded,
-                                    label: 'Add Students',
-                                    page: 2,
-                                    selectedPage: _pageNumber,
-                                    onTap: () {
-                                      setState(() {
-                                        initializeStreamNames(_selectdClass);
-                                        _pageNumber = 2;
-                                      });
-                                    },
-                                    isMenuExpanded: _isMenuExpanded,
-                                  ),
-                                  CustomDrawerItem(
-                                    icon: Icons.add_box_outlined,
-                                    selectedIcon: Icons.add_box,
-                                    label: 'Exam Entry',
-                                    page: 4,
-                                    selectedPage: _pageNumber,
-                                    onTap: () {
-                                      setState(() {
-                                        _pageNumber = 4;
-                                      });
-                                    },
-                                    isMenuExpanded: _isMenuExpanded,
-                                  ),
-                                ],
-                              ),
-                            )
-                          : SizedBox(
-                              height: 0,
-                            ),
-                      SizedBox(
-                        child: Column(
-                          children: [
-                            CustomDrawerItem(
-                                icon: widget.isDarkMode
-                                    ? Icons.wb_sunny
-                                    : Icons.nightlight_round,
-                                selectedIcon: Icons.wb_sunny,
-                                label: widget.isDarkMode ? "Light" : "Dark",
-                                page: -1,
-                                selectedPage: _pageNumber,
-                                onTap: () {
-                                  setState(() {
-                                    widget.onThemeChanged(!widget.isDarkMode);
-                                  });
-                                },
-                                isMenuExpanded: _isMenuExpanded),
-                            CustomDrawerItem(
-                              icon: Icons.settings_outlined,
-                              selectedIcon: Icons.settings,
-                              label: 'Settings',
-                              page: 5,
-                              selectedPage: _pageNumber,
-                              onTap: () {
-                                setState(() {
-                                  _pageNumber = 0;
-                                });
-                              },
-                              isMenuExpanded: _isMenuExpanded,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
+                _pageNumber != 0 && _pageNumber != 5
+                    ? CustomDrawerItem(
+                        icon: Icons.group_add_outlined,
+                        selectedIcon: Icons.group_add_rounded,
+                        label: 'Add Students',
+                        page: 2,
+                        selectedPage: _pageNumber,
+                        onTap: () {
+                          setState(() {
+                            initializeStreamNames(_selectdClass);
+                            _pageNumber = 2;
+                          });
+                        },
+                        isMenuExpanded: _isMenuExpanded,
+                      )
+                    : SizedBox(),
+                _pageNumber != 0 && _pageNumber != 5
+                    ? CustomDrawerItem(
+                        icon: Icons.add_box_outlined,
+                        selectedIcon: Icons.add_box,
+                        label: 'Exam Entry',
+                        page: 4,
+                        selectedPage: _pageNumber,
+                        onTap: () {
+                          setState(() {
+                            _pageNumber = 4;
+                          });
+                        },
+                        isMenuExpanded: _isMenuExpanded,
+                      )
+                    : SizedBox(),
+                Spacer(),
+                CustomDrawerItem(
+                    icon: widget.isDarkMode
+                        ? Icons.wb_sunny
+                        : Icons.nightlight_round,
+                    selectedIcon: Icons.wb_sunny,
+                    label: widget.isDarkMode ? "Light" : "Dark",
+                    page: -1,
+                    selectedPage: _pageNumber,
+                    onTap: () {
+                      setState(() {
+                        widget.onThemeChanged(!widget.isDarkMode);
+                      });
+                    },
+                    isMenuExpanded: _isMenuExpanded),
+                CustomDrawerItem(
+                  icon: Icons.settings_outlined,
+                  selectedIcon: Icons.settings,
+                  label: 'Settings',
+                  page: 5,
+                  selectedPage: _pageNumber,
+                  onTap: () {
+                    setState(() {
+                      _pageNumber = 5;
+                    });
+                  },
+                  isMenuExpanded: _isMenuExpanded,
                 ),
               ],
             ),
-
-            // Add more ListTile widgets for other menu items
           ),
           Expanded(
               child: switch (_pageNumber) {
@@ -531,7 +535,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 classes: _classes,
                 isMenuExpanded: _isMenuExpanded,
               ),
-            // 6 => _addNewExam(context, setState),
+            5 => _buildSettings(context),
 
             // TODO: Handle this case.
             int() => throw UnimplementedError(),
@@ -552,83 +556,56 @@ class _MyHomePageState extends State<MyHomePage> {
     Icons.currency_rupee_rounded,
   ];
   String _appMode = 'Acadamics';
-  // Widget _buildHome(BuildContext context) {
-  //   return Center(
-  //     child: Container(
-  //       width: 500,
-  //       height: 500,
-  //       margin: EdgeInsets.all(20),
-  //       child: Center(
-  //         child: Column(
-  //           mainAxisAlignment: MainAxisAlignment.start,
-  //           crossAxisAlignment: CrossAxisAlignment.start,
-  //           children: [
-  //             Expanded(
-  //               child: GridView.builder(
-  //                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-  //                   crossAxisCount: 3, // Number of cards in a row
-  //                   childAspectRatio:
-  //                       1, // Width/height ratio of the cards (1 for square)
-  //                   crossAxisSpacing: 20,
-  //                   mainAxisSpacing: 20,
-  //                 ),
-  //                 itemCount: _menuOptions.length,
-  //                 itemBuilder: (context, index) {
-  //                   return Align(
-  //                     alignment: Alignment.topLeft,
-  //                     child: MouseRegion(
-  //                       cursor: SystemMouseCursors.click,
-  //                       child: GestureDetector(
-  //                         onTap: () {
-  //                           setState(() {
-  //                             _appMode = _menuOptions[index];
-  //                           });
-  //                         },
-  //                         child: Container(
-  //                           decoration: BoxDecoration(
-  //                             color: Theme.of(context).cardColor,
-  //                             borderRadius: BorderRadius.circular(10),
-  //                             border: Border.all(
-  //                               color: Colors.grey.withOpacity(.5),
-  //                               width: .5,
-  //                             ),
-  //                             boxShadow: [
-  //                               BoxShadow(
-  //                                 color: Colors.grey.withOpacity(.5),
-  //                                 blurRadius: 5,
-  //                                 offset: Offset(2, 2),
-  //                               ),
-  //                             ],
-  //                           ),
-  //                           child: Column(
-  //                             mainAxisAlignment: MainAxisAlignment.center,
-  //                             children: [
-  //                               Icon(
-  //                                 _menuIcons[index],
-  //                                 size: 50,
-  //                               ),
-  //                               Center(
-  //                                 child: Text(
-  //                                   _menuOptions[index],
-  //                                   style:
-  //                                       TextStyle(fontWeight: FontWeight.bold),
-  //                                 ),
-  //                               ),
-  //                             ],
-  //                           ),
-  //                         ),
-  //                       ),
-  //                     ),
-  //                   );
-  //                 },
-  //               ),
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
+  Widget _buildSettings(BuildContext context) {
+    return Center(
+      child: Container(
+        width: 900,
+        height: 1000,
+        margin: EdgeInsets.all(20),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: ListView.builder(
+                  itemCount: _menuOptions.length,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      padding: EdgeInsets.all(20),
+                      margin: EdgeInsets.all(10),
+                      height: 250,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).canvasColor,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: Colors.grey.withOpacity(.5),
+                          width: .5,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            _menuOptions[index],
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            _menuOptions[index],
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   Widget _buildClassPage({int index = 0, bool isDedicatedPage = true}) {
     return (_isClassTablesInitialized)

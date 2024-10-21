@@ -115,3 +115,92 @@ VALUES
 ('TS048', 92, 'ST008', 'T010'),
 ('TS049', 94, 'ST009', 'T010'),
 ('TS050', 96, 'ST010', 'T010');
+
+
+
+
+
+
+mysql 
+========
+
+
+ CREATE TABLE IF NOT EXISTS class_table (
+  id INTEGER AUTO_INCREMENT PRIMARY KEY ,           
+  class_name VARCHAR(32) NOT NULL,              
+  academic_year VARCHAR(32) NOT NULL,
+  section VARCHAR(32) NOT NULL         
+);
+
+  CREATE TABLE IF NOT EXISTS stream_table (
+  id INTEGER AUTO_INCREMENT PRIMARY KEY , 
+  stream_name VARCHAR(32) NOT NULL,  
+  class_id INTEGER,                          
+  FOREIGN KEY (class_id) REFERENCES class_table(id) ON DELETE CASCADE
+);
+
+  CREATE TABLE IF NOT EXISTS subject_table (
+  id INTEGER AUTO_INCREMENT PRIMARY KEY ,   
+  subject_name VARCHAR(32) NOT NULL,            
+  class_id INTEGER,
+  FOREIGN KEY (class_id) REFERENCES class_table(id) ON DELETE CASCADE
+);
+
+  CREATE TABLE IF NOT EXISTS stream_subjects_table (
+  id INTEGER AUTO_INCREMENT PRIMARY KEY ,   
+  stream_id INTEGER,
+  subject_id INTEGER,
+  FOREIGN KEY (stream_id) REFERENCES stream_table(id) ON DELETE CASCADE,
+  FOREIGN KEY (subject_id) REFERENCES subject_table(id) ON DELETE CASCADE
+);
+
+  CREATE TABLE IF NOT EXISTS student_table (
+  id INTEGER PRIMARY KEY ,  
+  student_name VARCHAR(32) NOT NULL,
+  photo_id VARCHAR(32),
+  parent_phone VARCHAR(32),
+  gender VARCHAR(32),
+  school_name VARCHAR(32),
+  stream_id INTEGER NOT NULL,
+  FOREIGN KEY (stream_id) REFERENCES stream_table(id) ON DELETE CASCADE
+);
+
+  CREATE TABLE IF NOT EXISTS test_table (
+  id INTEGER PRIMARY KEY ,   
+  subject_id INTEGER,
+  topic VARCHAR(32),
+  max_mark INTEGER,
+  test_date DATETIME NOT NULL,
+  FOREIGN KEY (subject_id) REFERENCES subject_table(id) ON DELETE CASCADE
+);
+
+  CREATE TABLE IF NOT EXISTS test_score_table (
+  id INTEGER PRIMARY KEY AUTO_INCREMENT,   
+  score INTEGER,
+  student_id INTEGER,
+  test_id INTEGER,
+  FOREIGN KEY (student_id) REFERENCES student_table(id) ON DELETE CASCADE,
+  FOREIGN KEY (test_id) REFERENCES test_table(id) ON DELETE CASCADE
+);
+
+CREATE VIEW student_grade_view AS
+SELECT 
+  s.id AS student_id,
+  s.student_name,
+  COALESCE(s.photo_id, 'default_photo.png') AS photo_path,
+  c.class_name,
+  c.academic_year,
+  sub.subject_name,
+  COALESCE(ts.score, 0) AS latest_score,
+  t.max_mark,
+  t.test_date
+FROM student_table s
+LEFT JOIN stream_table st ON s.stream_id = st.id
+LEFT JOIN class_table c ON st.class_id = c.id
+LEFT JOIN test_score_table ts ON s.id = ts.student_id
+LEFT JOIN test_table t ON ts.test_id = t.id
+LEFT JOIN subject_table sub ON t.subject_id = sub.id;
+
+
+
+''';

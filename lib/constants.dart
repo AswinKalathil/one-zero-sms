@@ -501,38 +501,37 @@ List<Map<String, Object>> streamSubjectDataList = [
   {'stream_id': 16, 'subject_id': 63},
 ];
 
-String createQuery = '''
-  CREATE TABLE IF NOT EXISTS class_table (
-  id INTEGER AUTO_INCREMENT PRIMARY KEY ,           
+String createQuery = '''  CREATE TABLE IF NOT EXISTS class_table (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,           
   class_name VARCHAR(32) NOT NULL,              
   academic_year VARCHAR(32) NOT NULL,
   section VARCHAR(32) NOT NULL         
 );
 
-  CREATE TABLE IF NOT EXISTS stream_table (
-  id INTEGER AUTO_INCREMENT PRIMARY KEY , 
+CREATE TABLE IF NOT EXISTS stream_table (
+  id INTEGER PRIMARY KEY AUTOINCREMENT, 
   stream_name VARCHAR(32) NOT NULL,  
   class_id INTEGER,                          
   FOREIGN KEY (class_id) REFERENCES class_table(id) ON DELETE CASCADE
 );
 
-  CREATE TABLE IF NOT EXISTS subject_table (
-  id INTEGER AUTO_INCREMENT PRIMARY KEY ,   
+CREATE TABLE IF NOT EXISTS subject_table (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,   
   subject_name VARCHAR(32) NOT NULL,            
   class_id INTEGER,
   FOREIGN KEY (class_id) REFERENCES class_table(id) ON DELETE CASCADE
 );
 
-  CREATE TABLE IF NOT EXISTS stream_subjects_table (
-  id INTEGER AUTO_INCREMENT PRIMARY KEY ,   
+CREATE TABLE IF NOT EXISTS stream_subjects_table (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,   
   stream_id INTEGER,
   subject_id INTEGER,
   FOREIGN KEY (stream_id) REFERENCES stream_table(id) ON DELETE CASCADE,
   FOREIGN KEY (subject_id) REFERENCES subject_table(id) ON DELETE CASCADE
 );
 
-  CREATE TABLE IF NOT EXISTS student_table (
-  id INTEGER PRIMARY KEY ,  
+CREATE TABLE IF NOT EXISTS student_table (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,  
   student_name VARCHAR(32) NOT NULL,
   photo_id VARCHAR(32),
   parent_phone VARCHAR(32),
@@ -542,8 +541,8 @@ String createQuery = '''
   FOREIGN KEY (stream_id) REFERENCES stream_table(id) ON DELETE CASCADE
 );
 
-  CREATE TABLE IF NOT EXISTS test_table (
-  id INTEGER PRIMARY KEY ,   
+CREATE TABLE IF NOT EXISTS test_table (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,   
   subject_id INTEGER,
   topic VARCHAR(32),
   max_mark INTEGER,
@@ -551,8 +550,8 @@ String createQuery = '''
   FOREIGN KEY (subject_id) REFERENCES subject_table(id) ON DELETE CASCADE
 );
 
-  CREATE TABLE IF NOT EXISTS test_score_table (
-  id INTEGER PRIMARY KEY AUTO_INCREMENT,   
+CREATE TABLE IF NOT EXISTS test_score_table (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,   
   score INTEGER,
   student_id INTEGER,
   test_id INTEGER,
@@ -560,7 +559,7 @@ String createQuery = '''
   FOREIGN KEY (test_id) REFERENCES test_table(id) ON DELETE CASCADE
 );
 
-CREATE VIEW student_grade_view AS
+CREATE VIEW IF NOT EXISTS student_grade_view AS
 SELECT 
   s.id AS student_id,
   s.student_name,
@@ -577,7 +576,4 @@ LEFT JOIN class_table c ON st.class_id = c.id
 LEFT JOIN test_score_table ts ON s.id = ts.student_id
 LEFT JOIN test_table t ON ts.test_id = t.id
 LEFT JOIN subject_table sub ON t.subject_id = sub.id;
-
-
-
 ''';

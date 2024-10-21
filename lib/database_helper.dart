@@ -21,6 +21,7 @@ class DatabaseHelper {
 
   Future<Database> _initDatabase() async {
     String path = join(await getDatabasesPath(), 'one_zero_sqlite_db_file.db');
+    print("Database path: $path");
 
     // Open the database and enable foreign key support
     var db = await openDatabase(
