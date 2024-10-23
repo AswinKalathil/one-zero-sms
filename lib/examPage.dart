@@ -2,13 +2,14 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
-import 'package:one_zero/constants.dart';
+
 import 'package:one_zero/custom-widgets.dart';
-import 'package:one_zero/dataEntry.dart';
+
 import 'package:one_zero/database_helper.dart';
+import 'package:uuid/uuid.dart';
 
 class ExamScoreSheet extends StatefulWidget {
-  final int classId;
+  final String classId;
   final bool isClassTablesInitialized;
   final List<Map<String, dynamic>> classes;
   final bool isMenuExpanded;
@@ -34,11 +35,11 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
   bool _changeExist = true;
   bool reset = false;
   List<Map<String, dynamic>> _studentList = [];
-  int _testId = 0;
+  String _testId = '';
   List<String> _subjectForSuggestions = [];
   List<String>? _subjectsOfClass = [];
 
-  int _selectedClassid = 0;
+  String _selectedClassid = '';
   List<Map<String, dynamic>> _testHistory = [];
   DateTime _selectedDate = DateTime.now();
   DatabaseHelper _dbHelper = DatabaseHelper();
@@ -52,7 +53,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
     synchTestHistory();
   }
 
-  void fetchSubjects(int classId) async {
+  void fetchSubjects(String classId) async {
     _subjectsOfClass = await _dbHelper.getClassSubjects(widget.classId);
 
     _selectedClassid = widget.classId;
@@ -612,6 +613,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
   }
 
   saveExam() async {
+    var uuid = Uuid();
     // if (_classNameController.text.isEmpty ||
     if (_subjectNameController.text.isEmpty ||
         _topicController.text.isEmpty ||
@@ -629,10 +631,8 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
     } else {
       // All fields are filled, proceed with your logic
 
-      int maxtestId = await _dbHelper.getMaxId('test_table');
-
       Map<String, dynamic> newTest = {
-        'testId': maxtestId + 1,
+        'testId': uuid.v4(),
         'date': _selectedDate.toString(),
         'className': _classNameController.text,
         'maxMark': _maxiMarkController.text,
@@ -641,10 +641,10 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
       };
       // print(
       //     "class id at subject fetch: $_selectedClassid");
-      int subjectId = await _dbHelper.getSubjectId(
+      String subjectId = await _dbHelper.getSubjectId(
           _subjectNameController.text, _selectedClassid);
 
-      if (subjectId == 0) {
+      if (subjectId == '') {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Subject not found in the database'),
@@ -667,6 +667,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
             await _dbHelper.getStudentIdsAndNamesByTestId(test['id']);
         for (int i = 0; i < _studentList.length; i++) {
           _dbHelper.insertToTable('test_score_table', {
+            'id': uuid.v4(),
             'student_id': _studentList[i]['student_id'],
             'test_id': test['id'],
           });
@@ -680,7 +681,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
             // Use the default theme color
           ),
         );
-        _testId = maxtestId + 1;
+        _testId = test['id'];
 
         _studentList = await _dbHelper.getStudentIdsAndNamesByTestId(_testId);
 
@@ -696,7 +697,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
 }
 
 class ExamEntry extends StatefulWidget {
-  final int test_id;
+  final String test_id;
   Function parentsetstate;
 
   ExamEntry({Key? key, required this.test_id, required this.parentsetstate})
@@ -713,14 +714,14 @@ class _ExamEntryState extends State<ExamEntry> {
   List<FocusNode> focusNodes = [];
   List<Map<String, dynamic>> _studentScoreList = [];
   Map<String, dynamic> testDetails = {};
-  int maxId = 0;
+
   DatabaseHelper dbHelper = DatabaseHelper();
   int maxScore = 100;
   bool _isLoading = true;
 
   @override
   void initState() {
-    headers = ['ID', 'Student Name', 'Score'];
+    headers = ['SL No.', 'Student Name', 'Score'];
     columnLengths = [100, 300, 100];
 
     fetchStudents(widget.test_id);
@@ -739,7 +740,7 @@ class _ExamEntryState extends State<ExamEntry> {
     // _addNewRows();
   }
 
-  void fetchStudents(int testId) async {
+  void fetchStudents(String testId) async {
     DatabaseHelper dbHelper = DatabaseHelper();
     // print("Test id $testId");
     // studentList = await dbHelper.getStudentIdsAndNamesByTestId(testId);
@@ -993,9 +994,9 @@ class _ExamEntryState extends State<ExamEntry> {
                                   isScoreColumn ? controller : null,
                               focusNode:
                                   isScoreColumn ? focusNodes[rowIndex] : null,
-                              studentId: header == 'ID'
-                                  ? student['student_id'] as int
-                                  : 0,
+                              studentId: header == 'SL No.'
+                                  ? (rowIndex + 1001).toString()
+                                  : "",
                               currentScore: student['score']?.toString() ?? "",
                               maxMark: maxScore,
                               onSubmitted: isScoreColumn
@@ -1038,6 +1039,8 @@ class _ExamEntryState extends State<ExamEntry> {
 
     if (abort) return;
     DatabaseHelper dbHelper = DatabaseHelper();
+
+    print(_studentScoreList);
 
     for (int i = 0; i < _studentScoreList.length; i++) {
       print("${_studentScoreList[i]['test_score_id']} :${data[i]} ");
@@ -1095,7 +1098,7 @@ class StudentDataCell extends StatelessWidget {
   final String? studentName;
   final TextEditingController? scoreController;
   final FocusNode? focusNode;
-  final int studentId;
+  final String studentId;
   final String currentScore;
   final int maxMark;
   final VoidCallback? onSubmitted;
@@ -1122,7 +1125,7 @@ class StudentDataCell extends StatelessWidget {
             style: const TextStyle(),
           ),
         );
-      case 'ID':
+      case 'SL No.':
         return SizedBox(
           width: 50,
           child: Text(

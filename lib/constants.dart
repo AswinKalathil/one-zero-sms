@@ -101,7 +101,7 @@ Column getLogoColored(double fontSize, double opacity) {
 
 DatabaseHelper dbHelperForConstants = DatabaseHelper();
 
-Future<void> initializeStreamNames(int class_id) async {
+Future<void> initializeStreamNames(String class_id) async {
   STREAM_NAMES = await dbHelperForConstants.getStreamNames(class_id);
 }
 
@@ -492,7 +492,90 @@ List<Map<String, Object>> streamSubjectDataList = [
   {'stream_id': 16, 'subject_id': 63},
 ];
 
-String createQuery = '''  CREATE TABLE IF NOT EXISTS class_table (
+String createQuery = '''
+
+CREATE TABLE IF NOT EXISTS class_table (
+  id TEXT PRIMARY KEY,  -- Using TEXT for UUID
+  class_name VARCHAR(32) NOT NULL,
+  academic_year VARCHAR(32) NOT NULL,
+  section VARCHAR(32) NOT NULL,
+  sync_pending INTEGER DEFAULT 1,  -- 1 for true, indicating pending sync
+  last_modified DATETIME DEFAULT CURRENT_TIMESTAMP  -- Track last modification time
+);
+
+CREATE TABLE IF NOT EXISTS stream_table (
+  id TEXT PRIMARY KEY,
+  stream_name VARCHAR(32) NOT NULL,
+  class_id TEXT,
+  sync_pending INTEGER DEFAULT 1,
+  last_modified DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (class_id) REFERENCES class_table(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS subject_table (
+  id TEXT PRIMARY KEY,
+  subject_name VARCHAR(32) NOT NULL,
+  class_id TEXT,
+  sync_pending INTEGER DEFAULT 1,
+  last_modified DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (class_id) REFERENCES class_table(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS stream_subjects_table (
+  id TEXT PRIMARY KEY,
+  stream_id TEXT,
+  subject_id TEXT,
+  sync_pending INTEGER DEFAULT 1,
+  last_modified DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (stream_id) REFERENCES stream_table(id) ON DELETE CASCADE,
+  FOREIGN KEY (subject_id) REFERENCES subject_table(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS student_table (
+  id TEXT PRIMARY KEY,
+  student_name VARCHAR(32) NOT NULL,
+  photo_id VARCHAR(32),
+  parent_phone VARCHAR(32),
+  gender VARCHAR(32),
+  school_name VARCHAR(32),
+  stream_id TEXT,
+  sync_pending INTEGER DEFAULT 1,
+  last_modified DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (stream_id) REFERENCES stream_table(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS test_table (
+  id TEXT PRIMARY KEY,
+  subject_id TEXT,
+  topic VARCHAR(32),
+  max_mark INTEGER,
+  test_date DATETIME NOT NULL,
+  sync_pending INTEGER DEFAULT 1,
+  last_modified DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (subject_id) REFERENCES subject_table(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS test_score_table (
+  id TEXT PRIMARY KEY,
+  score INTEGER,
+  student_id TEXT,
+  test_id TEXT,
+  sync_pending INTEGER DEFAULT 1,
+  last_modified DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (student_id) REFERENCES student_table(id) ON DELETE CASCADE,
+  FOREIGN KEY (test_id) REFERENCES test_table(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS deleted_records (
+  id TEXT PRIMARY KEY,  -- UUID for the deleted record
+  table_name VARCHAR(32),  -- Name of the original table
+  deleted_data TEXT,  -- JSON representation of the deleted row
+  deleted_at DATETIME DEFAULT CURRENT_TIMESTAMP  -- When the record was deleted
+);
+
+ ''';
+
+String createQuery1 = '''  CREATE TABLE IF NOT EXISTS class_table (
   id INTEGER PRIMARY KEY AUTOINCREMENT,           
   class_name VARCHAR(32) NOT NULL,              
   academic_year VARCHAR(32) NOT NULL,

@@ -88,7 +88,7 @@ class _MyHomePageState extends State<MyHomePage>
   DatabaseHelper _dbHelper = DatabaseHelper();
   int _pageNumber = 0;
   int _selectedClass_index = 0;
-  int _selectdClass = 0;
+  String _selectdClass = '';
   int _classCount = 0;
   bool _isMenuExpanded = false;
   bool _isClassTablesInitialized = false;
@@ -235,7 +235,7 @@ class _MyHomePageState extends State<MyHomePage>
     // Simulate a sync operation (replace this with actual sync logic)
     // await Future.delayed(Duration(seconds: 3));
     Database db = await _dbHelper.database;
-    syncDatabase(db);
+    // syncDatabase(db);==================
 
     _animationController.stop(); // Stop the animation
     setState(() {

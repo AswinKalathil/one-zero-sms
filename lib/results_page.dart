@@ -12,7 +12,7 @@ import 'package:one_zero/testAnalytics.dart';
 
 class ClassDetailPage extends StatefulWidget {
   final String className;
-  final int classId;
+  final String classId;
   final bool isDedicatedPage;
 
   ClassDetailPage(
@@ -30,7 +30,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   List<String> _criteriaOptions = [];
   // Default criteria
 
-  int _studentId = 0;
+  String _studentId = '';
 
   String _studentNameForGrade = '';
   String searchText = '';
@@ -91,8 +91,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         // fetchedStudentsList = await _dbHelper.getStudentsOfName(value, 0);
         _resultTitle = 'search results with  $value';
       } else if (_selectedcriteria == 'Class') {
-        fetchedStudentsList =
-            await _dbHelper.getStudentsOfClass(int.parse(value));
+        fetchedStudentsList = await _dbHelper.getStudentsOfClass(value);
         _resultTitle = 'students of class $value';
       } else if (_selectedcriteria == 'Subject') {
         fetchedStudentsList = await _dbHelper.getStudentsOfSubject(value);
@@ -373,7 +372,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     );
   }
 
-  void setAnalyticsStudentId(int studentId) async {
+  void setAnalyticsStudentId(String studentId) async {
     // Clear the previous test results
     _testResults.clear();
 
@@ -491,7 +490,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 ),
                 onTap: () {
                   setState(() {
-                    _studentId = student['id'] as int;
+                    _studentId = student['id'];
 
                     _studentNameForGrade = student['student_name'] as String;
                     showGradeCard = true;
@@ -520,7 +519,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 }
 
 class GradeCard extends StatefulWidget {
-  final int studentId;
+  final String studentId;
 
   GradeCard({Key? key, required this.studentId}) : super(key: key);
   @override
@@ -591,7 +590,7 @@ class _GradeCardState extends State<GradeCard> {
 
         // Fetch the average score for the current subject
         var avg = await dbHelper.getStudentSubjectAverage(
-            widget.studentId, element['subject_id'] as int);
+            widget.studentId, element['subject_id']);
 
         // Ensure avg is a double and handle null values
         double averageScore = (avg is double)
@@ -664,8 +663,9 @@ class _GradeCardState extends State<GradeCard> {
 
     for (var test in tests) {
       String subject = test['subject_name'];
-      int subjectId = test['subject_id'] ?? -1;
-      int testId = test['test_id'] ?? 0;
+      String subjectId = test['subject_id'] ?? '';
+      String testId = test['test_id'] ?? '';
+
       // Handle score as an int, either from int or parsed from string
       int? score = test['score'] is int
           ? test['score']
@@ -702,7 +702,7 @@ class _GradeCardState extends State<GradeCard> {
         // Update the entry only if it doesn't exist or if the current testDate is more recent
         if (existingEntry == null ||
             existingEntry['test_date'] == null ||
-            testId > existingEntry['test_id']) {
+            testId.compareTo(existingEntry['test_id'] as String) > 0) {
           latestScores[subject] = {
             'subject_name': subject,
             'subject_id': subjectId,
@@ -721,7 +721,7 @@ class _GradeCardState extends State<GradeCard> {
         latestScores[subject] = {
           // Placeholder for no test conducted
           'subject_name': subject,
-          'subject_id': -1, // Indicate no test conducted
+          'subject_id': '-', // Indicate no test conducted
           'score': '-', // Indicate no test conducted
           'max_mark': '-', // Indicate no test conducted
           'test_date': null // No date available

@@ -1,6 +1,7 @@
 import 'package:one_zero/constants.dart';
 import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:uuid/uuid.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -73,7 +74,7 @@ class DatabaseHelper {
     }
   }
 
-  Future<Map<String, dynamic>> getTestDetails(int testId) async {
+  Future<Map<String, dynamic>> getTestDetails(String testId) async {
     final db = await database;
     try {
       String query =
@@ -87,7 +88,7 @@ class DatabaseHelper {
     }
   }
 
-  Future<List<String>> getStreamNames(int class_id) async {
+  Future<List<String>> getStreamNames(String class_id) async {
     // print("Acadamic year private: $_acadamicYear");
 
     final db = await database;
@@ -121,7 +122,7 @@ class DatabaseHelper {
 
     // Map the results and handle asynchronous count fetching for each row
     var mappedResults = await Future.wait(results.map((row) async {
-      int classId = row['id'] as int;
+      String classId = row['id'] as String;
       // Fetch student count for the current class
       var countResult = await db.rawQuery(
         sQuery,
@@ -185,7 +186,7 @@ class DatabaseHelper {
   // }
 
   Future<List<Map<String, dynamic>>> getStudentIdsAndNamesByTestId(
-      int testId) async {
+      String testId) async {
     // print("test id in getStudentIdsAndNamesByTestId function $testId");
     final db = await database;
 
@@ -213,7 +214,7 @@ class DatabaseHelper {
   }
 
   Future<List<Map<String, dynamic>>> getTestDataSheetForUpdate(
-      int testId) async {
+      String testId) async {
     // print("test id in getStudentIdsAndNamesByTestId function $testId");
     final db = await database;
 
@@ -238,7 +239,7 @@ JOIN (SELECT id, student_name
     return testDataSheet;
   }
 
-  Future<int> updateTestScore(int id, Map<String, dynamic> testScore) async {
+  Future<int> updateTestScore(String id, Map<String, dynamic> testScore) async {
     final db = await database;
     return await db.update('test_score_table', testScore,
         where: 'id = ?', whereArgs: [id]);
@@ -275,7 +276,7 @@ JOIN (SELECT id, student_name
     }
   }
 
-  Future<List<String>?> getClassSubjects(int classId) async {
+  Future<List<String>?> getClassSubjects(String classId) async {
     final db = await database;
     String query = '''
     SELECT 
@@ -366,7 +367,7 @@ JOIN (SELECT id, student_name
   }
 
   Future<List<Map<String, dynamic>>> getSubjectsOfStudentID(
-      int studentId) async {
+      String studentId) async {
     try {
       final db = await database;
 
@@ -392,7 +393,7 @@ JOIN (SELECT id, student_name
   }
 
   Future<List<Map<String, dynamic>>> getTestHistoryForSubjectOfStudentID(
-      int studentId, int subjectId) async {
+      String studentId, String subjectId) async {
     final db = await database;
 
     String query = '''
@@ -421,7 +422,7 @@ JOIN (SELECT id, student_name
   }
 
   Future<List<Map<String, dynamic>>> getStudentsOfNameAndClass(
-      String studentName, int classId) async {
+      String studentName, String classId) async {
     final db = await database;
 
     try {
@@ -506,7 +507,7 @@ JOIN (SELECT id, student_name
     }
   }
 
-  Future<List<Map<String, dynamic>>> getStudentsOfClass(int class_id) async {
+  Future<List<Map<String, dynamic>>> getStudentsOfClass(String class_id) async {
     final db = await database;
 
     // Query to get the class ID
@@ -556,7 +557,7 @@ JOIN (SELECT id, student_name
   //   // Get the class ID from the result
   //   int studentId = sudentIdResults[0]['id'] as int;
 
-  Future<List<Map<String, dynamic>>> getStudentData(int studentId) async {
+  Future<List<Map<String, dynamic>>> getStudentData(String studentId) async {
     final db = await database;
 
     String query = ''' SELECT 
@@ -596,7 +597,7 @@ WHERE
     }
   }
 
-  Future<List<Map<String, dynamic>>> getGradeCard(int studentId) async {
+  Future<List<Map<String, dynamic>>> getGradeCard(String studentId) async {
     final db = await database;
 
     String query = ''' SELECT 
@@ -661,7 +662,8 @@ ORDER BY
     }
   }
 
-  Future<double> getStudentSubjectAverage(int studentId, int subjectId) async {
+  Future<double> getStudentSubjectAverage(
+      String studentId, String subjectId) async {
     final db = await database;
 
     String query = '''
@@ -741,7 +743,7 @@ WHERE
     return result.first['maxId'] ?? 0; // Returns 0 if there are no rows
   }
 
-  Future<int> getSubjectId(String subjectName, int classid) async {
+  Future<String> getSubjectId(String subjectName, String classid) async {
     final db = await database;
 
     // Ensure that subjectName is not null or empty
@@ -761,11 +763,11 @@ WHERE
 
       // Check if the result is empty and return null if no subject is found
       if (result.isEmpty) {
-        return 0; // Return 0 if no subject is found
+        return ''; // Return 0 if no subject is found
       }
 
       // Return the subject ID
-      return result[0]['id'] as int;
+      return result[0]['id'];
     } catch (e) {
       // Handle any exceptions that occur
       print("Error occurred while fetching subject ID: $e");
@@ -773,7 +775,7 @@ WHERE
     }
   }
 
-  Future<int> getStreamId(String streamName, int classId) async {
+  Future<String> getStreamId(String streamName, String classId) async {
     final db = await database;
 
     // Ensure that streamName is not null or empty
@@ -793,11 +795,11 @@ WHERE
 
       // Check if the result is empty and return null if no stream is found
       if (result.isEmpty) {
-        return 0; // Return 0 if no stream is found
+        return ''; // Return 0 if no stream is found
       }
 
       // Return the stream ID
-      return result[0]['id'] as int;
+      return result[0]['id'];
     } catch (e) {
       // Handle any exceptions that occur
       print("Error occurred while fetching stream ID: $e");
@@ -813,13 +815,16 @@ WHERE
     try {
       Database db = await database;
       await db.transaction((txn) async {
-        Map<int, int> classIdMap = {}; // Maps class_id to generated id
-        Map<int, int> subjectIdMap = {}; // Maps subject_id to generated id
-        Map<int, int> streamIdMap = {}; // Maps stream_id to generated id
+        var uuid = Uuid();
+
+        Map<int, String> classIdMap = {}; // Maps class_id to generated id
+        Map<int, String> subjectIdMap = {}; // Maps subject_id to generated id
+        Map<int, String> streamIdMap = {}; // Maps stream_id to generated id
 
         // Insert classes and store their IDs
         for (var classData in classDataList) {
-          int classId = (await getMaxIdTX(txn, 'class_table')) + 1;
+          // int classId = (await getMaxIdTX(txn, 'class_table')) + 1;
+          String classId = uuid.v4();
           await txn.insert('class_table', {
             'id': classId,
             'class_name': classData['class_name'],
@@ -831,8 +836,8 @@ WHERE
 
         // Insert subjects and store their IDs
         for (var subjectData in subjectDataList) {
-          int classId = classIdMap[subjectData['class_id']] ?? 0;
-          int subjectId = (await getMaxIdTX(txn, 'subject_table')) + 1;
+          String classId = classIdMap[subjectData['class_id']] ?? '';
+          String subjectId = uuid.v4();
           await txn.insert('subject_table', {
             'id': subjectId,
             'subject_name': subjectData['subject_name'],
@@ -843,8 +848,8 @@ WHERE
 
         // Insert streams and store their IDs
         for (var streamData in streamDataList) {
-          int classId = classIdMap[streamData['class_id']] ?? 0;
-          int streamId = (await getMaxIdTX(txn, 'stream_table')) + 1;
+          String classId = classIdMap[streamData['class_id']] ?? '';
+          String streamId = uuid.v4();
           await txn.insert('stream_table', {
             'id': streamId,
             'stream_name': streamData['stream_name'],
@@ -855,10 +860,11 @@ WHERE
 
         // Insert stream-subject mappings
         for (var streamSubjectData in streamSubjectDataList) {
-          int streamId = streamIdMap[streamSubjectData['stream_id']] ?? 0;
-          int subjectId = subjectIdMap[streamSubjectData['subject_id']] ?? 0;
-          int streamSubjectId =
-              (await getMaxIdTX(txn, 'stream_subjects_table')) + 1;
+          String streamId = streamIdMap[streamSubjectData['stream_id']] ?? '';
+          String subjectId =
+              subjectIdMap[streamSubjectData['subject_id']] ?? '';
+          String streamSubjectId = uuid.v4();
+
           await txn.insert('stream_subjects_table', {
             'id': streamSubjectId,
             'stream_id': streamId,
@@ -1177,7 +1183,7 @@ WHERE
         classDataList, subjectDataList, streamDataList, streamSubjectDataList);
   }
 
-  Future<List<Map<String, dynamic>>> getTestHistory(int class_id) async {
+  Future<List<Map<String, dynamic>>> getTestHistory(String class_id) async {
     final db = await database;
     String query = '''SELECT DISTINCT
     t.id AS test_id,
@@ -1197,7 +1203,7 @@ JOIN
     class_table c ON st.class_id = c.id
 WHERE c.id = ?
 ORDER BY 
-    t.id DESC;  
+    t.last_modified DESC;  
 
 
 ''';
@@ -1206,7 +1212,7 @@ ORDER BY
     return results;
   }
 
-  Future<int> deleteFromTable(String tablename, int id) async {
+  Future<int> deleteFromTable(String tablename, String id) async {
     final db = await database;
     return await db.delete(tablename, where: 'id = ?', whereArgs: [id]);
   }

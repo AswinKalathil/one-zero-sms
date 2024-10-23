@@ -3,10 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:one_zero/custom-widgets.dart';
 import 'package:one_zero/database_helper.dart';
 import 'package:one_zero/constants.dart';
+import 'package:uuid/uuid.dart';
 
 class DataEntryPage extends StatefulWidget {
   final InputTableMetadata metadata;
-  final int classId;
+  final String classId;
   // Parameter
 
   // Constructor accepting the headers list
@@ -19,7 +20,7 @@ class DataEntryPage extends StatefulWidget {
 class _DataEntryPageState extends State<DataEntryPage> {
   late List<String> headers; // Use late initialization
   late List<double> columnLengths;
-  int maxId = 0;
+  String maxId = '';
 
   List<Map<String, TextEditingController>> rowTextEditingControllers = [];
   List<List<FocusNode>> focusNodes = [];
@@ -30,20 +31,20 @@ class _DataEntryPageState extends State<DataEntryPage> {
     // Add ID column
     headers = widget.metadata.columnNames; // Initialize headers
     columnLengths = widget.metadata.columnLengths;
-    setMaxId();
+    // setMaxId();
     for (var i = 0; i < 1; i++) {
       _addNewRow();
     }
   }
 
-  void setMaxId() async {
-    DatabaseHelper dbHelper = DatabaseHelper();
-    maxId = await dbHelper.getMaxId(widget.metadata.tableName);
+  // void setMaxId() async {
+  //   DatabaseHelper dbHelper = DatabaseHelper();
+  //   maxId = await dbHelper.getMaxId(widget.metadata.tableName);
 
-    setState(() {
-      maxId = maxId;
-    });
-  }
+  //   setState(() {
+  //     maxId = maxId;
+  //   });
+  // }
 
   void _addNewRow() {
     setState(() {
@@ -91,41 +92,42 @@ class _DataEntryPageState extends State<DataEntryPage> {
     // Insert data to the database
 
     if (widget.metadata.tableName == 'class_table') {
-      var check1 = -1;
-      var check2 = -1;
-      // prepare data for class table
-      var subjectId = await dbHelper.getMaxId('subject_table');
-      for (var row in data) {
-        // Insert data to the database
-        Map<String, dynamic> classData = {
-          'id': row['ID']!,
-          'class_name': row['Class Name']!,
-          'academic_year': row['Academic Year']!,
-        };
-        check1 = await dbHelper.insertToTable('class_table', classData);
-        var subjects = row['Subjects']!.split(',');
-        for (var subject in subjects) {
-          Map<String, dynamic> subjectData = {
-            'id': subjectId,
-            'subject_name': subject,
-            'class_id': row['ID']!,
-          };
-          check2 = await dbHelper.insertToTable('subject_table', subjectData);
-          subjectId++;
-        }
-      }
-      if (check1 == -1 && check2 == -1) {
-        insertionSuccess = 0;
-      } else {
-        insertionSuccess = 1;
-      }
+      // var check1 = -1;
+      // var check2 = -1;
+      // // prepare data for class table
+      // var subjectId = await dbHelper.getMaxId('subject_table');
+      // for (var row in data) {
+      //   // Insert data to the database
+      //   Map<String, dynamic> classData = {
+      //     'id': row['ID']!,
+      //     'class_name': row['Class Name']!,
+      //     'academic_year': row['Academic Year']!,
+      //   };
+      //   check1 = await dbHelper.insertToTable('class_table', classData);
+      //   var subjects = row['Subjects']!.split(',');
+      //   for (var subject in subjects) {
+      //     Map<String, dynamic> subjectData = {
+      //       'id': subjectId,
+      //       'subject_name': subject,
+      //       'class_id': row['ID']!,
+      //     };
+      //     check2 = await dbHelper.insertToTable('subject_table', subjectData);
+      //     subjectId++;
+      //   }
+      // }
+      // if (check1 == -1 && check2 == -1) {
+      //   insertionSuccess = 0;
+      // } else {
+      //   insertionSuccess = 1;
+      // }
     } else if (widget.metadata.tableName == 'student_table') {
+      var uuid = Uuid();
       print("Student table data $data");
       for (var row in data) {
-        int straemId =
+        String straemId =
             await dbHelper.getStreamId(row['Stream Name']!, widget.classId);
 
-        if (straemId == 0) {
+        if (straemId == '') {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Stream not found!'),
@@ -135,7 +137,7 @@ class _DataEntryPageState extends State<DataEntryPage> {
           return;
         }
         Map<String, dynamic> studentData = {
-          'id': row['ID']!,
+          'id': uuid.v4(),
           'student_name': row['Student Name']!,
           'stream_id': straemId,
           'photo_id': '-',
@@ -162,7 +164,7 @@ class _DataEntryPageState extends State<DataEntryPage> {
         ),
       );
     } else {
-      setMaxId();
+      // setMaxId();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Data submitted successfully!'),
@@ -317,7 +319,7 @@ class _DataEntryPageState extends State<DataEntryPage> {
                               ),
                             );
                           } else if (header == 'ID') {
-                            int rowId = maxId + rowIndex + 1;
+                            int rowId = 1;
                             rowTextEditingControllers[rowIndex][header]!.text =
                                 rowId.toString();
 
