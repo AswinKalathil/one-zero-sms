@@ -183,23 +183,7 @@ mysql
   FOREIGN KEY (test_id) REFERENCES test_table(id) ON DELETE CASCADE
 );
 
-CREATE VIEW student_grade_view AS
-SELECT 
-  s.id AS student_id,
-  s.student_name,
-  COALESCE(s.photo_id, 'default_photo.png') AS photo_path,
-  c.class_name,
-  c.academic_year,
-  sub.subject_name,
-  COALESCE(ts.score, 0) AS latest_score,
-  t.max_mark,
-  t.test_date
-FROM student_table s
-LEFT JOIN stream_table st ON s.stream_id = st.id
-LEFT JOIN class_table c ON st.class_id = c.id
-LEFT JOIN test_score_table ts ON s.id = ts.student_id
-LEFT JOIN test_table t ON ts.test_id = t.id
-LEFT JOIN subject_table sub ON t.subject_id = sub.id;
+
 
 
 

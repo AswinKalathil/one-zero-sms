@@ -148,16 +148,7 @@ Map<String, InputTableMetadata> tableMetadataMap = {
       "Parent Phone",
       "Remove"
     ],
-    columnLengths: [
-      50,
-      200,
-      205,
-      150,
-      100,
-      150,
-      100,
-      50,
-    ],
+    columnLengths: [50, 200, 205, 150, 100, 150, 75],
   ),
   "subject_table": InputTableMetadata(
     tableName: "subject_table",

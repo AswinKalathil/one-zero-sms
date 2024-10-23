@@ -122,7 +122,8 @@ class _DataEntryPageState extends State<DataEntryPage> {
     } else if (widget.metadata.tableName == 'student_table') {
       print("Student table data $data");
       for (var row in data) {
-        int straemId = await dbHelper.getStreamId(row['Stream Name']!);
+        int straemId =
+            await dbHelper.getStreamId(row['Stream Name']!, widget.classId);
 
         if (straemId == 0) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -352,13 +353,13 @@ class _DataEntryPageState extends State<DataEntryPage> {
                                     if (value.length == 10) {
                                       // Move to the next focus node if input is valid (10 digits)
                                       focusNodes[rowIndex][cellIndex].unfocus();
+                                      _addNewRow();
                                     }
                                   },
                                   onSubmitted: (value) {
                                     if (value.length == 10) {
                                       // Move to the next focus node if input is valid (10 digits)
-                                      focusNodes[rowIndex][cellIndex + 1]
-                                          .requestFocus();
+                                      _addNewRow();
                                     } else {
                                       // Show error if input is not valid (not 10 digits)
                                       focusNodes[rowIndex][cellIndex]

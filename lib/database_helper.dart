@@ -34,15 +34,6 @@ class DatabaseHelper {
     return db;
   }
 
-  String _acadamicYear = DateTime.now().year.toString() +
-      "-" +
-      (DateTime.now().year + 1).toString().substring(2);
-
-  void setAcademicYear(String acadamicYear) {
-    _acadamicYear = acadamicYear;
-    // print("New Academic year private: $_acadamicYear");
-  }
-
   Future<void> _onCreate(Database db, int version) async {
     await db.execute(createQuery);
     // Other table creation queries can be executed here
@@ -473,7 +464,7 @@ JOIN (SELECT id, student_name
   }
 
   Future<List<Map<String, dynamic>>> getStudentsOfName(
-      String studentName) async {
+      String studentName, String year) async {
     final db = await database;
 
     try {
@@ -499,7 +490,7 @@ JOIN (SELECT id, student_name
     END, 
     s.student_name;   
        
-       ''', ['%$studentName%', _acadamicYear, '$studentName%']);
+       ''', ['%$studentName%', year, '$studentName%']);
 
       // Check if the query returned any results
       if (queryResults.isEmpty) {
@@ -647,14 +638,14 @@ LEFT JOIN (
               AND latest_test.latest_test_date = t.test_date
 WHERE 
     s.id = ?
-    AND c.academic_year = ?
+    
 ORDER BY 
     sub.id; ''';
 
     try {
       // Execute the query and get the result
       List<Map<String, dynamic>> result =
-          await db.rawQuery(query, [studentId, studentId, _acadamicYear]);
+          await db.rawQuery(query, [studentId, studentId]);
 
       // Check if the result is empty
       if (result.isEmpty) {
@@ -782,7 +773,7 @@ WHERE
     }
   }
 
-  Future<int> getStreamId(String streamName) async {
+  Future<int> getStreamId(String streamName, int classId) async {
     final db = await database;
 
     // Ensure that streamName is not null or empty
@@ -792,13 +783,13 @@ WHERE
 
     // Query to get the stream ID
     String query = '''
-    SELECT st.id FROM stream_table st join class_table c ON st.class_id = c.id WHERE st.stream_name = ? AND c.academic_year = ?;
+    SELECT st.id FROM stream_table st join class_table c ON st.class_id = c.id WHERE st.stream_name = ? AND c.id = ?;
   ''';
 
     try {
       // Execute the query and get the result
       List<Map<String, dynamic>> result =
-          await db.rawQuery(query, [streamName, _acadamicYear]);
+          await db.rawQuery(query, [streamName, classId]);
 
       // Check if the result is empty and return null if no stream is found
       if (result.isEmpty) {

@@ -30,7 +30,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  mysql1: ^0.19.2
 
   path: ^1.8.0
 
@@ -39,6 +38,8 @@ dependencies:
   stroke_text: any
   flutter_screenutil: ^5.0.0+2
   sqflite_common_ffi: 2.3.4
+  mysql1: ^0.19.2
+  shared_preferences: ^2.1.0
 
 
 

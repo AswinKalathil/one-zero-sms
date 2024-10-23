@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:one_zero/DataSyncMethods.dart';
 import 'package:one_zero/constants.dart';
 import 'package:one_zero/custom-widgets.dart';
 import 'package:one_zero/database_helper.dart';
@@ -189,7 +190,6 @@ class _MyHomePageState extends State<MyHomePage>
 
                     _selectdAcadamicYear =
                         textFieldController.text; // Set new year as selected
-                    _dbHelper.setAcademicYear(_selectdAcadamicYear);
                   });
                   _loadClasess();
 
@@ -233,7 +233,9 @@ class _MyHomePageState extends State<MyHomePage>
     _animationController.repeat(); // Start the spinning animation
 
     // Simulate a sync operation (replace this with actual sync logic)
-    await Future.delayed(Duration(seconds: 3));
+    // await Future.delayed(Duration(seconds: 3));
+    Database db = await _dbHelper.database;
+    syncDatabase(db);
 
     _animationController.stop(); // Stop the animation
     setState(() {
@@ -316,7 +318,6 @@ class _MyHomePageState extends State<MyHomePage>
                       onChanged: (value) {
                         setState(() {
                           _selectdAcadamicYear = value!;
-                          _dbHelper.setAcademicYear(_selectdAcadamicYear);
 
                           _loadClasess();
                           _pageNumber = 0;
@@ -517,6 +518,9 @@ class _MyHomePageState extends State<MyHomePage>
                     });
                   },
                   isMenuExpanded: _isMenuExpanded,
+                ),
+                SizedBox(
+                  height: 20,
                 ),
               ],
             ),

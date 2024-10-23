@@ -88,7 +88,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
     if (!widget.isDedicatedPage && value.isNotEmpty) {
       if (_selectedcriteria == 'Student') {
-        fetchedStudentsList = await _dbHelper.getStudentsOfName(value);
+        // fetchedStudentsList = await _dbHelper.getStudentsOfName(value, 0);
         _resultTitle = 'search results with  $value';
       } else if (_selectedcriteria == 'Class') {
         fetchedStudentsList =
@@ -341,8 +341,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       SizedBox(
-                        width: 600,
-                        height: 760,
+                        width: _screenWidth > 1200 ? _screenWidth * .84 : 600,
+                        height: _screenWidth > 1200 ? 700 : 760,
                         child: Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: GradeCard(
@@ -597,7 +597,10 @@ class _GradeCardState extends State<GradeCard> {
         double averageScore = (avg is double)
             ? avg
             : 0.0; // Default to 0.0 if avg is null or not a double
-        double currentPercentage = (marks * 100 / maxMarks);
+        double currentPercentage = (marks * 100 / maxMarks).isNaN ||
+                (marks * 100 / maxMarks).isInfinite
+            ? 0.0
+            : (marks * 100 / maxMarks);
         // Update _radarData with the new average score
         _radarData.add({
           'subject': element['subject_name'],
@@ -750,8 +753,7 @@ class _GradeCardState extends State<GradeCard> {
     return 'F';
   }
 
-  @override
-  Widget build(BuildContext context) {
+  Widget verticalCard() {
     return SizedBox(
       child: AspectRatio(
         aspectRatio: 1, // A4 aspect ratio (210mm x 297mm)
@@ -970,5 +972,270 @@ class _GradeCardState extends State<GradeCard> {
         ),
       ),
     );
+  }
+
+  Widget horizontalCard() {
+    return Container(
+      padding: const EdgeInsets.all(30.0),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.withOpacity(1)),
+        borderRadius: BorderRadius.circular(8.0),
+        color: Theme.of(context).cardColor,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          Container(
+            width: _screenWidth * .4,
+            height: 700,
+            padding: const EdgeInsets.all(10.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 80,
+                      height: 100,
+                      child: Image.asset(
+                        photoUrl,
+                        fit: BoxFit.fitHeight, // Fills the circular container
+                        errorBuilder: (BuildContext context, Object error,
+                            StackTrace? stackTrace) {
+                          return Image.asset('assets/ml.jpg',
+                              fit: BoxFit.cover);
+                        },
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(left: 10.0, bottom: 10),
+                      child: SizedBox(
+                        width: 300,
+                        height: 100,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Text(
+                              studentName,
+                              style: const TextStyle(
+                                  fontSize: 20, fontWeight: FontWeight.bold),
+                            ),
+                            Text(
+                              '$className',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                            Text(
+                              '$schoolName',
+                              style: const TextStyle(fontSize: 16),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const Spacer(),
+                    getLogoColored(10, .6)
+                  ],
+                ),
+                const SizedBox(height: 16.0),
+                const Text(
+                  'Latest Grades',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8.0),
+                SizedBox(
+                  height: 50 + subjects.length * 30.0,
+                  child: Table(
+                    border: TableBorder.all(color: Colors.grey),
+                    columnWidths: const {
+                      0: FlexColumnWidth(3),
+                      1: FlexColumnWidth(2),
+                      2: FlexColumnWidth(1),
+                      3: FlexColumnWidth(1),
+                    },
+                    children: [
+                      const TableRow(
+                        decoration: BoxDecoration(
+                          color: Color.fromRGBO(0, 0, 0, 0.05),
+                        ),
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.all(6.0),
+                            child: Center(
+                              child: FittedBox(
+                                child: Text(
+                                  'Subject',
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(6.0),
+                            child: Center(
+                              child: FittedBox(
+                                child: Text(
+                                  'Marks',
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(6.0),
+                            child: Center(
+                              child: FittedBox(
+                                child: Text(
+                                  'Grade',
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.all(6.0),
+                            child: Center(
+                              child: Text(
+                                'Date',
+                                style: TextStyle(
+                                    fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      ...subjects.map(
+                        (subject) => TableRow(
+                          children: [
+                            Container(
+                              height: 30,
+                              padding: const EdgeInsets.all(5.5),
+                              child: FittedBox(
+                                  child: Text(subject['subject'] ?? '')),
+                            ),
+                            Container(
+                              height: 30,
+                              padding: const EdgeInsets.all(5.5),
+                              child: FittedBox(
+                                child: Text(
+                                    "  ${subject['marks']} / ${subject['maxMarks']}" ??
+                                        '-'),
+                              ),
+                            ),
+                            Container(
+                              height: 30,
+                              padding: const EdgeInsets.all(5.5),
+                              child: FittedBox(
+                                  child: Text(subject['grade'] ?? '')),
+                            ),
+                            Container(
+                              height: 30,
+                              padding: const EdgeInsets.all(5.5),
+                              child:
+                                  FittedBox(child: Text(subject['date'] ?? '')),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Spacer(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      ' ${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}',
+                      style: const TextStyle(fontSize: 10),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Container(
+            width: _screenWidth * .38,
+            height: 600,
+            child: Column(
+              children: [
+                Container(
+                  height: 200,
+                  child: Center(
+                    child: Text(
+                      'Academic Performance',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                Container(
+                  height: 400,
+                  padding: const EdgeInsets.all(30.0),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 15,
+                            height: 15,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.green, // Assign color
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text('Average'),
+                          const SizedBox(width: 20),
+                          Container(
+                            width: 15,
+                            height: 15,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.blue, // Assign color
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text('Current'),
+                        ],
+                      ),
+                      Container(
+                        height: 300,
+                        width: 500,
+                        child: Center(
+                          child: _radarData.length > 0
+                              ? RadarChartWidget(
+                                  subjectsData: _radarData,
+                                )
+                              : const SizedBox(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  double _screenWidth = 0;
+  double _screenHeight = 0;
+  @override
+  Widget build(BuildContext context) {
+    _screenWidth = MediaQuery.of(context).size.width;
+    _screenHeight = MediaQuery.of(context).size.height;
+
+    return _screenWidth > 1200 ? horizontalCard() : verticalCard();
   }
 }
