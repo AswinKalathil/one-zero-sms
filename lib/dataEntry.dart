@@ -319,14 +319,13 @@ class _DataEntryPageState extends State<DataEntryPage> {
                               ),
                             );
                           } else if (header == 'ID') {
-                            int rowId = 1;
                             rowTextEditingControllers[rowIndex][header]!.text =
-                                rowId.toString();
+                                (rowIndex + 1).toString();
 
                             return DataCell(
                               Container(
                                 width: double.infinity,
-                                child: Text(rowId.toString(),
+                                child: Text((rowIndex + 1).toString(),
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                     )),
@@ -408,7 +407,11 @@ class _DataEntryPageState extends State<DataEntryPage> {
                                           .map((String value) {
                                         return DropdownMenuItem<String>(
                                           value: value,
-                                          child: Text(value),
+                                          child: Text(
+                                            value,
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.normal),
+                                          ),
                                         );
                                       }).toList(),
                                       onChanged: (String? newValue) {
@@ -463,7 +466,10 @@ class _DataEntryPageState extends State<DataEntryPage> {
                                       items: STREAM_NAMES.map((String value) {
                                         return DropdownMenuItem<String>(
                                           value: value,
-                                          child: Text(value),
+                                          child: Text(value,
+                                              style: TextStyle(
+                                                  fontWeight:
+                                                      FontWeight.normal)),
                                         );
                                       }).toList(),
                                       onChanged: (String? newValue) {
@@ -501,34 +507,29 @@ class _DataEntryPageState extends State<DataEntryPage> {
                 ),
               ),
             ),
-            Align(
-              alignment: Alignment.topRight,
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Spacer(),
-                    Padding(
-                        padding: EdgeInsets.only(left: 20, right: 20),
-                        child: TextButton(
-                            onPressed: _addNewRow, child: Text("New Row"))),
-                    Padding(
-                      padding: const EdgeInsets.only(right: 60.0),
-                      child: CustomButton(
-                          text: "Save",
-                          onPressed: () {
-                            _onSubmit();
-                          },
-                          width: 100,
-                          height: 45,
-                          textColor: Colors.white),
-                    ),
-                  ],
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Spacer(),
+                Padding(
+                  padding: EdgeInsets.only(left: 20, right: 20),
+                  child:
+                      TextButton(onPressed: _addNewRow, child: Text("New Row")),
                 ),
-              ),
-            )
+                Padding(
+                  padding: const EdgeInsets.only(right: 60.0),
+                  child: CustomButton(
+                      text: "Save",
+                      onPressed: () {
+                        _onSubmit();
+                      },
+                      width: 100,
+                      height: 40,
+                      textColor: Colors.white),
+                ),
+              ],
+            ),
           ],
         ),
       ),

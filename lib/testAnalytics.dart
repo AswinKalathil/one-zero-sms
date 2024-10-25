@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:one_zero/database_helper.dart';
+import 'package:intl/intl.dart';
 
 import 'package:syncfusion_flutter_charts/charts.dart';
 
@@ -169,10 +170,12 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Padding(
-                            padding: const EdgeInsets.only(left: 20.0),
+                            padding: const EdgeInsets.only(
+                                left: 20.0, top: 8, bottom: 8),
                             child: Text(widget.allSubjects[index],
                                 style: TextStyle(
-                                    fontSize: 7.sp,
+                                    color: Colors.grey.shade800,
+                                    fontSize: 24,
                                     fontWeight: FontWeight.bold)),
                           ),
                           Divider(),
@@ -182,7 +185,8 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                             children: [
                               Expanded(
                                 child: Padding(
-                                  padding: const EdgeInsets.all(10.0),
+                                  padding:
+                                      const EdgeInsets.only(left: 20, top: 10),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -360,8 +364,7 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                                                                             .all(
                                                                             5.5),
                                                                     child: FittedBox(
-                                                                        child: Text(subject['test_date'].toString().substring(5,
-                                                                                10) ??
+                                                                        child: Text(DateFormat('MMM dd').format(DateTime.parse(subject['test_date'])) ??
                                                                             '')),
                                                                   ),
                                                                 ],
@@ -437,6 +440,7 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                                                         exam.y == -1
                                                             ? null
                                                             : exam.y,
+                                                // spacing: 0.5,
                                                 name: 'Percentage Score',
                                                 markerSettings: MarkerSettings(
                                                     isVisible: true,

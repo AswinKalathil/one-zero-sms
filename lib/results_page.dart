@@ -181,7 +181,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                     width: 200,
                                     child: _criteriaDropdown(),
                                   )
-                                : const SizedBox(),
+                                : const SizedBox(
+                                    width: 40,
+                                  ),
                             SizedBox(
                               width: 300,
                               child: Padding(
@@ -225,7 +227,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 ],
               ),
             ),
-            Divider(),
             Listener(
               onPointerSignal: (pointerSignal) {
                 // Handle horizontal scrolling with mouse wheel
@@ -313,14 +314,14 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                         CrossAxisAlignment.start,
                                     mainAxisAlignment: MainAxisAlignment.start,
                                     children: [
-                                      Expanded(
-                                        flex: 2,
-                                        child: profileCard(),
-                                        // child: GradeCard(
-                                        //   key: UniqueKey(),
-                                        //   studentId: _studentId,
-                                        // ),
-                                      ),
+                                      // Expanded(
+                                      //   flex: 1,
+                                      //   child: profileCard(),
+                                      //   // child: GradeCard(
+                                      //   //   key: UniqueKey(),
+                                      //   //   studentId: _studentId,
+                                      //   // ),
+                                      // ),
                                     ],
                                   )
                                 : Center(
@@ -334,7 +335,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                 ),
               ),
             ),
-            Divider(),
             showGradeCard
                 ? Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -353,7 +353,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                     ],
                   )
                 : SizedBox(),
-            Divider(),
             _testResults.isNotEmpty && _allSubjects.isNotEmpty
                 ? Expanded(
                     child: TestAnalytics(
@@ -365,7 +364,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                     ),
                   )
                 : SizedBox(),
-            Divider(),
           ],
         ),
       ),
@@ -430,6 +428,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   }
 
   Widget studentsListView(List<Map<String, dynamic>> students) {
+    widget.isDedicatedPage;
     double _screenHeight = MediaQuery.of(context).size.height;
     return SizedBox(
       height: 475,
@@ -440,63 +439,80 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         itemCount: students.length,
         itemBuilder: (context, index) {
           final student = students[index];
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10.0),
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                child: Container(
-                  margin: const EdgeInsets.all(4.0),
-                  height: 60,
-                  padding: const EdgeInsets.all(5.0),
-                  decoration: BoxDecoration(
+          return Align(
+            alignment: Alignment.center,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10.0),
+              child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  child: Container(
+                    margin: const EdgeInsets.all(4.0),
+                    width: _studentId == student['id'] ? 500 : 480,
+                    height: 70,
+                    padding: const EdgeInsets.all(5.0),
+                    decoration: BoxDecoration(
                       border: Border.all(color: Colors.grey.withOpacity(0.3)),
                       borderRadius: BorderRadius.circular(8.0),
-                      color: Theme.of(context).cardColor),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 50,
-                        height: 50,
+                      color: Theme.of(context).cardColor,
+                      boxShadow: [
+                        _studentId == student['id']
+                            ? BoxShadow(
+                                color: Colors.grey.withOpacity(0.2),
+                                spreadRadius: 2,
+                                blurRadius: 5,
+                                offset: const Offset(0, 3),
+                              )
+                            : BoxShadow(),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 50,
+                          height: 50,
 
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle, // Make the container circular
-                          border: Border.all(color: Colors.grey),
+                          decoration: BoxDecoration(
+                            shape:
+                                BoxShape.circle, // Make the container circular
+                            border: Border.all(color: Colors.grey),
+                          ),
+                          clipBehavior: Clip
+                              .hardEdge, // Ensures the image is clipped to the circular shape
+                          child: Image.asset(
+                            student['photo_path'] as String? ??
+                                (student['gender'] == 'F'
+                                    ? 'assets/fl.jpg'
+                                    : 'assets/ml.jpg'),
+                            fit: BoxFit.cover, // Fills the circular container
+                          ),
                         ),
-                        clipBehavior: Clip
-                            .hardEdge, // Ensures the image is clipped to the circular shape
-                        child: Image.asset(
-                          student['photo_path'] as String? ??
-                              (student['gender'] == 'F'
-                                  ? 'assets/fl.jpg'
-                                  : 'assets/ml.jpg'),
-                          fit: BoxFit.cover, // Fills the circular container
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(student['student_name'] as String,
+                                  style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold)),
+                              Text(student['stream_name'] as String),
+                            ],
+                          ),
                         ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(student['student_name'] as String,
-                                style: const TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold)),
-                            Text(student['stream_name'] as String),
-                          ],
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                onTap: () {
-                  setState(() {
-                    _studentId = student['id'];
+                  onTap: () {
+                    setState(() {
+                      _studentId = student['id'];
 
-                    _studentNameForGrade = student['student_name'] as String;
-                    showGradeCard = true;
-                  });
-                  setAnalyticsStudentId(_studentId);
-                },
+                      _studentNameForGrade = student['student_name'] as String;
+                      showGradeCard = true;
+                    });
+                    setAnalyticsStudentId(_studentId);
+                  },
+                ),
               ),
             ),
           );
@@ -507,14 +523,94 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
   Widget profileCard() {
     return Container(
-      width: 500,
-      height: 500,
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.withOpacity(0.3)),
-        borderRadius: BorderRadius.circular(8.0),
-        color: Theme.of(context).cardColor,
-      ),
-    );
+        width: 400,
+        height: 400,
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.withOpacity(0.3)),
+          borderRadius: BorderRadius.circular(8.0),
+          color: Theme.of(context).cardColor,
+        ),
+        child: Container(
+          padding: EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.2),
+                spreadRadius: 2,
+                blurRadius: 5,
+                offset: Offset(0, 3), // changes position of shadow
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center, // Center align
+            children: [
+              CircleAvatar(
+                radius: 75,
+                backgroundImage: NetworkImage(
+                    'https://example.com/profile.jpg'), // Replace with student's profile image URL
+              ),
+              SizedBox(height: 10),
+              Text(
+                'Student Name',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 50),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Text(
+                        'Class: Plus Two STATE',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      Text(
+                        'Academic Year: 2024',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    height: 50,
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      Text(
+                        'Section: HSS',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.edit),
+                        onPressed: () {
+                          // Implement edit functionality here
+                          print(
+                              'Edit button pressed'); // Placeholder for editing action
+                        },
+                      ),
+                    ],
+                  )
+                ],
+              )
+            ],
+          ),
+        ));
   }
 }
 
@@ -699,10 +795,22 @@ class _GradeCardState extends State<GradeCard> {
       if (testDate != null && maxMark != null) {
         var existingEntry = latestScores[subject];
 
+        // print(
+        //     'subject:  $subject  Test Date: $testDate  Existing Date: $existingDate}\n  value: ${((existingEntry?['test_date'] is DateTime && testDate.isAfter(existingEntry?['test_date'])))}');
+// Ensure existingEntry['test_date'] is parsed correctly.
+        DateTime? existingDate = existingEntry?['test_date'] != null
+            ? DateTime.parse(existingEntry?['test_date'])
+            : null;
+
+        bool isAfterComparison =
+            existingDate == null || testDate.isAfter(existingDate!);
+
+        print(
+            'subject: $subject  Test Date: $testDate  Existing Date: ${existingDate}\n  value: $isAfterComparison');
+
         // Update the entry only if it doesn't exist or if the current testDate is more recent
-        if (existingEntry == null ||
-            existingEntry['test_date'] == null ||
-            testId.compareTo(existingEntry['test_id'] as String) > 0) {
+        if (isAfterComparison == true) {
+          print(testDate.toIso8601String());
           latestScores[subject] = {
             'subject_name': subject,
             'subject_id': subjectId,

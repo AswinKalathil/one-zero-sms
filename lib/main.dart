@@ -51,10 +51,12 @@ class _MyAppState extends State<MyApp> {
                 ? Color.fromRGBO(36, 47, 61, 1)
                 : Color.fromRGBO(241, 241, 241, 1),
             cardColor:
-                _isDarkMode ? Color.fromRGBO(24, 37, 51, 1) : Colors.white,
+                _isDarkMode ? Color.fromRGBO(24, 37, 51, 1) : Color(0xFDFEFFFF),
             primaryTextTheme: TextTheme(
               bodyMedium: TextStyle(
-                color: _isDarkMode ? Colors.white : Colors.black,
+                color: _isDarkMode
+                    ? Colors.grey[200] // Light grey for softer contrast
+                    : Colors.grey[850],
               ),
             ),
           ),
@@ -99,10 +101,10 @@ class _MyHomePageState extends State<MyHomePage>
   bool _isSyncing = false;
   List<String> appBarTitle = [
     'Class Rooms',
-    'Reports for ',
-    'Add Students to',
+    'Reports',
+    'Enroll',
     'not used',
-    'Exam Entry for ',
+    'Exams',
     'Settings',
   ];
 
@@ -138,14 +140,6 @@ class _MyHomePageState extends State<MyHomePage>
     _isClassTablesInitialized = _classCount == 0 ? false : true;
 
     setState(() {
-      appBarTitle = [
-        'Class Rooms',
-        'Reports for ${_classes[_selectedClass_index]['class_name']}',
-        'Add Students to ${_classes[_selectedClass_index]['class_name']}',
-        'not used',
-        'Exam Entry for ${_classes[_selectedClass_index]['class_name']}',
-        'Settings',
-      ];
       _classes;
       _classCount = _classes.length;
     });
@@ -232,15 +226,214 @@ class _MyHomePageState extends State<MyHomePage>
 
     _animationController.repeat(); // Start the spinning animation
 
-    // Simulate a sync operation (replace this with actual sync logic)
-    // await Future.delayed(Duration(seconds: 3));
-    Database db = await _dbHelper.database;
-    // syncDatabase(db);==================
+    try {
+      // Simulate a sync operation (replace this with actual sync logic)
+      // await Future.delayed(Duration(seconds: 3));
 
-    _animationController.stop(); // Stop the animation
-    setState(() {
-      _isSyncing = false;
-    });
+      Database db = await _dbHelper.database;
+      await syncDatabase(db); // Await the syncDatabase call
+    } catch (e) {
+      // Handle any errors that might occur during sync
+      print('Error during sync: $e');
+    } finally {
+      _loadYears();
+      _loadClasess();
+      _animationController.stop();
+      // Stop the animation
+      setState(() {
+        _isSyncing = false; // Set to false after sync completes
+      });
+    }
+  }
+
+  List<Widget> TopBarActions() {
+    List<Widget> actions = [];
+
+    // Add title
+    actions.add(
+      Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Text(appBarTitle[_pageNumber],
+            style: TextStyle(
+              fontSize: 36,
+              color: Colors.grey.shade800,
+            )),
+      ),
+    );
+
+    // Add spacer
+    actions.add(Spacer());
+
+    // Add sync button
+
+    // Handle page-specific actions
+    switch (_pageNumber) {
+      case 0:
+        actions.add(_buildSyncButton());
+        actions.add(_buildAcademicYearDropdown());
+        actions.add(_buildNewYearButton());
+        break;
+      case 1:
+        actions.add(_buildSyncButton());
+        actions.add(_buildMenuOptionsList());
+        break;
+      default:
+        break;
+    }
+
+    return actions;
+  }
+
+// Sync button widget
+  Widget _buildSyncButton() {
+    return Padding(
+      padding: EdgeInsets.only(right: 16.0),
+      child: RotationTransition(
+        turns: Tween<double>(
+          begin: 1.0,
+          end: 0.0, // 1.0 for a full clockwise rotation
+        ).animate(_animationController),
+        child: IconButton(
+          icon: Icon(
+            Icons.sync_rounded,
+          ),
+          onPressed: _isSyncing ? null : _startSync,
+          tooltip: 'Sync data',
+        ),
+      ),
+    );
+  }
+
+// Dropdown for selecting academic year
+  Widget _buildAcademicYearDropdown() {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      width: 200,
+      height: 70,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: DropdownButtonFormField(
+        decoration: InputDecoration(
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8.0),
+            borderSide:
+                BorderSide(color: Colors.grey.withOpacity(.4), width: 0.4),
+          ),
+          contentPadding: const EdgeInsets.all(15.0),
+        ),
+        value: _selectdAcadamicYear != null &&
+                _academicYears.contains(_selectdAcadamicYear)
+            ? _selectdAcadamicYear
+            : null,
+        items: _academicYears.map((year) {
+          return DropdownMenuItem(
+            value: year,
+            child: Text(
+              year,
+              style: TextStyle(
+                fontSize: 16,
+                fontFamily: 'Revue',
+              ),
+            ),
+          );
+        }).toList(),
+        onChanged: (value) {
+          setState(() {
+            _selectdAcadamicYear = value!;
+            _loadClasess();
+            _pageNumber = 0;
+          });
+        },
+      ),
+    );
+  }
+
+// Button for starting a new academic year
+  Widget _buildNewYearButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: IconButton(
+        icon: const Icon(
+          Icons.new_label,
+        ),
+        tooltip: 'Start New Academic Year',
+        onPressed: () {
+          newYearDialog();
+        },
+      ),
+    );
+  }
+
+// Menu options list for page 1
+  Widget _buildMenuOptionsList() {
+    return SizedBox(
+      width: 200,
+      height: 70,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: _menuOptions.length,
+        itemBuilder: (context, index) {
+          return GestureDetector(
+            onTap: () {
+              setState(() {
+                _appMode = _menuOptions[index];
+              });
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  _buildMenuOptionItem(index),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+// Menu option item builder
+  Widget _buildMenuOptionItem(int index) {
+    return Container(
+      height: 50,
+      width: 50,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(
+          color: Colors.grey.withOpacity(.5),
+          width: .5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(.5),
+            blurRadius: 5,
+            offset: Offset(2, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            _menuIcons[index],
+            size: _menuOptions[index] == _appMode ? 25 : 20,
+            color: _menuOptions[index] == _appMode ? Colors.black : Colors.grey,
+          ),
+          Text(
+            _menuOptions[index],
+            style: TextStyle(
+              fontSize: 8,
+              fontWeight: FontWeight.bold,
+              color:
+                  _menuOptions[index] == _appMode ? Colors.black : Colors.grey,
+            ),
+          )
+        ],
+      ),
+    );
   }
 
   @override
@@ -249,184 +442,13 @@ class _MyHomePageState extends State<MyHomePage>
 
     return Scaffold(
       key: _scaffoldKey,
-      appBar: AppBar(
-          toolbarHeight: 70,
-          leading: IconButton(
-            iconSize: 40,
-            icon: _pageNumber == 0
-                ? Icon(Icons.home, color: Colors.white)
-                : Icon(Icons.home_outlined, color: Colors.white),
-            onPressed: () {
-              setState(() {
-                _pageNumber = 0;
-              });
-            },
-          ),
-          title: Text(appBarTitle[_pageNumber],
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontFamily: 'Revue',
-              )),
-          backgroundColor: Theme.of(context).primaryColor,
-          actions: switch (_pageNumber) {
-            0 => [
-                Padding(
-                  padding: EdgeInsets.only(right: 16.0),
-                  child: RotationTransition(
-                    turns: _animationController,
-                    child: IconButton(
-                      icon: Icon(Icons.sync, color: Colors.white),
-                      onPressed: _isSyncing
-                          ? null
-                          : _startSync, // Disable button during sync
-                      tooltip: 'Sync data',
-                    ),
-                  ),
-                ),
-                Container(
-                    color: Theme.of(context).primaryColor,
-                    padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                    width: 200,
-                    height: 70,
-                    child: DropdownButtonFormField(
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                          borderSide: BorderSide(
-                              color: Colors.grey.withOpacity(.4), width: 0.4),
-                        ),
-                        contentPadding: const EdgeInsets.all(15.0),
-                      ),
-                      value: _selectdAcadamicYear != null &&
-                              _academicYears.contains(_selectdAcadamicYear)
-                          ? _selectdAcadamicYear
-                          : null,
-                      items: List.generate(
-                        _academicYears.length,
-                        (index) => DropdownMenuItem(
-                          child: Text(_academicYears[index],
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontFamily: 'Revue',
-                              )),
-                          value: _academicYears[index],
-                        ),
-                      ),
-                      dropdownColor: Theme.of(context).primaryColor,
-                      onChanged: (value) {
-                        setState(() {
-                          _selectdAcadamicYear = value!;
-
-                          _loadClasess();
-                          _pageNumber = 0;
-                        });
-                      },
-                    )),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: IconButton(
-                      icon: const Icon(Icons.new_label, color: Colors.white),
-                      tooltip: 'Start New Acadamic Year',
-                      onPressed: () {
-                        newYearDialog();
-                      }),
-                ),
-              ],
-            1 => [
-                Padding(
-                  padding: EdgeInsets.only(right: 16.0),
-                  child: RotationTransition(
-                    turns: _animationController,
-                    child: IconButton(
-                      icon: Icon(Icons.sync, color: Colors.white),
-                      onPressed: _isSyncing
-                          ? null
-                          : _startSync, // Disable button during sync
-                      tooltip: 'Sync data',
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 200,
-                  height: 70,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: _menuOptions.length,
-                    itemBuilder: (context, index) {
-                      // Debug print to check the index and list lengths
-                      return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _appMode = _menuOptions[index];
-                          });
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Column(
-                            children: [
-                              Container(
-                                height: 50,
-                                width: 50,
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).cardColor,
-                                  borderRadius: BorderRadius.circular(5),
-                                  border: Border.all(
-                                    color: Colors.grey.withOpacity(.5),
-                                    width: .5,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.grey.withOpacity(.5),
-                                      blurRadius: 5,
-                                      offset: Offset(2, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      _menuIcons[
-                                          index], // This will be safe as the index is within bounds
-                                      size: _menuOptions[index] == _appMode
-                                          ? 25
-                                          : 20,
-                                      color: _menuOptions[index] == _appMode
-                                          ? Colors.black
-                                          : Colors.grey,
-                                    ),
-                                    Text(
-                                      _menuOptions[index],
-                                      style: TextStyle(
-                                        fontSize: 8,
-                                        fontWeight: FontWeight.bold,
-                                        color: _menuOptions[index] == _appMode
-                                            ? Colors.black
-                                            : Colors.grey,
-                                      ),
-                                    )
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            int() => [],
-          }),
       body: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             color: Theme.of(context).primaryColor,
             width: _isMenuExpanded ? 200 : 60,
-            height: MediaQuery.of(context).size.height - 70,
+            height: MediaQuery.of(context).size.height,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -444,6 +466,22 @@ class _MyHomePageState extends State<MyHomePage>
                       });
                     },
                   ),
+                ),
+                SizedBox(
+                  height: 20,
+                ),
+                CustomDrawerItem(
+                  icon: Icons.home_outlined,
+                  selectedIcon: Icons.home,
+                  label: 'Home',
+                  page: 0,
+                  selectedPage: _pageNumber,
+                  onTap: () {
+                    setState(() {
+                      _pageNumber = 0;
+                    });
+                  },
+                  isMenuExpanded: _isMenuExpanded,
                 ),
                 _pageNumber != 0 && _pageNumber != 5
                     ? CustomDrawerItem(
@@ -464,7 +502,7 @@ class _MyHomePageState extends State<MyHomePage>
                     ? CustomDrawerItem(
                         icon: Icons.group_add_outlined,
                         selectedIcon: Icons.group_add_rounded,
-                        label: 'Add Students',
+                        label: 'Enroll',
                         page: 2,
                         selectedPage: _pageNumber,
                         onTap: () {
@@ -480,7 +518,7 @@ class _MyHomePageState extends State<MyHomePage>
                     ? CustomDrawerItem(
                         icon: Icons.add_box_outlined,
                         selectedIcon: Icons.add_box,
-                        label: 'Exam Entry',
+                        label: 'Exams',
                         page: 4,
                         selectedPage: _pageNumber,
                         onTap: () {
@@ -526,24 +564,30 @@ class _MyHomePageState extends State<MyHomePage>
             ),
           ),
           Expanded(
-              child: switch (_pageNumber) {
-            0 => _buildClassRooms(context),
-            1 => _buildClassPage(
-                index: _selectedClass_index, isDedicatedPage: true),
-            2 => _buildEntrySection(UniqueKey()),
-            3 => _buildClassPage(
-                index: _selectedClass_index, isDedicatedPage: false),
-            4 => ExamScoreSheet(
-                classId: _selectdClass,
-                isClassTablesInitialized: _isClassTablesInitialized,
-                classes: _classes,
-                isMenuExpanded: _isMenuExpanded,
-              ),
-            5 => _buildSettings(context),
+              child: Column(
+            children: [
+              Row(children: TopBarActions()),
+              Expanded(
+                  child: switch (_pageNumber) {
+                0 => _buildClassRooms(context),
+                1 => _buildClassPage(
+                    index: _selectedClass_index, isDedicatedPage: true),
+                2 => _buildEntrySection(UniqueKey()),
+                3 => _buildClassPage(
+                    index: _selectedClass_index, isDedicatedPage: false),
+                4 => ExamScoreSheet(
+                    classId: _selectdClass,
+                    isClassTablesInitialized: _isClassTablesInitialized,
+                    classes: _classes,
+                    isMenuExpanded: _isMenuExpanded,
+                  ),
+                5 => _buildSettings(context),
 
-            // TODO: Handle this case.
-            int() => throw UnimplementedError(),
-          }),
+                // TODO: Handle this case.
+                int() => throw UnimplementedError(),
+              })
+            ],
+          )),
         ],
       ),
     );
@@ -617,7 +661,7 @@ class _MyHomePageState extends State<MyHomePage>
             className: _classes[index]['class_name'],
             classId: _selectdClass,
             isDedicatedPage: isDedicatedPage,
-            key: UniqueKey(),
+            key: ValueKey(_isSyncing.hashCode),
           )
         : Container(
             child: Center(
@@ -641,6 +685,7 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
   Widget _buildClassRooms(BuildContext context) {
+    _loadClasess();
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     int crossAxisCount = (MediaQuery.of(context).size.width / 400).floor() + 1;
     return _isClassTablesInitialized

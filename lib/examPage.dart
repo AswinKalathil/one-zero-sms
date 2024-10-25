@@ -66,9 +66,11 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
         ),
       );
     } else {
-      setState(() {
-        _subjectForSuggestions = _subjectsOfClass ?? [];
-      });
+      if (mounted) {
+        setState(() {
+          _subjectForSuggestions = _subjectsOfClass ?? [];
+        });
+      }
     }
 
     return;
@@ -162,7 +164,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                         margin: const EdgeInsets.only(
                                             left: 10, bottom: 10),
                                         padding: const EdgeInsets.all(20),
-                                        height: 250,
+                                        height: 580,
                                         width: 600,
                                         decoration: BoxDecoration(
                                           color: Theme.of(context).cardColor,
@@ -173,45 +175,22 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                             width: .5,
                                           ),
                                         ),
-                                        child: Row(
+                                        child: Column(
                                           crossAxisAlignment:
-                                              CrossAxisAlignment.start,
+                                              CrossAxisAlignment.center,
                                           mainAxisAlignment:
                                               MainAxisAlignment.start,
                                           children: [
-                                            Column(
+                                            Row(
                                               crossAxisAlignment:
                                                   CrossAxisAlignment.start,
                                               mainAxisAlignment:
-                                                  MainAxisAlignment.start,
+                                                  MainAxisAlignment.center,
                                               children: [
-                                                // Container(
-                                                //   padding: const EdgeInsets.symmetric(
-                                                //       vertical: 5),
-                                                //   height: 70,
-                                                //   width: 200,
-                                                //   child: AutoFill(
-                                                //     key: ValueKey(
-                                                //         widget.classes.hashCode),
-                                                //     labelText: 'Class Name',
-                                                //     controller: _classNameController,
-                                                //     focusNode: focusNodes[0],
-                                                //     nextFocusNode: focusNodes[1],
-                                                //     optionsList: widget.classes
-                                                //         .map((e) => e['class_name']
-                                                //             .toString())
-                                                //         .toList(),
-                                                //     // onSubmitCallback: (value) async {
-                                                //     //   if (value.isNotEmpty) {
-
-                                                //     // },
-                                                //   ),
-                                                // ),
                                                 Container(
                                                   padding:
-                                                      const EdgeInsets.only(
-                                                          bottom: 10),
-                                                  width: 200,
+                                                      const EdgeInsets.all(10),
+                                                  width: 250,
                                                   child:
                                                       DropdownButtonFormField(
                                                     decoration: InputDecoration(
@@ -253,29 +232,10 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                                     },
                                                   ),
                                                 ),
-                                                // Container(
-                                                //   padding: const EdgeInsets.symmetric(
-                                                //       vertical: 5),
-                                                //   height: 70,
-                                                //   width: 200,
-                                                //   child: AutoFill(
-                                                //     key: ValueKey(
-                                                //         _subjectForSuggestions
-                                                //             .hashCode),
-                                                //     labelText: 'Subject',
-                                                //     controller:
-                                                //         _subjectNameController,
-                                                //     nextFocusNode: focusNodes[2],
-                                                //     optionsList:
-                                                //         _subjectForSuggestions,
-                                                //   ),
-                                                // ),
-
                                                 Container(
                                                   padding:
-                                                      const EdgeInsets.only(
-                                                          bottom: 10),
-                                                  width: 200,
+                                                      const EdgeInsets.all(10),
+                                                  width: 250,
                                                   child: TextField(
                                                       focusNode: focusNodes[2],
                                                       controller:
@@ -307,17 +267,31 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                                         ),
                                                       ),
                                                       onSubmitted: (value) {
-                                                        setState(() {
-                                                          _changeExist = true;
-                                                        });
+                                                        if (mounted) {
+                                                          setState(() {
+                                                            _changeExist = true;
+                                                          });
+                                                        }
                                                         focusNodes[3]
                                                             .requestFocus();
                                                       }),
                                                 ),
+                                                const Row(
+                                                  children: [],
+                                                ),
+                                              ],
+                                            ),
+
+                                            //second Row --------
+
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
                                                 Container(
-                                                  padding: const EdgeInsets
-                                                      .symmetric(vertical: 10),
-                                                  width: 200,
+                                                  padding:
+                                                      const EdgeInsets.all(10),
+                                                  width: 250,
                                                   child: TextField(
                                                     inputFormatters: [
                                                       FilteringTextInputFormatter
@@ -352,42 +326,47 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                                     onSubmitted: (value) {
                                                       focusNodes[4]
                                                           .requestFocus();
-
-                                                      setState(() {
-                                                        _changeExist = true;
-                                                      });
+                                                      if (mounted) {
+                                                        setState(() {
+                                                          _changeExist = true;
+                                                        });
+                                                      }
                                                     },
                                                   ),
                                                 ),
-                                                const Row(
-                                                  children: [],
-                                                ),
-                                              ],
-                                            ),
-
-                                            //second column --------
-                                            Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.end,
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.start,
-                                              children: [
                                                 GestureDetector(
                                                   onTap: () =>
                                                       _pickDate(context),
                                                   child: Container(
+                                                    width: 250,
                                                     padding:
-                                                        const EdgeInsets.all(
-                                                            22.0),
+                                                        const EdgeInsets.only(
+                                                      left: 50,
+                                                    ),
                                                     child: Row(
                                                       children: [
-                                                        Text(
-                                                          "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}  ", // Default to today's date
-                                                          style: const TextStyle(
-                                                              fontSize: 16,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold),
+                                                        Column(
+                                                          crossAxisAlignment:
+                                                              CrossAxisAlignment
+                                                                  .start,
+                                                          children: [
+                                                            Text(
+                                                              "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}  ", // Default to today's date
+                                                              style: const TextStyle(
+                                                                  fontSize: 16,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold),
+                                                            ),
+                                                            Text(
+                                                              "${_selectedDate.hour}:${_selectedDate.minute}:${_selectedDate.second} ", // Default to today's date
+                                                              style: const TextStyle(
+                                                                  fontSize: 10,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .normal),
+                                                            ),
+                                                          ],
                                                         ),
                                                         const Icon(Icons
                                                             .calendar_today),
@@ -397,34 +376,57 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                                 ),
                                               ],
                                             ),
+                                            SizedBox(
+                                              height: 20,
+                                            ),
+
+                                            Padding(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 10,
+                                                      horizontal: 50),
+                                              child: Align(
+                                                alignment: Alignment.topLeft,
+                                                child: Text(
+                                                  'Test History',
+                                                  style: TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                            showTestHistory(_dbHelper, () {
+                                              synchTestHistory();
+                                            }),
                                           ],
                                         )),
                                   ],
                                 ),
                                 Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Container(
-                                      margin: const EdgeInsets.only(
-                                          left: 10, top: 10),
-                                      padding: const EdgeInsets.all(20),
-                                      width: 600,
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context).cardColor,
-                                        borderRadius: BorderRadius.circular(4),
-                                        border: Border.all(
-                                          color: Colors.grey.withOpacity(.5),
-                                          width: .5,
-                                        ),
-                                      ),
-                                      child: Text(
-                                        'Recent Tests ',
-                                        style: TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ),
-                                    showTestHistory(),
+                                    // Container(
+                                    //   margin: const EdgeInsets.only(
+                                    //       left: 10, top: 10),
+                                    //   padding: const EdgeInsets.all(20),
+                                    //   width: 600,
+                                    //   decoration: BoxDecoration(
+                                    //     color: Theme.of(context).cardColor,
+                                    //     borderRadius: BorderRadius.circular(4),
+                                    //     border: Border.all(
+                                    //       color: Colors.grey.withOpacity(.5),
+                                    //       width: .5,
+                                    //     ),
+                                    //   ),
+                                    //   child: Text(
+                                    //     'Recent Tests ',
+                                    //     style: TextStyle(
+                                    //       fontSize: 20,
+                                    //       fontWeight: FontWeight.bold,
+                                    //     ),
+                                    //   ),
+                                    // ),
                                   ],
                                 ),
                               ],
@@ -474,136 +476,226 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
     );
 
     if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
+      if (mounted) {
+        setState(() {
+          _selectedDate = picked;
+        });
+      }
     }
   }
 
   void synchTestHistory() async {
     _testHistory = await _dbHelper.getTestHistory(widget.classId);
-
-    setState(() {});
+    if (mounted) {
+      setState(() {});
+    }
   }
 
-  Widget showTestHistory() {
+  Widget showTestHistory(DatabaseHelper dbHelper, Function parentSetState) {
     return Container(
       width: 600,
-      height: 240,
+      height: 316,
       margin: const EdgeInsets.only(left: 10, bottom: 10),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(
-          color: Colors.grey.withOpacity(.5),
-          width: .5,
-        ),
-      ),
+      // padding: const EdgeInsets.all(20),
+      // decoration: BoxDecoration(
+      //   // color: Theme.of(context).cardColor.withOpacity(.7),
+      //   borderRadius: BorderRadius.circular(4),
+      //   border: Border.all(
+      //     color: Colors.grey.withOpacity(.5),
+      //     width: .5,
+      //   ),
+      // ),
       child: ListView.builder(
         itemCount: _testHistory.length,
         itemBuilder: (context, index) {
           return GestureDetector(
             onTap: () async {
               _testId = _testHistory[index]['test_id'];
-
               _studentList =
                   await _dbHelper.getStudentIdsAndNamesByTestId(_testId);
-
-              setState(() {
-                _testId;
-                _studentList;
-                _changeExist = false;
-              });
+              if (mounted) {
+                setState(() {
+                  _testId;
+                  _studentList;
+                  _changeExist = false;
+                });
+              }
             },
-            child: Container(
-              decoration: BoxDecoration(
-                border: Border(
-                    bottom: BorderSide(
-                        color: Colors.grey.withOpacity(1), width: 0.4)),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          _testHistory[index]['subject_name'] ?? "--",
-                          style: TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.bold),
+            child: Align(
+              alignment: Alignment.center,
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                height: _testId == _testHistory[index]['test_id'] ? 75 : 70,
+                width: _testId == _testHistory[index]['test_id']
+                    ? 500
+                    : 475, // Adjust the initial width here
+                decoration: BoxDecoration(
+                  color: _testId == _testHistory[index]['test_id']
+                      ? Theme.of(context).cardColor
+                      : Theme.of(context).canvasColor.withOpacity(.5),
+                  boxShadow: _testId == _testHistory[index]['test_id']
+                      ? [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.5),
+                            spreadRadius: 1,
+                            blurRadius: 7,
+                            offset: const Offset(
+                                0, 3), // changes position of shadow
+                          ),
+                        ]
+                      : [],
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(
+                    color: Colors.grey.withOpacity(0.5),
+                    width: 0.5,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 20, vertical: 10),
+                          child: Text(
+                            _testHistory[index]['subject_name'] ?? "--",
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
                         ),
-                      ),
-                      Padding(
-                          padding: const EdgeInsets.all(8.0),
+                        Padding(
+                          padding: const EdgeInsets.all(10),
                           child: Text(
                             _testHistory[index]['topic'] ?? "_",
-                            style: TextStyle(
-                              fontSize: 12,
-                            ),
-                          )),
-                      Spacer(),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          _testHistory[index]['test_date'] != null
-                              ? (() {
-                                  final testDate =
-                                      _testHistory[index]['test_date'];
-                                  if (testDate is DateTime) {
-                                    // If it's already a DateTime, format it directly
-                                    return DateFormat('yyyy-MM-dd – kk:mm')
-                                        .format(testDate);
-                                  } else if (testDate is String) {
-                                    // If it's a String, replace spaces and parse
-                                    try {
-                                      return DateFormat('yyyy-MM-dd – kk:mm')
-                                          .format(
-                                        DateTime.parse(
-                                            testDate.replaceAll(' ', 'T')),
-                                      );
-                                    } catch (e) {
-                                      // Handle parsing error
-                                      return "--/--/--"; // Return a default value on error
-                                    }
-                                  } else {
-                                    // Handle unexpected types
-                                    return "--/--/--"; // Return a default value
-                                  }
-                                }())
-                              : "--/--/--", // Handle null case
-                          style: TextStyle(
-                            fontSize: 10,
+                            style: TextStyle(fontSize: 12),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.all(8),
-                        child: Text(
-                          _testHistory[index]['class_name'] ?? "--",
-                          style: TextStyle(
-                            fontSize: 10,
-                          ),
+                        Spacer(),
+                        PopupMenuButton(
+                          iconColor: Colors.grey.shade800,
+                          iconSize: 15,
+                          itemBuilder: (context) {
+                            return [
+                              PopupMenuItem(
+                                child: Text("Edit"),
+                                value: "edit",
+                              ),
+                              PopupMenuItem(
+                                child: Text("Delete"),
+                                value: "delete",
+                              ),
+                            ];
+                          },
+                          onSelected: (value) {
+                            if (value == "delete") {
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: const Text('Delete Test'),
+                                    content: const Text(
+                                        'Are you sure you want to delete this test?'),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () async {
+                                          await dbHelper.deleteFromTable(
+                                              "test_table",
+                                              _testHistory[index]['test_id']);
+                                          parentSetState();
+
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: const Text('Delete'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            } else if (value == "edit") {
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: const Text('Edit Test'),
+                                    content: const Text(
+                                        'Are you sure you want to edit this test?'),
+                                    actions: <Widget>[
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () async {
+                                          parentSetState();
+                                          Navigator.of(context).pop();
+                                        },
+                                        child: const Text('Edit'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            }
+                          },
                         ),
-                      ),
-                      Spacer(),
-                      Padding(
-                          padding: const EdgeInsets.all(8.0),
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(left: 20),
                           child: Text(
-                            "Test ID: ${_testHistory[index]['test_id']}" ?? "_",
+                            _testHistory[index]['class_name'] ?? "--",
                             style: TextStyle(
-                              fontSize: 8,
+                              fontSize: 10,
                             ),
-                          )),
-                    ],
-                  ),
-                ],
+                          ),
+                        ),
+                        Spacer(),
+                        Padding(
+                          padding: EdgeInsets.only(right: 20),
+                          child: Text(
+                            _testHistory[index]['test_date'] != null
+                                ? (() {
+                                    final testDate =
+                                        _testHistory[index]['test_date'];
+                                    if (testDate is DateTime) {
+                                      return DateFormat('yyyy-MM-dd  kk:mm')
+                                          .format(testDate);
+                                    } else if (testDate is String) {
+                                      try {
+                                        return DateFormat('yyyy-MM-dd  kk:mm')
+                                            .format(
+                                          DateTime.parse(
+                                              testDate.replaceAll(' ', 'T')),
+                                        );
+                                      } catch (e) {
+                                        return "--/--/--";
+                                      }
+                                    } else {
+                                      return "--/--/--";
+                                    }
+                                  }())
+                                : "--/--/--",
+                            style: TextStyle(
+                              fontSize: 10,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -684,10 +776,12 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
         _testId = test['id'];
 
         _studentList = await _dbHelper.getStudentIdsAndNamesByTestId(_testId);
-
-        setState(() {
-          _changeExist = false;
-        });
+        if (mounted) {
+          setState(() {
+            _changeExist = false;
+            _selectedDate = DateTime.now();
+          });
+        }
       }
 
       // Proceed with further processing, like saving data to a database or sending it to a server
@@ -730,9 +824,11 @@ class _ExamEntryState extends State<ExamEntry> {
     if (rowTextEditingControllers.isEmpty) {
       // Delay for 2 seconds before showing the "No Students Found" message
       Future.delayed(const Duration(seconds: 1), () {
-        setState(() {
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       });
     } else {
       _isLoading = false;
@@ -748,23 +844,24 @@ class _ExamEntryState extends State<ExamEntry> {
     _studentScoreList = await dbHelper.getTestDataSheetForUpdate(testId);
     testDetails = await dbHelper.getTestDetails(testId);
     // print(" Students length ${_studentScoreList.length}");
+    if (mounted) {
+      setState(() {
+        rowTextEditingControllers =
+            List.generate(_studentScoreList.length, (index) {
+          return TextEditingController();
+        });
+        focusNodes.addAll(List.generate(_studentScoreList.length, (index) {
+          return FocusNode();
+        }));
 
-    setState(() {
-      rowTextEditingControllers =
-          List.generate(_studentScoreList.length, (index) {
-        return TextEditingController();
+        for (int i = 0; i < _studentScoreList.length; i++) {
+          rowTextEditingControllers[i].text =
+              _studentScoreList[i]['score']?.toString() ?? "";
+        }
+
+        maxScore = testDetails['max_mark'];
       });
-      focusNodes.addAll(List.generate(_studentScoreList.length, (index) {
-        return FocusNode();
-      }));
-
-      for (int i = 0; i < _studentScoreList.length; i++) {
-        rowTextEditingControllers[i].text =
-            _studentScoreList[i]['score']?.toString() ?? "";
-      }
-
-      maxScore = testDetails['max_mark'];
-    });
+    }
   }
 
   void _moveFocusToNextRow(int currentRowIndex) {
