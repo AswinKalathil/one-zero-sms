@@ -32,6 +32,8 @@ dependencies:
     sdk: flutter
 
   path: ^1.8.0
+  file_picker: ^5.2.0
+  excel: ^2.0.9
 
 
   bitsdojo_window: ^0.1.2+1
@@ -95,6 +97,9 @@ flutter:
     - assets/no-data-vector.png
     - assets/missing-students.png
 
+    - assets/icons/xlsx-96.png
+
+    - assets/apluss.png
 
   fonts:
     - family: Revue  # Give a name to your font

@@ -134,7 +134,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                       child: Row(
                                         children: [
                                           Text(
-                                            'Add New Exam',
+                                            'Create Exam',
                                             style: TextStyle(
                                               fontSize: 20,
                                               fontWeight: FontWeight.bold,
@@ -164,7 +164,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                         margin: const EdgeInsets.only(
                                             left: 10, bottom: 10),
                                         padding: const EdgeInsets.all(20),
-                                        height: 580,
+                                        height: 180,
                                         width: 600,
                                         decoration: BoxDecoration(
                                           color: Theme.of(context).cardColor,
@@ -270,6 +270,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                                         if (mounted) {
                                                           setState(() {
                                                             _changeExist = true;
+                                                            _testId = '';
                                                           });
                                                         }
                                                         focusNodes[3]
@@ -302,7 +303,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                                         _maxiMarkController,
                                                     decoration: InputDecoration(
                                                       label: const Text(
-                                                          'Max Mark'),
+                                                          'Maximum Score'),
                                                       filled: true,
                                                       fillColor:
                                                           Theme.of(context)
@@ -329,76 +330,60 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                                       if (mounted) {
                                                         setState(() {
                                                           _changeExist = true;
+                                                          _testId = '';
                                                         });
                                                       }
                                                     },
                                                   ),
                                                 ),
-                                                GestureDetector(
-                                                  onTap: () =>
-                                                      _pickDate(context),
-                                                  child: Container(
-                                                    width: 250,
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                      left: 50,
-                                                    ),
-                                                    child: Row(
-                                                      children: [
-                                                        Column(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
-                                                          children: [
-                                                            Text(
-                                                              "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}  ", // Default to today's date
-                                                              style: const TextStyle(
-                                                                  fontSize: 16,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .bold),
-                                                            ),
-                                                            Text(
-                                                              "${_selectedDate.hour}:${_selectedDate.minute}:${_selectedDate.second} ", // Default to today's date
-                                                              style: const TextStyle(
-                                                                  fontSize: 10,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .normal),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                        const Icon(Icons
-                                                            .calendar_today),
-                                                      ],
+                                                MouseRegion(
+                                                  cursor:
+                                                      SystemMouseCursors.click,
+                                                  child: GestureDetector(
+                                                    onTap: () =>
+                                                        _pickDate(context),
+                                                    child: Container(
+                                                      width: 250,
+                                                      padding:
+                                                          const EdgeInsets.only(
+                                                        left: 50,
+                                                      ),
+                                                      child: Row(
+                                                        children: [
+                                                          Column(
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            children: [
+                                                              Text(
+                                                                "${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}  ", // Default to today's date
+                                                                style: const TextStyle(
+                                                                    fontSize:
+                                                                        16,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold),
+                                                              ),
+                                                              Text(
+                                                                "${_selectedDate.hour}:${_selectedDate.minute}:${_selectedDate.second} ", // Default to today's date
+                                                                style: const TextStyle(
+                                                                    fontSize:
+                                                                        10,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .normal),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          const Icon(Icons
+                                                              .calendar_today),
+                                                        ],
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
                                               ],
                                             ),
-                                            SizedBox(
-                                              height: 20,
-                                            ),
-
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                      vertical: 10,
-                                                      horizontal: 50),
-                                              child: Align(
-                                                alignment: Alignment.topLeft,
-                                                child: Text(
-                                                  'Test History',
-                                                  style: TextStyle(
-                                                    fontSize: 18,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                            showTestHistory(_dbHelper, () {
-                                              synchTestHistory();
-                                            }),
                                           ],
                                         )),
                                   ],
@@ -406,27 +391,43 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    // Container(
-                                    //   margin: const EdgeInsets.only(
-                                    //       left: 10, top: 10),
-                                    //   padding: const EdgeInsets.all(20),
-                                    //   width: 600,
-                                    //   decoration: BoxDecoration(
-                                    //     color: Theme.of(context).cardColor,
-                                    //     borderRadius: BorderRadius.circular(4),
-                                    //     border: Border.all(
-                                    //       color: Colors.grey.withOpacity(.5),
-                                    //       width: .5,
-                                    //     ),
-                                    //   ),
-                                    //   child: Text(
-                                    //     'Recent Tests ',
-                                    //     style: TextStyle(
-                                    //       fontSize: 20,
-                                    //       fontWeight: FontWeight.bold,
-                                    //     ),
-                                    //   ),
-                                    // ),
+                                    Container(
+                                      margin: const EdgeInsets.only(
+                                        left: 10,
+                                      ),
+                                      // padding: const EdgeInsets.all(20),
+                                      width: 600,
+
+                                      child: Column(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.all(20),
+                                            width: 600,
+                                            decoration: BoxDecoration(
+                                              color:
+                                                  Theme.of(context).cardColor,
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                              border: Border.all(
+                                                color:
+                                                    Colors.grey.withOpacity(.5),
+                                                width: .5,
+                                              ),
+                                            ),
+                                            child: Text(
+                                              'Recent Exams',
+                                              style: TextStyle(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ),
+                                          showTestHistory(_dbHelper, () {
+                                            synchTestHistory();
+                                          }),
+                                        ],
+                                      ),
+                                    ),
                                   ],
                                 ),
                               ],
@@ -446,6 +447,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                       super.setState(() {
                                         synchTestHistory();
                                         _changeExist = true;
+                                        _testId = '';
                                       });
                                     },
                                   ),
@@ -495,16 +497,16 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
     return Container(
       width: 600,
       height: 316,
-      margin: const EdgeInsets.only(left: 10, bottom: 10),
-      // padding: const EdgeInsets.all(20),
-      // decoration: BoxDecoration(
-      //   // color: Theme.of(context).cardColor.withOpacity(.7),
-      //   borderRadius: BorderRadius.circular(4),
-      //   border: Border.all(
-      //     color: Colors.grey.withOpacity(.5),
-      //     width: .5,
-      //   ),
-      // ),
+      // margin: const EdgeInsets.only(left: 10, bottom: 10, top: 10),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(
+          color: Colors.grey.withOpacity(.5),
+          width: .5,
+        ),
+      ),
       child: ListView.builder(
         itemCount: _testHistory.length,
         itemBuilder: (context, index) {
@@ -670,11 +672,11 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                     final testDate =
                                         _testHistory[index]['test_date'];
                                     if (testDate is DateTime) {
-                                      return DateFormat('yyyy-MM-dd  kk:mm')
+                                      return DateFormat('dd-MM-yyyy  kk:mm')
                                           .format(testDate);
                                     } else if (testDate is String) {
                                       try {
-                                        return DateFormat('yyyy-MM-dd  kk:mm')
+                                        return DateFormat('dd-MM-yyyy  kk:mm')
                                             .format(
                                           DateTime.parse(
                                               testDate.replaceAll(' ', 'T')),
@@ -923,88 +925,33 @@ class _ExamEntryState extends State<ExamEntry> {
           SizedBox(
             width: 550,
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   "${testDetails['subject_name']} ",
                   style: const TextStyle(
-                      fontSize: 24, fontWeight: FontWeight.bold),
+                      fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 Text(
                   "${testDetails['topic']} ",
                   style: const TextStyle(
-                      fontSize: 20, fontStyle: FontStyle.italic),
+                      fontSize: 18, fontStyle: FontStyle.normal),
                 ),
                 Spacer(),
-                PopupMenuButton(itemBuilder: (context) {
-                  return [
-                    PopupMenuItem(
-                      child: Text("Edit"),
-                      value: "edit",
-                    ),
-                    PopupMenuItem(
-                      child: Text("Delete"),
-                      value: "delete",
-                    ),
-                  ];
-                }, onSelected: (value) {
-                  if (value == "delete") {
-                    showDialog(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: const Text('Delete Test'),
-                          content: const Text(
-                              'Are you sure you want to delete this test?'),
-                          actions: <Widget>[
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () async {
-                                await dbHelper.deleteFromTable(
-                                    "test_table", widget.test_id);
-                                widget.parentsetstate();
-
-                                Navigator.of(context).pop();
-                              },
-                              child: const Text('Delete'),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  } else if (value == "edit") {
-                    showDialog(
-                      context: context,
-                      builder: (context) {
-                        return AlertDialog(
-                          title: const Text('Edit Test'),
-                          content: const Text(
-                              'Are you sure you want to edit this test?'),
-                          actions: <Widget>[
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () async {
-                                widget.parentsetstate();
-                                Navigator.of(context).pop();
-                                // Navigator.of(context).pop();
-                              },
-                              child: const Text('Edit'),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  }
-                }),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 10, right: 10.0),
+                    child: CustomButton(
+                        text: "SAVE",
+                        onPressed: () {
+                          saveExamScores();
+                        },
+                        width: 85,
+                        height: 35,
+                        textColor: Colors.white),
+                  ),
+                ),
               ],
             ),
           ),
@@ -1017,25 +964,11 @@ class _ExamEntryState extends State<ExamEntry> {
                       "${testDetails['test_date'].toString().substring(0, 10)}")),
             ],
           ),
-          const SizedBox(height: 20),
           Divider(
             color: Theme.of(context).canvasColor, // Line color
             thickness: 2, // Line thickness
           ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 10, right: 30.0),
-              child: CustomButton(
-                  text: "SAVE",
-                  onPressed: () {
-                    saveExamScores();
-                  },
-                  width: 85,
-                  height: 35,
-                  textColor: Colors.white),
-            ),
-          ),
+          const SizedBox(height: 20),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 30),

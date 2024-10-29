@@ -4,6 +4,9 @@ import 'package:one_zero/custom-widgets.dart';
 import 'package:one_zero/database_helper.dart';
 import 'package:one_zero/constants.dart';
 import 'package:uuid/uuid.dart';
+import 'package:file_picker/file_picker.dart';
+import 'dart:io';
+import 'package:excel/excel.dart';
 
 class DataEntryPage extends StatefulWidget {
   final InputTableMetadata metadata;
@@ -188,6 +191,74 @@ class _DataEntryPageState extends State<DataEntryPage> {
   }
 
   List<bool> _selections = [true, false];
+  String? _selectedFilePath;
+
+  Future<List<Map<String, dynamic>>> importData() async {
+    List<Map<String, dynamic>> importedData = [];
+
+    if (_selectedFilePath != null) {
+      String filePath = _selectedFilePath!;
+      var bytes = File(filePath).readAsBytesSync();
+      var excel = Excel.decodeBytes(bytes);
+
+      for (var table in excel.tables.keys) {
+        var sheet = excel.tables[table];
+        if (sheet == null) continue;
+
+        List<String> headers = [];
+        bool headersInitialized = false;
+
+        for (var row in sheet.rows) {
+          // Initialize headers from the first row if not already done
+          if (!headersInitialized) {
+            headers = row.map((cell) => cell?.value.toString() ?? '').toList();
+            headersInitialized = true;
+            continue; // Skip to the next row for data
+          }
+
+          // Map row data to headers
+          Map<String, dynamic> rowData = {};
+          for (int i = 0; i < headers.length; i++) {
+            rowData[headers[i]] = row[i]?.value;
+          }
+          importedData.add(rowData);
+        }
+      }
+    } else {
+      print('No file selected');
+    }
+
+    loadData(importedData);
+    return importedData;
+  }
+
+  void loadData(List<Map<String, dynamic>> importedData) {
+    if (!rowTextEditingControllers.isNotEmpty) {
+      _addNewRow();
+    }
+    for (var row in importedData) {
+      rowTextEditingControllers.last.forEach((key, controller) {
+        if (row[key] != null) controller.text = row[key].toString();
+      });
+      if (row != importedData.last) _addNewRow();
+    }
+  }
+
+  Future<void> _pickXlsFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['xls', 'xlsx'],
+    );
+
+    if (result != null) {
+      setState(() {
+        _selectedFilePath = result.files.single.path;
+      });
+      importData();
+    } else {
+      // User canceled the picker
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -248,12 +319,45 @@ class _DataEntryPageState extends State<DataEntryPage> {
             //   ),
             // ),
 
-            const SizedBox(height: 20),
-            Divider(
-              color: Theme.of(context).canvasColor, // Line color
-              thickness: 2, // Line thickness
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                SizedBox(
+                  width: 75,
+                  height: 80,
+                  child: Column(
+                    children: [
+                      IconButton(
+                        icon: Image.asset(
+                          'assets/icons/xlsx-96.png',
+                          width: 40,
+                          height: 40,
+                        ),
+                        iconSize: 50,
+                        isSelected: _selectedFilePath != null,
+                        onPressed: () {
+                          _pickXlsFile();
+                        },
+                      ),
+                      _selectedFilePath == null
+                          ? Text(
+                              'From Excel',
+                              style: TextStyle(
+                                color: Colors.black,
+                              ),
+                            )
+                          : Icon(
+                              Icons.check,
+                              color: Colors.green,
+                              size: 15,
+                            ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 50),
+              ],
             ),
-            const SizedBox(height: 20),
+
             Align(
               alignment: Alignment.center,
               child: Padding(
@@ -451,34 +555,39 @@ class _DataEntryPageState extends State<DataEntryPage> {
                                           [cellIndex],
                                       decoration: InputDecoration(
                                         focusedBorder: OutlineInputBorder(
-                                            borderSide:
-                                                BorderSide(color: Colors.grey)),
+                                          borderSide:
+                                              BorderSide(color: Colors.grey),
+                                        ),
                                         border: InputBorder.none,
                                       ),
                                       value: rowTextEditingControllers[rowIndex]
-                                                  [header]!
-                                              .text
-                                              .isNotEmpty
+                                                      [header]
+                                                  ?.text
+                                                  .isNotEmpty ==
+                                              true
                                           ? rowTextEditingControllers[rowIndex]
-                                                  [header]!
-                                              .text
-                                          : null, // Get the current value from the controller
+                                                  [header]
+                                              ?.text
+                                          : STREAM_NAMES[
+                                              0], // Default to first item if no selection
                                       items: STREAM_NAMES.map((String value) {
                                         return DropdownMenuItem<String>(
                                           value: value,
-                                          child: Text(value,
-                                              style: TextStyle(
-                                                  fontWeight:
-                                                      FontWeight.normal)),
+                                          child: Text(
+                                            value,
+                                            style: TextStyle(
+                                                fontWeight: FontWeight.normal),
+                                          ),
                                         );
                                       }).toList(),
                                       onChanged: (String? newValue) {
                                         setState(() {
                                           if (newValue != null) {
-                                            // Update the controller with the selected gender
+                                            // Update the controller with the selected value
                                             rowTextEditingControllers[rowIndex]
-                                                    [header]!
-                                                .text = newValue;
+                                                    [header]
+                                                ?.text = newValue;
+                                            // Move focus to the next field if desired
                                             focusNodes[rowIndex][cellIndex + 1]
                                                 .requestFocus();
                                           }

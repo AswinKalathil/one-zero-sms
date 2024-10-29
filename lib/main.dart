@@ -7,6 +7,8 @@ import 'package:one_zero/database_helper.dart';
 import 'package:one_zero/examPage.dart';
 import 'package:one_zero/results_page.dart';
 import 'package:one_zero/dataEntry.dart';
+import 'package:one_zero/subpages.dart';
+
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:stroke_text/stroke_text.dart';
@@ -531,20 +533,6 @@ class _MyHomePageState extends State<MyHomePage>
                     : SizedBox(),
                 Spacer(),
                 CustomDrawerItem(
-                    icon: widget.isDarkMode
-                        ? Icons.wb_sunny
-                        : Icons.nightlight_round,
-                    selectedIcon: Icons.wb_sunny,
-                    label: widget.isDarkMode ? "Light" : "Dark",
-                    page: -1,
-                    selectedPage: _pageNumber,
-                    onTap: () {
-                      setState(() {
-                        widget.onThemeChanged(!widget.isDarkMode);
-                      });
-                    },
-                    isMenuExpanded: _isMenuExpanded),
-                CustomDrawerItem(
                   icon: Icons.settings_outlined,
                   selectedIcon: Icons.settings,
                   label: 'Settings',
@@ -581,7 +569,7 @@ class _MyHomePageState extends State<MyHomePage>
                     classes: _classes,
                     isMenuExpanded: _isMenuExpanded,
                   ),
-                5 => _buildSettings(context),
+                5 => buildSettings(context, widget.onThemeChanged),
 
                 // TODO: Handle this case.
                 int() => throw UnimplementedError(),
@@ -604,56 +592,6 @@ class _MyHomePageState extends State<MyHomePage>
     Icons.currency_rupee_rounded,
   ];
   String _appMode = 'Acadamics';
-  Widget _buildSettings(BuildContext context) {
-    return Center(
-      child: Container(
-        width: 900,
-        height: 1000,
-        margin: EdgeInsets.all(20),
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _menuOptions.length,
-                  itemBuilder: (context, index) {
-                    return Container(
-                      padding: EdgeInsets.all(20),
-                      margin: EdgeInsets.all(10),
-                      height: 250,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).canvasColor,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(
-                          color: Colors.grey.withOpacity(.5),
-                          width: .5,
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _menuOptions[index],
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            _menuOptions[index],
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   Widget _buildClassPage({int index = 0, bool isDedicatedPage = true}) {
     return (_isClassTablesInitialized)

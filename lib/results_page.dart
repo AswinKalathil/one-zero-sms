@@ -31,6 +31,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   // Default criteria
 
   String _studentId = '';
+  bool _orientation = true;
 
   String _studentNameForGrade = '';
   String searchText = '';
@@ -306,22 +307,15 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                               : SizedBox(),
                         ),
                         SizedBox(
-                          width: 750,
+                          width: 500,
                           child: Container(
                             child: showGradeCard
                                 ? Row(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.start,
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      // Expanded(
-                                      //   flex: 1,
-                                      //   child: profileCard(),
-                                      //   // child: GradeCard(
-                                      //   //   key: UniqueKey(),
-                                      //   //   studentId: _studentId,
-                                      //   // ),
-                                      // ),
+                                      profileCard(),
                                     ],
                                   )
                                 : Center(
@@ -336,21 +330,47 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
               ),
             ),
             showGradeCard
-                ? Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        width: _screenWidth > 1200 ? _screenWidth * .84 : 600,
-                        height: _screenWidth > 1200 ? 700 : 760,
-                        child: Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: GradeCard(
-                            key: UniqueKey(),
-                            studentId: _studentId,
+                ? ColoredBox(
+                    color: Theme.of(context).cardColor.withOpacity(.4),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Align(
+                          alignment: Alignment.centerRight,
+                          child: Padding(
+                            padding: const EdgeInsets.all(50.0),
+                            child: SizedBox(
+                              height: 50,
+                              child: IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _orientation = !_orientation;
+                                    });
+                                  },
+                                  icon: Icon(
+                                    Icons.print,
+                                    size: 30,
+                                  )),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                        SizedBox(
+                          width: _screenWidth > 1200
+                              ? (_orientation ? _screenWidth * .84 : 600)
+                              : 600,
+                          height: _screenWidth > 1200
+                              ? (_orientation ? 680 : 760)
+                              : 760,
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: GradeCard(
+                                key: UniqueKey(),
+                                studentId: _studentId,
+                                orientation: _orientation),
+                          ),
+                        ),
+                      ],
+                    ),
                   )
                 : SizedBox(),
             _testResults.isNotEmpty && _allSubjects.isNotEmpty
@@ -463,7 +483,12 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                 blurRadius: 5,
                                 offset: const Offset(0, 3),
                               )
-                            : BoxShadow(),
+                            : BoxShadow(
+                                color: Colors.white.withOpacity(0.1),
+                                spreadRadius: 0,
+                                blurRadius: 0,
+                                offset: const Offset(0, 3),
+                              ),
                       ],
                     ),
                     child: Row(
@@ -488,7 +513,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                           ),
                         ),
                         Padding(
-                          padding: const EdgeInsets.only(left: 8.0),
+                          padding: const EdgeInsets.only(left: 8.0, top: 10),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -524,7 +549,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   Widget profileCard() {
     return Container(
         width: 400,
-        height: 400,
+        height: 500,
         decoration: BoxDecoration(
           border: Border.all(color: Colors.grey.withOpacity(0.3)),
           borderRadius: BorderRadius.circular(8.0),
@@ -547,11 +572,11 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center, // Center align
             children: [
-              CircleAvatar(
-                radius: 75,
-                backgroundImage: NetworkImage(
-                    'https://example.com/profile.jpg'), // Replace with student's profile image URL
-              ),
+              // CircleAvatar(
+              //   radius: 75,
+              //   backgroundImage: NetworkImage(
+              //       'https://example.com/profile.jpg'), // Replace with student's profile image URL
+              // ),
               SizedBox(height: 10),
               Text(
                 'Student Name',
@@ -616,8 +641,10 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
 class GradeCard extends StatefulWidget {
   final String studentId;
+  final bool orientation;
 
-  GradeCard({Key? key, required this.studentId}) : super(key: key);
+  GradeCard({Key? key, required this.studentId, required this.orientation})
+      : super(key: key);
   @override
   _GradeCardState createState() => _GradeCardState();
 }
@@ -795,9 +822,6 @@ class _GradeCardState extends State<GradeCard> {
       if (testDate != null && maxMark != null) {
         var existingEntry = latestScores[subject];
 
-        // print(
-        //     'subject:  $subject  Test Date: $testDate  Existing Date: $existingDate}\n  value: ${((existingEntry?['test_date'] is DateTime && testDate.isAfter(existingEntry?['test_date'])))}');
-// Ensure existingEntry['test_date'] is parsed correctly.
         DateTime? existingDate = existingEntry?['test_date'] != null
             ? DateTime.parse(existingEntry?['test_date'])
             : null;
@@ -805,12 +829,8 @@ class _GradeCardState extends State<GradeCard> {
         bool isAfterComparison =
             existingDate == null || testDate.isAfter(existingDate!);
 
-        print(
-            'subject: $subject  Test Date: $testDate  Existing Date: ${existingDate}\n  value: $isAfterComparison');
-
         // Update the entry only if it doesn't exist or if the current testDate is more recent
         if (isAfterComparison == true) {
-          print(testDate.toIso8601String());
           latestScores[subject] = {
             'subject_name': subject,
             'subject_id': subjectId,
@@ -862,6 +882,16 @@ class _GradeCardState extends State<GradeCard> {
   }
 
   Widget verticalCard() {
+    bool isFullApluss = false;
+    int aplussCount = 0;
+
+    for (var subject in subjects) {
+      if (subject['grade'] == 'A+') {
+        aplussCount++;
+      }
+    }
+    isFullApluss = aplussCount == subjects.length && aplussCount > 0;
+
     return SizedBox(
       child: AspectRatio(
         aspectRatio: 1, // A4 aspect ratio (210mm x 297mm)
@@ -879,6 +909,7 @@ class _GradeCardState extends State<GradeCard> {
             children: [
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   SizedBox(
                     width: 80,
@@ -895,7 +926,7 @@ class _GradeCardState extends State<GradeCard> {
                   Padding(
                     padding: const EdgeInsets.only(left: 10.0, bottom: 10),
                     child: SizedBox(
-                      width: 300,
+                      width: 200,
                       height: 100,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -918,11 +949,21 @@ class _GradeCardState extends State<GradeCard> {
                       ),
                     ),
                   ),
-                  const Spacer(),
-                  getLogoColored(10, .6)
+                  isFullApluss
+                      ? Padding(
+                          padding: const EdgeInsets.only(left: 20, top: 20.0),
+                          child: Image.asset(
+                            'assets/apluss.png',
+                            width: 90,
+                            height: 90,
+                          ),
+                        )
+                      : const SizedBox(),
+                  Spacer(),
+                  getLogoColored(10, .6),
                 ],
               ),
-              const SizedBox(height: 16.0),
+              SizedBox(height: 16.0),
               const Text(
                 'Latest Grades',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -1052,6 +1093,10 @@ class _GradeCardState extends State<GradeCard> {
                   ),
                   const SizedBox(width: 8),
                   Text('Current'),
+                  Spacer(),
+                  Text(
+                    'Consistancy: 80%',
+                  ),
                 ],
               ),
               Container(
@@ -1084,12 +1129,12 @@ class _GradeCardState extends State<GradeCard> {
 
   Widget horizontalCard() {
     return Container(
-      padding: const EdgeInsets.all(30.0),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.withOpacity(1)),
-        borderRadius: BorderRadius.circular(8.0),
-        color: Theme.of(context).cardColor,
-      ),
+      // padding: const EdgeInsets.all(30.0),
+      // decoration: BoxDecoration(
+      //   border: Border.all(color: Colors.grey.withOpacity(1)),
+      //   borderRadius: BorderRadius.circular(8.0),
+      //   color: Theme.of(context).cardColor,
+      // ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
@@ -1143,8 +1188,6 @@ class _GradeCardState extends State<GradeCard> {
                         ),
                       ),
                     ),
-                    const Spacer(),
-                    getLogoColored(10, .6)
                   ],
                 ),
                 const SizedBox(height: 16.0),
@@ -1256,6 +1299,16 @@ class _GradeCardState extends State<GradeCard> {
                     ],
                   ),
                 ),
+                Container(
+                  height: 200,
+                  child: Center(
+                    child: Text(
+                      'Academic Performance          \nOveral Percentage: 66%\nConsistency: 70% ',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
                 Spacer(),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1275,20 +1328,21 @@ class _GradeCardState extends State<GradeCard> {
             child: Column(
               children: [
                 Container(
-                  height: 200,
-                  child: Center(
-                    child: Text(
-                      'Academic Performance',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ),
-                Container(
-                  height: 400,
+                  height: 600,
                   padding: const EdgeInsets.all(30.0),
                   child: Column(
                     children: [
+                      Container(
+                        height: 500,
+                        width: 500,
+                        child: Center(
+                          child: _radarData.length > 0
+                              ? RadarChartWidget(
+                                  subjectsData: _radarData,
+                                )
+                              : const SizedBox(),
+                        ),
+                      ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
@@ -1315,17 +1369,6 @@ class _GradeCardState extends State<GradeCard> {
                           Text('Current'),
                         ],
                       ),
-                      Container(
-                        height: 300,
-                        width: 500,
-                        child: Center(
-                          child: _radarData.length > 0
-                              ? RadarChartWidget(
-                                  subjectsData: _radarData,
-                                )
-                              : const SizedBox(),
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -1344,6 +1387,8 @@ class _GradeCardState extends State<GradeCard> {
     _screenWidth = MediaQuery.of(context).size.width;
     _screenHeight = MediaQuery.of(context).size.height;
 
-    return _screenWidth > 1200 ? horizontalCard() : verticalCard();
+    return _screenWidth > 1200
+        ? (widget.orientation ? horizontalCard() : verticalCard())
+        : verticalCard();
   }
 }
