@@ -42,9 +42,8 @@ class RadarChartWidget extends StatelessWidget {
       case 3:
         ticks = [50, 100];
         break;
+      case 4:
       case 5:
-        ticks = [25, 50, 75, 100];
-        break;
       case 7:
         ticks = [25, 50, 75, 100];
         break;

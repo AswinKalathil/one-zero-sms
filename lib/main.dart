@@ -92,7 +92,8 @@ class _MyHomePageState extends State<MyHomePage>
   DatabaseHelper _dbHelper = DatabaseHelper();
   int _pageNumber = 0;
   int _selectedClass_index = 0;
-  String _selectdClass = '';
+  String _selectdClassID = '';
+  String _selectedClass_name = '';
   int _classCount = 0;
   bool _isMenuExpanded = false;
   bool _isClassTablesInitialized = false;
@@ -307,6 +308,7 @@ class _MyHomePageState extends State<MyHomePage>
   }
 
 // Dropdown for selecting academic year
+
   Widget _buildAcademicYearDropdown() {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -454,21 +456,47 @@ class _MyHomePageState extends State<MyHomePage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: IconButton(
-                    icon: _isMenuExpanded
-                        ? Icon(Icons.menu_open, color: Colors.white)
-                        : Icon(Icons.menu, color: Colors.white),
-                    onPressed: () {
-                      setState(() {
-                        super.setState(() {
-                          _isMenuExpanded = !_isMenuExpanded;
-                        });
-                      });
-                    },
-                  ),
+                Row(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: IconButton(
+                        icon: _isMenuExpanded
+                            ? Icon(Icons.menu_open, color: Colors.white)
+                            : Icon(Icons.menu, color: Colors.white),
+                        onPressed: () {
+                          setState(() {
+                            super.setState(() {
+                              _isMenuExpanded = !_isMenuExpanded;
+                            });
+                          });
+                        },
+                      ),
+                    ),
+                    _isMenuExpanded
+                        ? Text(_selectedClass_name,
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold))
+                        : SizedBox()
+                  ],
                 ),
+                // CustomDrawerItem(
+                //   icon: _isMenuExpanded ? Icons.menu_open : Icons.menu,
+                //   selectedIcon: Icons.menu_open,
+                //   label: _selectedClass_name,
+                //   page: -1,
+                //   selectedPage: _pageNumber,
+                //   onTap: () {
+                //     setState(() {
+                //       super.setState(() {
+                //         _isMenuExpanded = !_isMenuExpanded;
+                //       });
+                //     });
+                //   },
+                //   isMenuExpanded: _isMenuExpanded,
+                // ),
                 SizedBox(
                   height: 20,
                 ),
@@ -481,6 +509,7 @@ class _MyHomePageState extends State<MyHomePage>
                   onTap: () {
                     setState(() {
                       _pageNumber = 0;
+                      _selectedClass_name = '';
                     });
                   },
                   isMenuExpanded: _isMenuExpanded,
@@ -509,7 +538,7 @@ class _MyHomePageState extends State<MyHomePage>
                         selectedPage: _pageNumber,
                         onTap: () {
                           setState(() {
-                            initializeStreamNames(_selectdClass);
+                            initializeStreamNames(_selectdClassID);
                             _pageNumber = 2;
                           });
                         },
@@ -541,6 +570,7 @@ class _MyHomePageState extends State<MyHomePage>
                   onTap: () {
                     setState(() {
                       _pageNumber = 5;
+                      _selectedClass_name = '';
                     });
                   },
                   isMenuExpanded: _isMenuExpanded,
@@ -564,12 +594,15 @@ class _MyHomePageState extends State<MyHomePage>
                 3 => _buildClassPage(
                     index: _selectedClass_index, isDedicatedPage: false),
                 4 => ExamScoreSheet(
-                    classId: _selectdClass,
+                    classId: _selectdClassID,
                     isClassTablesInitialized: _isClassTablesInitialized,
                     classes: _classes,
                     isMenuExpanded: _isMenuExpanded,
                   ),
-                5 => buildSettings(context, widget.onThemeChanged),
+                5 => SetiingsPage(
+                    onThemeChange: widget.onThemeChanged,
+                    academic_year: _selectdAcadamicYear,
+                  ),
 
                 // TODO: Handle this case.
                 int() => throw UnimplementedError(),
@@ -597,7 +630,7 @@ class _MyHomePageState extends State<MyHomePage>
     return (_isClassTablesInitialized)
         ? ClassDetailPage(
             className: _classes[index]['class_name'],
-            classId: _selectdClass,
+            classId: _selectdClassID,
             isDedicatedPage: isDedicatedPage,
             key: ValueKey(_isSyncing.hashCode),
           )
@@ -612,7 +645,7 @@ class _MyHomePageState extends State<MyHomePage>
     return (_isClassTablesInitialized)
         ? DataEntryPage(
             metadata: tableMetadataMap['student_table']!,
-            classId: _selectdClass,
+            classId: _selectdClassID,
             key: key,
           )
         : Container(
@@ -648,7 +681,8 @@ class _MyHomePageState extends State<MyHomePage>
                   child: InkWell(
                     onTap: () {
                       super.setState(() {
-                        _selectdClass = _classes[index]['id'];
+                        _selectdClassID = _classes[index]['id'];
+                        _selectedClass_name = _classes[index]['class_name'];
                         _selectedClass_index = index;
                         _pageNumber = 1;
                       });

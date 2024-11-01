@@ -132,7 +132,7 @@ class _TestAnalyticsState extends State<TestAnalytics> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-            padding: const EdgeInsets.all(20.0),
+            padding: const EdgeInsets.only(top: 50.0, bottom: 20),
             child: Center(
               child: Text('Detailed Performance Analysis',
                   style:

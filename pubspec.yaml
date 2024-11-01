@@ -89,6 +89,21 @@ flutter:
     - assets/class-bg-1.png
     - assets/class-bg-2.png
 
+    - assets/chem-bg.png
+    - assets/phy-bg.png
+    - assets/bio-bg.png
+    - assets/maths-bg.png
+    - assets/eng-bg.png
+    - assets/bot-bg.png
+    - assets/zoo-bg.png
+    - assets/hindi-bg.png
+    - assets/social-bg.png
+
+
+
+
+    
+
     - assets/ml.jpg
     - assets/fl.jpg
     - assets/one_zero-logo-1.png

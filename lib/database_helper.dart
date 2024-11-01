@@ -284,12 +284,9 @@ JOIN (SELECT id, student_name
       c.id AS class_id
     FROM 
       subject_table sub
+  
     JOIN 
-      stream_subjects_table ss ON sub.id = ss.subject_id
-    JOIN 
-      stream_table st ON ss.stream_id = st.id
-    JOIN 
-      class_table c ON st.class_id = c.id
+      class_table c ON sub.class_id = c.id
     WHERE 
     c.id = ?;
   ''';

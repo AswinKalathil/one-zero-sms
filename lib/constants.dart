@@ -42,6 +42,37 @@ List<Color> GRAPH_LINE_COLORS = [
   Colors.amber, // Amber
 ];
 
+class Subject {
+  final String name;
+  final Color color;
+  final String image;
+  Subject(this.name, this.color, this.image);
+}
+
+Subject DEFAULT_SUBJECT =
+    Subject("Default", Colors.grey, 'assets/maths-bg.png');
+
+Map<String, Subject> SUBJECT_OBJECT = {
+  'Physics': Subject("Physics", const Color.fromARGB(150, 0, 73, 189),
+      'assets/phy-bg.png'), // Bright Blue
+  'Chemistry': Subject("Chemistry", const Color.fromARGB(149, 255, 185, 0),
+      'assets/chem-bg.png'), // Bright Red
+  'Biology': Subject("Biology", const Color.fromARGB(150, 0, 168, 36),
+      'assets/bio-bg.png'), // Bright Green
+  'Mathematics': Subject("Mathematics", const Color.fromARGB(150, 255, 91, 91),
+      'assets/maths-bg.png'), // Orange
+  'English': Subject("English", const Color.fromARGB(150, 50, 129, 255),
+      'assets/eng-bg.png'), // Purple
+  'Hindi': Subject(
+      "Hindi", const Color.fromARGB(150, 153, 92, 246), 'assets/hindi-bg.png'),
+  'Social Science': Subject("Social Science",
+      const Color.fromARGB(150, 190, 95, 0), 'assets/social-bg.png'),
+  'Botany': Subject(
+      "Botany", const Color.fromARGB(150, 92, 244, 94), 'assets/bot-bg.png'),
+  'Zoology': Subject(
+      "Zoology", const Color.fromARGB(150, 251, 170, 57), 'assets/zoo-bg.png'),
+};
+
 //   ? Color.fromARGB(255, 2, 47, 22)
 // : Color.fromARGB(255, 45, 205, 114),
 Column getLogo(double fontSize, double opacity) {

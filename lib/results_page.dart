@@ -1,11 +1,8 @@
-import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:one_zero/constants.dart';
-import 'package:one_zero/custom-widgets.dart';
 import 'package:one_zero/database_helper.dart';
 import 'package:one_zero/pieChart.dart';
 import 'package:one_zero/testAnalytics.dart';
@@ -33,7 +30,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   String _studentId = '';
   bool _orientation = true;
 
-  String _studentNameForGrade = '';
   String searchText = '';
   String searchTextfinal = '';
   FocusNode serchButtonFocusNode = FocusNode();
@@ -41,11 +37,15 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   List<Map<String, dynamic>> _studentsOfClassList = [];
   List<Map<String, dynamic>> _studentsOfSubjectList = [];
   String _resultTitle = '';
+
   final ScrollController _scrollController = ScrollController();
   int resultBoardIndex = 0;
   bool showGradeCard = false;
+  List<String> _classSubjects = [];
 
   List<Map<String, dynamic>> _allSubjects = [];
+  Map<String, int> _subjectTestCount = {};
+
   List<List<Map<String, dynamic>>> _testResults = [];
   @override
   void initState() {
@@ -53,11 +53,17 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     super.initState();
     _selectedcriteria = 'Student';
     _criteriaOptions = ['Student', 'Class'];
+    setAllSubjects();
+    setTestCount();
 
     if (widget.isDedicatedPage) {
       resultBoardIndex = 4;
       onSubmittedSerch('class');
     }
+  }
+
+  void setAllSubjects() async {
+    _classSubjects = (await _dbHelper.getClassSubjects(widget.classId))!;
   }
 
   void _onSelected(String criteria) {
@@ -90,13 +96,13 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     if (!widget.isDedicatedPage && value.isNotEmpty) {
       if (_selectedcriteria == 'Student') {
         // fetchedStudentsList = await _dbHelper.getStudentsOfName(value, 0);
-        _resultTitle = 'search results with  $value';
+        _resultTitle = "search results with  '$value' ";
       } else if (_selectedcriteria == 'Class') {
         fetchedStudentsList = await _dbHelper.getStudentsOfClass(value);
         _resultTitle = 'students of class $value';
       } else if (_selectedcriteria == 'Subject') {
         fetchedStudentsList = await _dbHelper.getStudentsOfSubject(value);
-        _resultTitle = 'students of $value';
+        _resultTitle = "students of '$value'";
       }
 
       setState(() {
@@ -120,14 +126,14 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       _studentsOfClassList = fetchedStudentsList;
       resultBoardIndex = 4;
       searchText = widget.className;
-      _resultTitle = 'students of class ${widget.className}';
+      _resultTitle = "students of class '${widget.className}'";
       setState(() {});
     } else if (_selectedcriteria == 'Student' && value.isNotEmpty) {
       fetchedStudentsList =
           await _dbHelper.getStudentsOfNameAndClass(value, widget.classId);
 
       setState(() {
-        _resultTitle = 'search results with  $value';
+        _resultTitle = "search results with  '$value' ";
         _studentsOfNameList = fetchedStudentsList;
         resultBoardIndex = 3;
         searchText = value;
@@ -135,18 +141,31 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     }
   }
 
-  final List<String> _menuOptions = [
-    'Acadamics',
-    'Attendance',
-    'Finance',
-  ];
-  final List<IconData> _menuIcons = [
-    Icons.school,
-    Icons.check_circle,
-    Icons.currency_rupee_rounded,
-  ];
   double _screenWidth = 0;
   double _screenHeight = 0;
+
+  List<Map<String, dynamic>> _totalTest = [];
+
+  void setTestCount() async {
+    _totalTest = await _dbHelper.getTestHistory(widget.classId);
+
+    int testCount = 0;
+
+    for (var index = 0; index < _classSubjects.length; index++) {
+      testCount = 0;
+      for (var test in _totalTest) {
+        if (test['subject_name'] == _classSubjects[index]) {
+          testCount++;
+        }
+      }
+      _subjectTestCount[_classSubjects[index]] = testCount;
+    }
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     _screenWidth = MediaQuery.of(context).size.width;
@@ -164,70 +183,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
             : _screenHeight + 800 + (_allSubjects.length * 430) + 1000,
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.all(10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            !widget.isDedicatedPage
-                                ? SizedBox(
-                                    width: 200,
-                                    child: _criteriaDropdown(),
-                                  )
-                                : const SizedBox(
-                                    width: 40,
-                                  ),
-                            SizedBox(
-                              width: 300,
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: TextField(
-                                  cursorColor: Colors.grey,
-                                  decoration: InputDecoration(
-                                    hintText: 'Search by $_selectedcriteria',
-                                    prefixIcon: const Icon(Icons.search),
-                                    filled: true,
-                                    fillColor: Theme.of(context).canvasColor,
-                                    focusColor: Theme.of(context).canvasColor,
-                                    contentPadding: const EdgeInsets.all(15.0),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(8.0),
-                                      borderSide: BorderSide(
-                                          color: Colors.grey.withOpacity(.4),
-                                          width: 0.4),
-                                    ),
-                                  ),
-                                  onChanged: (value) {
-                                    showGradeCard = false;
-                                    setState(() {
-                                      searchTextfinal = value.trim();
-                                    });
-                                  },
-                                  onSubmitted: (value) {
-                                    setState(() {
-                                      searchTextfinal = value.trim();
-                                    });
-                                    onSubmittedSerch(searchTextfinal);
-                                  },
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
             Listener(
               onPointerSignal: (pointerSignal) {
                 // Handle horizontal scrolling with mouse wheel
@@ -248,11 +203,135 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                   scrollDirection: Axis.horizontal,
                   child: Container(
                     margin: EdgeInsets.only(right: 50),
-                    height: 600,
+                    height: 700,
                     width: 1350,
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
+                        Container(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(10.0),
+                                child: Text(
+                                  "Subjects",
+                                  textAlign: TextAlign.left,
+                                  style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              SizedBox(
+                                height: 20,
+                              ),
+                              SizedBox(
+                                width: 500,
+                                height: 500,
+                                child: GridView.builder(
+                                  physics: NeverScrollableScrollPhysics(),
+                                  gridDelegate:
+                                      SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 3,
+                                          crossAxisSpacing: 10,
+                                          mainAxisSpacing: 10,
+                                          childAspectRatio: 1.5),
+                                  itemCount: _classSubjects.length,
+                                  itemBuilder: (context, index) {
+                                    Color indexColor =
+                                        SUBJECT_OBJECT[_classSubjects[index]]
+                                                ?.color ??
+                                            DEFAULT_SUBJECT.color;
+                                    String imagePath =
+                                        SUBJECT_OBJECT[_classSubjects[index]]
+                                                ?.image ??
+                                            DEFAULT_SUBJECT.image;
+
+                                    int testCount = _subjectTestCount[
+                                            _classSubjects[index]] ??
+                                        0;
+
+                                    bool showSubjectcard = true;
+                                    if (_allSubjects.isNotEmpty) {
+                                      showSubjectcard = _allSubjects.any(
+                                          (element) =>
+                                              element['subject_name'] ==
+                                              _classSubjects[index]);
+                                    }
+
+                                    return Opacity(
+                                      opacity: showSubjectcard ? 1 : .3,
+                                      child: Container(
+                                        margin: EdgeInsets.all(
+                                            showSubjectcard ? 0 : 5),
+                                        padding: EdgeInsets.only(
+                                            top: 8, left: 8, right: 4),
+                                        decoration: BoxDecoration(
+                                          color: indexColor,
+
+                                          borderRadius: BorderRadius.all(
+                                              Radius.circular(8)),
+                                          // image: DecorationImage(
+                                          //   alignment: Alignment.bottomRight,
+                                          //   opacity: .3,
+                                          //   image: AssetImage(imagePath),
+                                          //   fit: BoxFit.none,
+                                          // ),
+                                        ),
+                                        child: Stack(children: [
+                                          Positioned(
+                                            bottom: 5,
+                                            right: 2,
+                                            child: SizedBox(
+                                              height: 50,
+                                              width: 50,
+                                              child: Opacity(
+                                                opacity: .35,
+                                                child: Image.asset(
+                                                  imagePath,
+                                                  fit: BoxFit
+                                                      .contain, // Keeps aspect ratio within the specified size
+                                                  alignment:
+                                                      Alignment.bottomRight,
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                          Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                FittedBox(
+                                                  child: Text(
+                                                    _classSubjects[index],
+                                                    style: TextStyle(
+                                                        color: Colors.white
+                                                            .withOpacity(.9),
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 20),
+                                                  ),
+                                                ),
+                                                Text('${testCount} Exams',
+                                                    style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        color: Colors.white
+                                                            .withOpacity(.9),
+                                                        fontSize: 12)),
+                                              ]),
+                                        ]),
+                                      ),
+                                    );
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                         SizedBox(
                           width: 550,
                           child: searchText.isNotEmpty
@@ -265,30 +344,78 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                   //   ),
                                   // ),
                                   margin: const EdgeInsets.all(10),
-
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
+                                      SizedBox(
+                                        width: 300,
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: TextField(
+                                            cursorColor: Colors.grey,
+                                            decoration: InputDecoration(
+                                              hintText:
+                                                  'Search by $_selectedcriteria',
+                                              prefixIcon:
+                                                  const Icon(Icons.search),
+                                              filled: true,
+                                              fillColor:
+                                                  Theme.of(context).canvasColor,
+                                              focusColor:
+                                                  Theme.of(context).canvasColor,
+                                              contentPadding:
+                                                  const EdgeInsets.all(15.0),
+                                              border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8.0),
+                                                borderSide: BorderSide(
+                                                    color: Colors.grey
+                                                        .withOpacity(.4),
+                                                    width: 0.4),
+                                              ),
+                                            ),
+                                            onChanged: (value) {
+                                              showGradeCard = false;
+
+                                              setState(() {
+                                                searchTextfinal = value.trim();
+                                              });
+                                            },
+                                            onSubmitted: (value) {
+                                              setState(() {
+                                                searchTextfinal = value.trim();
+                                              });
+                                              onSubmittedSerch(searchTextfinal);
+                                            },
+                                          ),
+                                        ),
+                                      ),
                                       Padding(
                                         padding: const EdgeInsets.all(10),
-                                        child: switch (resultBoardIndex) {
-                                          3 => Text(
-                                              "search results with  '$searchText'",
-                                              style: const TextStyle(
-                                                fontSize: 20,
-                                              )),
-                                          4 => Text(
-                                              "students of class $searchText",
-                                              style: const TextStyle(
-                                                fontSize: 20,
-                                              )),
-                                          5 => Text("students of $searchText",
-                                              style: const TextStyle(
-                                                fontSize: 20,
-                                              )),
-                                          _ => const Text(""),
-                                        },
+                                        child: Text(
+                                          _resultTitle,
+                                          style: const TextStyle(
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.bold),
+                                        ),
+                                        // child: switch (resultBoardIndex) {
+                                        //   3 => Text(
+                                        //       "search results with  '$searchText'",
+                                        //       style: const TextStyle(
+                                        //         fontSize: 20,
+                                        //       )),
+                                        //   4 => Text(
+                                        //       "students of class $searchText",
+                                        //       style: const TextStyle(
+                                        //         fontSize: 20,
+                                        //       )),
+                                        //   5 => Text("students of $searchText",
+                                        //       style: const TextStyle(
+                                        //         fontSize: 20,
+                                        //       )),
+                                        //   _ => const Text(""),
+                                        // },
                                       ),
                                       switch (resultBoardIndex) {
                                         3 => _studentsOfNameList == []
@@ -306,23 +433,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                 )
                               : SizedBox(),
                         ),
-                        SizedBox(
-                          width: 500,
-                          child: Container(
-                            child: showGradeCard
-                                ? Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      profileCard(),
-                                    ],
-                                  )
-                                : Center(
-                                    child: getLogo(30, .05),
-                                  ),
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -338,7 +448,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: Padding(
-                            padding: const EdgeInsets.all(50.0),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 50, vertical: 10),
                             child: SizedBox(
                               height: 50,
                               child: IconButton(
@@ -359,8 +470,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                               ? (_orientation ? _screenWidth * .84 : 600)
                               : 600,
                           height: _screenWidth > 1200
-                              ? (_orientation ? 680 : 760)
-                              : 760,
+                              ? (_orientation ? 600 : 770)
+                              : 770,
                           child: Padding(
                             padding: const EdgeInsets.all(8.0),
                             child: GradeCard(
@@ -451,7 +562,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     widget.isDedicatedPage;
     double _screenHeight = MediaQuery.of(context).size.height;
     return SizedBox(
-      height: 475,
+      height: 550,
       width: double.infinity,
       child: ListView.builder(
         physics: const BouncingScrollPhysics(),
@@ -532,7 +643,6 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                     setState(() {
                       _studentId = student['id'];
 
-                      _studentNameForGrade = student['student_name'] as String;
                       showGradeCard = true;
                     });
                     setAnalyticsStudentId(_studentId);
@@ -684,14 +794,15 @@ class _GradeCardState extends State<GradeCard> {
     List<Map<String, dynamic>> results = getLatestScores(resultsfromDb);
 
     if (studentData.isNotEmpty) {
-      setState(() {
-        studentName = studentData.first['student_name'] as String? ?? '-';
-        className = studentData.first['class_name'] as String? ?? '-';
-        schoolName = studentData.first['school_name'] as String? ?? '-';
-        photoUrl = (studentData.first['gender'] == 'M'
-            ? 'assets/ml.jpg'
-            : 'assets/fl.jpg');
-      });
+      if (mounted)
+        setState(() {
+          studentName = studentData.first['student_name'] as String? ?? '-';
+          className = studentData.first['class_name'] as String? ?? '-';
+          schoolName = studentData.first['school_name'] as String? ?? '-';
+          photoUrl = (studentData.first['gender'] == 'M'
+              ? 'assets/ml.jpg'
+              : 'assets/fl.jpg');
+        });
     }
 
     if (results.isNotEmpty) {
@@ -732,52 +843,54 @@ class _GradeCardState extends State<GradeCard> {
 
 // Once the loop is done, you can safely print the data
 
-      setState(() {
-        subjects = results.map((row) {
-          final subjectName = row['subject_name'] as String? ?? '-';
+      subjects = results.map((row) {
+        final subjectName = row['subject_name'] as String? ?? '-';
 
-          final latestScore = (row['score'] != null && row['score'] != '-')
-              ? (row['score'] is int
-                  ? row['score']
-                  : int.tryParse(row['score'] as String) ?? 0)
-              : '-'; // Replaced with '-' if null or invalid
+        final latestScore = (row['score'] != null && row['score'] != '-')
+            ? (row['score'] is int
+                ? row['score']
+                : int.tryParse(row['score'] as String) ?? 0)
+            : '-'; // Replaced with '-' if null or invalid
 
-          final maxMark = (row['max_mark'] != null && row['max_mark'] != -1)
-              ? (row['max_mark'] is int
-                  ? row['max_mark']
-                  : int.tryParse(row['max_mark'] as String) ?? '-')
-              : '-'; // Replaced with '-' if null or invalid
+        final maxMark = (row['max_mark'] != null && row['max_mark'] != -1)
+            ? (row['max_mark'] is int
+                ? row['max_mark']
+                : int.tryParse(row['max_mark'] as String) ?? '-')
+            : '-'; // Replaced with '-' if null or invalid
 
-          // Handle date parsing
-          String dateFormatted = '';
-          DateTime? date =
-              DateTime.tryParse(row['test_date']?.toString() ?? '');
+        // Handle date parsing
+        String dateFormatted = '';
+        DateTime? date = DateTime.tryParse(row['test_date']?.toString() ?? '');
 
-          // Check if the date is not null
-          if (date != null) {
-            // Format the date as 'dd-MM-yyyy'
-            dateFormatted =
-                '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}';
-          } else {
-            // Fallback for null dates
-            dateFormatted = '-';
-          }
+        // Check if the date is not null
+        if (date != null) {
+          // Format the date as 'dd-MM-yyyy'
+          dateFormatted =
+              '${date.day.toString().padLeft(2, '0')}-${date.month.toString().padLeft(2, '0')}-${date.year}';
+        } else {
+          // Fallback for null dates
+          dateFormatted = '-';
+        }
 
-          return {
-            'subject': subjectName,
-            'maxMarks': maxMark.toString(),
-            'marks': latestScore == '' ? '-' : latestScore.toString(),
-            'grade': _calculateGrade(latestScore == '-' ? -1 : latestScore,
-                maxMark is String ? -1 : maxMark),
-            'date': dateFormatted,
-          };
-        }).toList();
-      });
+        return {
+          'subject': subjectName,
+          'maxMarks': maxMark.toString(),
+          'marks': latestScore == '' ? '-' : latestScore.toString(),
+          'grade': _calculateGrade(latestScore == '-' ? -1 : latestScore,
+              maxMark is String ? -1 : maxMark),
+          'date': dateFormatted,
+        };
+      }).toList();
+      if (mounted) {
+        setState(() {
+          subjects;
+        });
+      }
     }
-
-    setState(() {
-      _radarData;
-    });
+    if (mounted)
+      setState(() {
+        _radarData;
+      });
   }
 
   List<Map<String, dynamic>> getLatestScores(List<Map<String, dynamic>> tests) {
@@ -1071,44 +1184,128 @@ class _GradeCardState extends State<GradeCard> {
               ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 15,
-                    height: 15,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.green, // Assign color
-                    ),
+                  Column(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 15,
+                            height: 15,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.green, // Assign color
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text('Average'),
+                          const SizedBox(width: 20),
+                        ],
+                      ),
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Row(
+                        children: [
+                          Container(
+                            width: 15,
+                            height: 15,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.blue, // Assign color
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text('Current'),
+                        ],
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  Text('Average'),
-                  const SizedBox(width: 20),
-                  Container(
-                    width: 15,
-                    height: 15,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: Colors.blue, // Assign color
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text('Current'),
                   Spacer(),
-                  Text(
-                    'Consistancy: 80%',
+                  Container(
+                    height: 225,
+                    width: 225,
+                    child: Center(
+                      child: _radarData.length > 0
+                          ? RadarChartWidget(
+                              subjectsData: _radarData,
+                            )
+                          : const SizedBox(),
+                    ),
                   ),
+                  Spacer(),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        'Overall: 80%',
+                        textAlign: TextAlign.end,
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        'Consitancy: 70%',
+                        textAlign: TextAlign.end,
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      // Row(
+                      //   children: [
+                      //     RichText(
+                      //       text: TextSpan(
+                      //         style:
+                      //             TextStyle(fontSize: 30, color: Colors.black),
+                      //         children: [
+                      //           TextSpan(text: '80'),
+                      //           WidgetSpan(
+                      //             child: Transform.translate(
+                      //               offset: const Offset(0,
+                      //                   -6), // Adjust the vertical offset as needed
+                      //               child: Text(
+                      //                 '%',
+                      //                 textScaleFactor:
+                      //                     0.7, // Adjust to make it smaller
+                      //                 style: TextStyle(color: Colors.black),
+                      //               ),
+                      //             ),
+                      //           ),
+                      //         ],
+                      //       ),
+                      //     ),
+                      //     RichText(
+                      //       text: TextSpan(
+                      //         style:
+                      //             TextStyle(fontSize: 16, color: Colors.black),
+                      //         children: [
+                      //           TextSpan(
+                      //             text: '70',
+                      //           ),
+                      //           WidgetSpan(
+                      //             child: Transform.translate(
+                      //               offset: const Offset(0,
+                      //                   0), // Adjust the vertical offset as needed
+                      //               child: Text(
+                      //                 '%',
+                      //                 textScaleFactor:
+                      //                     0.7, // Adjust to make it smaller
+                      //                 style: TextStyle(color: Colors.black),
+                      //               ),
+                      //             ),
+                      //           ),
+                      //         ],
+                      //       ),
+                      //     ),
+                      //     Text(
+                      //       'Consistancy: ',
+                      //       textAlign: TextAlign.end,
+                      //     ),
+                      //   ],
+                      // ),
+                    ],
+                  )
                 ],
-              ),
-              Container(
-                height: 225,
-                width: 500,
-                child: Center(
-                  child: _radarData.length > 0
-                      ? RadarChartWidget(
-                          subjectsData: _radarData,
-                        )
-                      : const SizedBox(),
-                ),
               ),
               Spacer(),
               Row(
@@ -1140,7 +1337,7 @@ class _GradeCardState extends State<GradeCard> {
         children: [
           Container(
             width: _screenWidth * .4,
-            height: 700,
+            height: 600,
             padding: const EdgeInsets.all(10.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1300,77 +1497,66 @@ class _GradeCardState extends State<GradeCard> {
                   ),
                 ),
                 Container(
-                  height: 200,
-                  child: Center(
-                    child: Text(
-                      'Academic Performance          \nOveral Percentage: 66%\nConsistency: 70% ',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
+                  height: 50,
+                  child: Text(
+                    'Overal Percentage: 66%    Consistency: 70% ',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                 ),
                 Spacer(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      ' ${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}',
-                      style: const TextStyle(fontSize: 10),
-                    ),
-                  ],
-                ),
+                // Row(
+                //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                //   children: [
+                //     Text(
+                //       ' ${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}',
+                //       style: const TextStyle(fontSize: 10),
+                //     ),
+                //   ],
+                // ),
               ],
             ),
           ),
           Container(
             width: _screenWidth * .38,
-            height: 600,
-            child: Column(
+            height: 550,
+            child: Stack(
               children: [
-                Container(
-                  height: 600,
-                  padding: const EdgeInsets.all(30.0),
-                  child: Column(
-                    children: [
-                      Container(
-                        height: 500,
-                        width: 500,
-                        child: Center(
-                          child: _radarData.length > 0
-                              ? RadarChartWidget(
-                                  subjectsData: _radarData,
-                                )
-                              : const SizedBox(),
-                        ),
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 15,
-                            height: 15,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.green, // Assign color
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text('Average'),
-                          const SizedBox(width: 20),
-                          Container(
-                            width: 15,
-                            height: 15,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.blue, // Assign color
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text('Current'),
-                        ],
-                      ),
-                    ],
+                Center(
+                  child: Container(
+                    height: 480,
+                    width: 550,
+                    child: _radarData.length > 0
+                        ? RadarChartWidget(
+                            subjectsData: _radarData,
+                          )
+                        : const SizedBox(),
                   ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 15,
+                      height: 15,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.green, // Assign color
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text('Average'),
+                    const SizedBox(width: 20),
+                    Container(
+                      width: 15,
+                      height: 15,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: Colors.blue, // Assign color
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text('Current'),
+                  ],
                 ),
               ],
             ),
