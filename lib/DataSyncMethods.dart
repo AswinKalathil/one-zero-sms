@@ -22,15 +22,22 @@ Future<void> logToFile(String message) async {
 Future<void> syncDatabase(Database db) async {
   await logToFile('Starting database sync...');
 
-  // Push local changes to cloud
+  // Capture the start time
+  final startTime = DateTime.now();
 
   try {
+    // Perform sync tasks
     await fetchCloudChanges(db);
     await pushLocalChangesToCloud(db);
   } catch (e) {
     await logToFile('Error pushing local changes to cloud: $e');
   } finally {
     await storeLastSyncTime(DateTime.now().toUtc());
+
+    // Calculate and log the total sync duration
+    final endTime = DateTime.now();
+    final duration = endTime.difference(startTime);
+    await logToFile('Total sync duration: ${duration.inSeconds} seconds');
   }
 }
 
@@ -88,12 +95,23 @@ Future<void> pushLocalChangesToCloud(Database db) async {
     final List<Map<String, dynamic>> pendingRecords =
         await db.rawQuery('SELECT * FROM $table WHERE sync_pending = 1');
 
+    if (pendingRecords.isEmpty) {
+      await logToFile('No local changes found for $table');
+      continue;
+    }
+
     await connection.transaction((trans) async {
       for (var record in pendingRecords) {
         final mutableRecord = Map<String, dynamic>.from(record);
-        mutableRecord.remove('sync_pending');
-        mutableRecord.remove('last_modified');
 
+        // Remove fields that shouldn't be inserted into the cloud database
+        mutableRecord.remove('sync_pending');
+
+        // Set last_modified to current UTC time before inserting
+        mutableRecord['last_modified'] =
+            DateTime.now().toUtc().toIso8601String();
+
+        // Prepare fields and values for the INSERT statement
         final nonNullFields = mutableRecord.keys
             .where((key) => mutableRecord[key] != null)
             .join(', ');
@@ -111,14 +129,21 @@ Future<void> pushLocalChangesToCloud(Database db) async {
             .map((value) => value as Object)
             .toList();
 
+        // Construct and execute the INSERT ON DUPLICATE KEY UPDATE query
         final query =
             'INSERT INTO $table ($nonNullFields) VALUES ($nonNullPlaceholders) '
             'ON DUPLICATE KEY UPDATE $updateFields';
 
-        await trans.query(query, nonNullValues);
+        var check = await trans.query(query, nonNullValues);
 
-        await db.rawUpdate(
-            'UPDATE $table SET sync_pending = 0 WHERE id = ?', [record['id']]);
+        // Update sync_pending status in the local database based on query result
+        if (check.insertId != 0) {
+          await db.rawUpdate('UPDATE $table SET sync_pending = 0 WHERE id = ?',
+              [record['id']]);
+        } else {
+          await db.rawUpdate('UPDATE $table SET sync_pending = 1 WHERE id = ?',
+              [record['id']]);
+        }
       }
     });
 
@@ -166,7 +191,7 @@ Future<void> fetchCloudChanges(Database db) async {
         if (firstTime) {
           await logToFile('First time sync for $table');
           results = await connection.query(
-            'SELECT * FROM $table  ',
+            'SELECT * FROM $table',
             [],
           );
         } else {
@@ -185,6 +210,15 @@ Future<void> fetchCloudChanges(Database db) async {
         for (var row in results) {
           try {
             Map<String, dynamic> record = {'id': row['id'], ...row.fields};
+
+            // Convert DateTime fields to ISO8601 strings for compatibility with sqflite
+            record = record.map((key, value) {
+              if (value is DateTime) {
+                return MapEntry(key, value.toIso8601String());
+              } else {
+                return MapEntry(key, value);
+              }
+            });
 
             record.remove('sync_pending');
             record.remove('last_modified');

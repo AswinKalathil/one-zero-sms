@@ -144,8 +144,8 @@ class _TestAnalyticsState extends State<TestAnalytics> {
         widget.testResults.isNotEmpty && widget.allSubjects.isNotEmpty
             ? SizedBox(
                 height: screenWidth > 1200
-                    ? ((widget.allSubjects.length / 2).ceil() * 390.0)
-                    : (widget.allSubjects.length * 430.0),
+                    ? (((widget.allSubjects.length + 1) / 2).ceil() * 430.0)
+                    : ((widget.allSubjects.length + 1) * 500.0),
                 child: GridView.builder(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: screenWidth > 1200 ? 2 : 1,
@@ -153,321 +153,447 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                   physics:
                       const NeverScrollableScrollPhysics(), // Disable scrolling
 
-                  itemCount: widget.allSubjects.length,
+                  itemCount: widget.allSubjects.length + 1,
                   itemBuilder: (context, index) {
-                    if (widget.testResults.length <= index) {
+                    if (widget.testResults.length < index) {
                       return CircularProgressIndicator();
                     }
-                    var result = widget.testResults[index];
-                    return Container(
-                      height: 300,
-                      margin: const EdgeInsets.all(5),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(
-                                left: 20.0, top: 8, bottom: 8),
-                            child: Text(widget.allSubjects[index],
-                                style: TextStyle(
-                                    color: Colors.grey.shade800,
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold)),
-                          ),
-                          Divider(),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            crossAxisAlignment: CrossAxisAlignment.start,
+
+                    if (index == widget.allSubjects.length) {
+                      return Container(
+                        margin: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        width: double.infinity,
+                        child: Column(
+                            mainAxisAlignment: MainAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: Padding(
-                                  padding:
-                                      const EdgeInsets.only(left: 20, top: 10),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Table(
-                                          border: TableBorder.all(
-                                              color: Colors.grey, width: .4),
-                                          columnWidths: const {
-                                            0: FlexColumnWidth(1),
-                                            1: FlexColumnWidth(3),
-                                            2: FlexColumnWidth(1),
-                                            3: FlexColumnWidth(1),
-                                          },
-                                          children: [
-                                            TableRow(
-                                              decoration: BoxDecoration(
-                                                color: Theme.of(context)
-                                                    .primaryColor,
-                                              ),
-                                              children: const [
-                                                Padding(
-                                                  padding: EdgeInsets.all(6.0),
-                                                  child: Center(
-                                                    child: FittedBox(
-                                                      child: Text(
-                                                        'Test No.',
-                                                        style: TextStyle(
-                                                            color: Colors.white,
-                                                            fontSize: 16,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      ),
-                                                    ),
-                                                  ),
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    left: 20.0, top: 8, bottom: 8),
+                                child: Text('Overall Analysis',
+                                    style: TextStyle(
+                                        color: Colors.grey.shade800,
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold)),
+                              ),
+                              Divider(),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).cardColor,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                height: 300,
+                                child: SfCartesianChart(
+                                  primaryXAxis: CategoryAxis(
+                                    title: AxisTitle(
+                                        text:
+                                            'Tests No.'), // Title for the X-axis
+                                  ),
+                                  primaryYAxis: NumericAxis(
+                                    minimum: 0,
+                                    maximum: 100,
+                                    title: AxisTitle(
+                                        text:
+                                            'Percentage Marks'), // Title for the Y-axis
+                                  ),
+                                  // Chart title
+                                  title: ChartTitle(
+                                    text: 'Overall Performance Trend',
+                                    textStyle:
+                                        TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+
+                                  // Enable legend
+                                  legend: Legend(
+                                    isVisible: true,
+                                  ),
+
+                                  // Enable tooltip
+                                  tooltipBehavior: TooltipBehavior(
+                                      enable: true, duration: 1),
+                                  series: <CartesianSeries<ScoreDataPoints,
+                                      int>>[
+                                    ...widget.allSubjects
+                                        .map((subject) {
+                                          // Check if the data exists for the subject to avoid null exceptions
+                                          if (graphListMap
+                                              .containsKey(subject)) {
+                                            return SplineSeries<ScoreDataPoints,
+                                                int>(
+                                              legendIconType:
+                                                  LegendIconType.circle,
+                                              width: 3,
+                                              // Define the style of the line
+                                              // Dotted line between points
+                                              markerSettings: MarkerSettings(
+                                                  isVisible: true,
+                                                  width: 4,
+                                                  height: 4,
+                                                  shape: DataMarkerType.circle),
+
+                                              dataSource: graphListMap[subject],
+                                              xValueMapper:
+                                                  (ScoreDataPoints exam, _) =>
+                                                      exam.x,
+                                              yValueMapper:
+                                                  (ScoreDataPoints exam, _) =>
+                                                      exam.y == -1
+                                                          ? null
+                                                          : exam.y,
+                                              name: subject,
+                                              // Enable data label
+                                              dataLabelSettings:
+                                                  DataLabelSettings(
+                                                      isVisible: false),
+                                            );
+                                          } else {
+                                            return null; // Return null if no data exists for that subject
+                                          }
+                                        })
+                                        .where((series) => series != null)
+                                        .cast<
+                                            SplineSeries<ScoreDataPoints,
+                                                int>>()
+                                        .toList(), // Filter out nulls
+                                  ],
+                                ),
+                              )
+                            ]),
+                      );
+                    } else {
+                      var result = widget.testResults[index];
+
+                      return Container(
+                        height: 400,
+                        margin: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.only(
+                                  left: 20.0, top: 8, bottom: 8),
+                              child: Text(widget.allSubjects[index],
+                                  style: TextStyle(
+                                      color: Colors.grey.shade800,
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold)),
+                            ),
+                            Divider(),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                        left: 20, top: 10),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Table(
+                                            border: TableBorder.all(
+                                                color: Colors.grey, width: .4),
+                                            columnWidths: const {
+                                              0: FlexColumnWidth(1),
+                                              1: FlexColumnWidth(3),
+                                              2: FlexColumnWidth(1),
+                                              3: FlexColumnWidth(1),
+                                            },
+                                            children: [
+                                              TableRow(
+                                                decoration: BoxDecoration(
+                                                  color: Theme.of(context)
+                                                      .primaryColor,
                                                 ),
-                                                Padding(
-                                                  padding: EdgeInsets.all(6.0),
-                                                  child: Center(
-                                                    child: FittedBox(
-                                                      child: Text(
-                                                        'Chapter Name',
-                                                        style: TextStyle(
-                                                            color: Colors.white,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                Padding(
-                                                  padding: EdgeInsets.all(6.0),
-                                                  child: Center(
-                                                    child: FittedBox(
-                                                      child: Text(
-                                                        'Marks',
-                                                        style: TextStyle(
-                                                            color: Colors.white,
-                                                            fontSize: 16,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                                Padding(
-                                                  padding: EdgeInsets.all(6.0),
-                                                  child: Center(
-                                                    child: FittedBox(
-                                                      child: Text(
-                                                        'Date',
-                                                        style: TextStyle(
-                                                            color: Colors.white,
-                                                            fontSize: 16,
-                                                            fontWeight:
-                                                                FontWeight
-                                                                    .bold),
-                                                      ),
-                                                    ),
-                                                  ),
-                                                ),
-                                              ],
-                                            ),
-                                          ]),
-                                      SizedBox(
-                                        width: double.infinity,
-                                        height:
-                                            getWidthBasedOnScreenSize(context) -
-                                                32,
-                                        child: SingleChildScrollView(
-                                          scrollDirection: Axis.vertical,
-                                          physics: BouncingScrollPhysics(),
-                                          child: Container(
-                                            decoration: BoxDecoration(),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                result.isNotEmpty
-                                                    ? Table(
-                                                        border: TableBorder.all(
-                                                            color: Colors.grey,
-                                                            width: .4),
-                                                        columnWidths: const {
-                                                          0: FlexColumnWidth(1),
-                                                          1: FlexColumnWidth(3),
-                                                          2: FlexColumnWidth(1),
-                                                          3: FlexColumnWidth(1),
-                                                        },
-                                                        children: [
-                                                          ...result
-                                                              .asMap()
-                                                              .entries
-                                                              .map(
-                                                            (entry) {
-                                                              int rowIndex =
-                                                                  entry.key + 1;
-                                                              var subject =
-                                                                  entry.value;
-                                                              return TableRow(
-                                                                decoration: BoxDecoration(
-                                                                    color: (Theme.of(context).brightness ==
-                                                                            Brightness
-                                                                                .light)
-                                                                        ? (rowIndex % 2 ==
-                                                                                0
-                                                                            ? Colors
-                                                                                .grey.shade200
-                                                                            : Colors
-                                                                                .white)
-                                                                        : (rowIndex % 2 ==
-                                                                                0
-                                                                            ? Colors.grey.shade600
-                                                                            : Colors.grey.shade700)),
-                                                                children: [
-                                                                  Container(
-                                                                    height: 30,
-                                                                    padding:
-                                                                        const EdgeInsets
-                                                                            .all(
-                                                                            5.5),
-                                                                    child: FittedBox(
-                                                                        child: Text((result.length - rowIndex + 1).toString() ??
-                                                                            '')),
-                                                                  ),
-                                                                  Container(
-                                                                    height: 30,
-                                                                    padding:
-                                                                        const EdgeInsets
-                                                                            .all(
-                                                                            5.5),
-                                                                    child:
-                                                                        FittedBox(
-                                                                      child: Text(
-                                                                          subject['topic'].toString() ??
-                                                                              '-'),
-                                                                    ),
-                                                                  ),
-                                                                  Container(
-                                                                    height: 30,
-                                                                    padding:
-                                                                        const EdgeInsets
-                                                                            .all(
-                                                                            5.5),
-                                                                    child: FittedBox(
-                                                                        child: Text("${subject['score']} / ${subject['max_mark']}" ??
-                                                                            '')),
-                                                                  ),
-                                                                  Container(
-                                                                    height: 30,
-                                                                    padding:
-                                                                        const EdgeInsets
-                                                                            .all(
-                                                                            5.5),
-                                                                    child: FittedBox(
-                                                                        child: Text(DateFormat('MMM dd').format(DateTime.parse(subject['test_date'])) ??
-                                                                            '')),
-                                                                  ),
-                                                                ],
-                                                              );
-                                                            },
-                                                          ),
-                                                        ],
-                                                      )
-                                                    : Container(
-                                                        height:
-                                                            200, // Adjust height as needed
-                                                        child: const Center(
-                                                          child: Text(
-                                                              'No tests available'),
+                                                children: const [
+                                                  Padding(
+                                                    padding:
+                                                        EdgeInsets.all(6.0),
+                                                    child: Center(
+                                                      child: FittedBox(
+                                                        child: Text(
+                                                          'Test No.',
+                                                          style: TextStyle(
+                                                              color:
+                                                                  Colors.white,
+                                                              fontSize: 16,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
                                                         ),
                                                       ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              Expanded(
-                                child: FractionallySizedBox(
-                                  widthFactor: 1,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(10.0),
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        SizedBox(
-                                          height: getWidthBasedOnScreenSize(
-                                              context), // Set the height as per your requirement
-                                          child: SfCartesianChart(
-                                            primaryXAxis: CategoryAxis(
-                                              title: AxisTitle(
-                                                  text: 'Tests No.',
-                                                  textStyle: TextStyle(
-                                                      fontSize: 4.sp)),
-                                            ),
-                                            primaryYAxis: NumericAxis(
-                                              maximum: 100,
-                                              minimum: 0,
-                                              interval: 25,
-                                              title: AxisTitle(
-                                                  text: 'Percentage Marks',
-                                                  textStyle: TextStyle(
-                                                      fontSize: 4.sp)),
-                                            ),
-                                            title: ChartTitle(
-                                              text: 'Performance Trend',
-                                              textStyle: TextStyle(
-                                                  fontSize: 4.sp,
-                                                  fontWeight: FontWeight.bold),
-                                            ),
-                                            legend: Legend(isVisible: false),
-                                            tooltipBehavior:
-                                                TooltipBehavior(enable: true),
-                                            series: <CartesianSeries<
-                                                ScoreDataPoints, int>>[
-                                              LineSeries<ScoreDataPoints, int>(
-                                                dataSource: graphListMap[
-                                                    widget.allSubjects[index]],
-                                                xValueMapper:
-                                                    (ScoreDataPoints exam, _) =>
-                                                        exam.x,
-                                                yValueMapper:
-                                                    (ScoreDataPoints exam, _) =>
-                                                        exam.y == -1
-                                                            ? null
-                                                            : exam.y,
-                                                // spacing: 0.5,
-                                                name: 'Percentage Score',
-                                                markerSettings: MarkerSettings(
-                                                    isVisible: true,
-                                                    width: 4,
-                                                    height: 4,
-                                                    shape:
-                                                        DataMarkerType.circle),
-                                                dataLabelSettings:
-                                                    DataLabelSettings(
-                                                  isVisible: true,
-                                                  textStyle:
-                                                      TextStyle(fontSize: 2.sp),
-                                                ),
+                                                    ),
+                                                  ),
+                                                  Padding(
+                                                    padding:
+                                                        EdgeInsets.all(6.0),
+                                                    child: Center(
+                                                      child: FittedBox(
+                                                        child: Text(
+                                                          'Chapter Name',
+                                                          style: TextStyle(
+                                                              color:
+                                                                  Colors.white,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Padding(
+                                                    padding:
+                                                        EdgeInsets.all(6.0),
+                                                    child: Center(
+                                                      child: FittedBox(
+                                                        child: Text(
+                                                          'Marks',
+                                                          style: TextStyle(
+                                                              color:
+                                                                  Colors.white,
+                                                              fontSize: 16,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Padding(
+                                                    padding:
+                                                        EdgeInsets.all(6.0),
+                                                    child: Center(
+                                                      child: FittedBox(
+                                                        child: Text(
+                                                          'Date',
+                                                          style: TextStyle(
+                                                              color:
+                                                                  Colors.white,
+                                                              fontSize: 16,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
-                                            ],
+                                            ]),
+                                        SizedBox(
+                                          width: double.infinity,
+                                          height: getWidthBasedOnScreenSize(
+                                                  context) -
+                                              32,
+                                          child: SingleChildScrollView(
+                                            scrollDirection: Axis.vertical,
+                                            physics: BouncingScrollPhysics(),
+                                            child: Container(
+                                              decoration: BoxDecoration(),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  result.isNotEmpty
+                                                      ? Table(
+                                                          border:
+                                                              TableBorder.all(
+                                                                  color: Colors
+                                                                      .grey,
+                                                                  width: .4),
+                                                          columnWidths: const {
+                                                            0: FlexColumnWidth(
+                                                                1),
+                                                            1: FlexColumnWidth(
+                                                                3),
+                                                            2: FlexColumnWidth(
+                                                                1),
+                                                            3: FlexColumnWidth(
+                                                                1),
+                                                          },
+                                                          children: [
+                                                            ...result
+                                                                .asMap()
+                                                                .entries
+                                                                .map(
+                                                              (entry) {
+                                                                int rowIndex =
+                                                                    entry.key +
+                                                                        1;
+                                                                var subject =
+                                                                    entry.value;
+                                                                return TableRow(
+                                                                  decoration: BoxDecoration(
+                                                                      color: (Theme.of(context).brightness ==
+                                                                              Brightness
+                                                                                  .light)
+                                                                          ? (rowIndex % 2 == 0
+                                                                              ? Colors
+                                                                                  .grey.shade200
+                                                                              : Colors
+                                                                                  .white)
+                                                                          : (rowIndex % 2 == 0
+                                                                              ? Colors.grey.shade600
+                                                                              : Colors.grey.shade700)),
+                                                                  children: [
+                                                                    Container(
+                                                                      height:
+                                                                          30,
+                                                                      padding: const EdgeInsets
+                                                                          .all(
+                                                                          5.5),
+                                                                      child: FittedBox(
+                                                                          child:
+                                                                              Text((result.length - rowIndex + 1).toString() ?? '')),
+                                                                    ),
+                                                                    Container(
+                                                                      height:
+                                                                          30,
+                                                                      padding: const EdgeInsets
+                                                                          .all(
+                                                                          5.5),
+                                                                      child:
+                                                                          FittedBox(
+                                                                        child: Text(subject['topic'].toString() ??
+                                                                            '-'),
+                                                                      ),
+                                                                    ),
+                                                                    Container(
+                                                                      height:
+                                                                          30,
+                                                                      padding: const EdgeInsets
+                                                                          .all(
+                                                                          5.5),
+                                                                      child: FittedBox(
+                                                                          child:
+                                                                              Text("${subject['score']} / ${subject['max_mark']}" ?? '')),
+                                                                    ),
+                                                                    Container(
+                                                                      height:
+                                                                          30,
+                                                                      padding: const EdgeInsets
+                                                                          .all(
+                                                                          5.5),
+                                                                      child: FittedBox(
+                                                                          child:
+                                                                              Text(DateFormat('MMM dd').format(DateTime.parse(subject['test_date'])) ?? '')),
+                                                                    ),
+                                                                  ],
+                                                                );
+                                                              },
+                                                            ),
+                                                          ],
+                                                        )
+                                                      : Container(
+                                                          height:
+                                                              200, // Adjust height as needed
+                                                          child: const Center(
+                                                            child: Text(
+                                                                'No tests available'),
+                                                          ),
+                                                        ),
+                                                ],
+                                              ),
+                                            ),
                                           ),
                                         ),
                                       ],
                                     ),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    );
+                                Expanded(
+                                  child: FractionallySizedBox(
+                                    widthFactor: 1,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(10.0),
+                                      child: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        children: [
+                                          SizedBox(
+                                            height: getWidthBasedOnScreenSize(
+                                                context), // Set the height as per your requirement
+                                            child: SfCartesianChart(
+                                              primaryXAxis: CategoryAxis(
+                                                title: AxisTitle(
+                                                    text: 'Tests No.',
+                                                    textStyle: TextStyle(
+                                                        fontSize: 4.sp)),
+                                              ),
+                                              primaryYAxis: NumericAxis(
+                                                maximum: 100,
+                                                minimum: 0,
+                                                interval: 25,
+                                                title: AxisTitle(
+                                                    text: 'Percentage Marks',
+                                                    textStyle: TextStyle(
+                                                        fontSize: 4.sp)),
+                                              ),
+                                              title: ChartTitle(
+                                                text: 'Performance Trend',
+                                                textStyle: TextStyle(
+                                                    fontSize: 4.sp,
+                                                    fontWeight:
+                                                        FontWeight.bold),
+                                              ),
+                                              legend: Legend(isVisible: false),
+                                              tooltipBehavior:
+                                                  TooltipBehavior(enable: true),
+                                              series: <CartesianSeries<
+                                                  ScoreDataPoints, int>>[
+                                                LineSeries<ScoreDataPoints,
+                                                    int>(
+                                                  dataSource: graphListMap[
+                                                      widget
+                                                          .allSubjects[index]],
+                                                  xValueMapper:
+                                                      (ScoreDataPoints exam,
+                                                              _) =>
+                                                          exam.x,
+                                                  yValueMapper:
+                                                      (ScoreDataPoints exam,
+                                                              _) =>
+                                                          exam.y == -1
+                                                              ? null
+                                                              : exam.y,
+                                                  // spacing: 0.5,
+                                                  name: 'Percentage Score',
+                                                  markerSettings:
+                                                      MarkerSettings(
+                                                          isVisible: true,
+                                                          width: 4,
+                                                          height: 4,
+                                                          shape: DataMarkerType
+                                                              .circle),
+                                                  dataLabelSettings:
+                                                      DataLabelSettings(
+                                                    isVisible: true,
+                                                    textStyle: TextStyle(
+                                                        fontSize: 2.sp),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    }
                   },
                 ),
               )
@@ -477,86 +603,86 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                   child: Text('No tests available'),
                 ),
               ),
-        Divider(),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 100.0),
-          child: SizedBox(
-            width: double.infinity,
-            child:
-                Column(mainAxisAlignment: MainAxisAlignment.start, children: [
-              Padding(
-                padding: const EdgeInsets.all(30.0),
-                child: Text('Overall Analysis',
-                    style:
-                        TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
-              ),
-              Container(
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                height: 500,
-                child: SfCartesianChart(
-                  primaryXAxis: CategoryAxis(
-                    title: AxisTitle(text: 'Tests No.'), // Title for the X-axis
-                  ),
-                  primaryYAxis: NumericAxis(
-                    minimum: 0,
-                    maximum: 100,
-                    title: AxisTitle(
-                        text: 'Percentage Marks'), // Title for the Y-axis
-                  ),
-                  // Chart title
-                  title: ChartTitle(
-                    text: 'Performance Trend',
-                    textStyle: TextStyle(fontWeight: FontWeight.bold),
-                  ),
+        // Divider(),
+        // Padding(
+        //   padding: const EdgeInsets.symmetric(horizontal: 100.0),
+        //   child: SizedBox(
+        //     width: double.infinity,
+        //     child:
+        //         Column(mainAxisAlignment: MainAxisAlignment.start, children: [
+        //       Padding(
+        //         padding: const EdgeInsets.all(30.0),
+        //         child: Text('Overall Analysis',
+        //             style:
+        //                 TextStyle(fontSize: 40, fontWeight: FontWeight.bold)),
+        //       ),
+        //       Container(
+        //         decoration: BoxDecoration(
+        //           color: Theme.of(context).cardColor,
+        //           borderRadius: BorderRadius.circular(10),
+        //         ),
+        //         height: 500,
+        //         child: SfCartesianChart(
+        //           primaryXAxis: CategoryAxis(
+        //             title: AxisTitle(text: 'Tests No.'), // Title for the X-axis
+        //           ),
+        //           primaryYAxis: NumericAxis(
+        //             minimum: 0,
+        //             maximum: 100,
+        //             title: AxisTitle(
+        //                 text: 'Percentage Marks'), // Title for the Y-axis
+        //           ),
+        //           // Chart title
+        //           title: ChartTitle(
+        //             text: 'Performance Trend',
+        //             textStyle: TextStyle(fontWeight: FontWeight.bold),
+        //           ),
 
-                  // Enable legend
-                  legend: Legend(
-                    isVisible: true,
-                  ),
+        //           // Enable legend
+        //           legend: Legend(
+        //             isVisible: true,
+        //           ),
 
-                  // Enable tooltip
-                  tooltipBehavior: TooltipBehavior(enable: true, duration: 1),
-                  series: <CartesianSeries<ScoreDataPoints, int>>[
-                    ...widget.allSubjects
-                        .map((subject) {
-                          // Check if the data exists for the subject to avoid null exceptions
-                          if (graphListMap.containsKey(subject)) {
-                            return SplineSeries<ScoreDataPoints, int>(
-                              legendIconType: LegendIconType.circle,
-                              width: 3,
-                              // Define the style of the line
-                              // Dotted line between points
-                              markerSettings: MarkerSettings(
-                                  isVisible: true,
-                                  width: 4,
-                                  height: 4,
-                                  shape: DataMarkerType.circle),
+        //           // Enable tooltip
+        //           tooltipBehavior: TooltipBehavior(enable: true, duration: 1),
+        //           series: <CartesianSeries<ScoreDataPoints, int>>[
+        //             ...widget.allSubjects
+        //                 .map((subject) {
+        //                   // Check if the data exists for the subject to avoid null exceptions
+        //                   if (graphListMap.containsKey(subject)) {
+        //                     return SplineSeries<ScoreDataPoints, int>(
+        //                       legendIconType: LegendIconType.circle,
+        //                       width: 3,
+        //                       // Define the style of the line
+        //                       // Dotted line between points
+        //                       markerSettings: MarkerSettings(
+        //                           isVisible: true,
+        //                           width: 4,
+        //                           height: 4,
+        //                           shape: DataMarkerType.circle),
 
-                              dataSource: graphListMap[subject],
-                              xValueMapper: (ScoreDataPoints exam, _) => exam.x,
-                              yValueMapper: (ScoreDataPoints exam, _) =>
-                                  exam.y == -1 ? null : exam.y,
-                              name: subject,
-                              // Enable data label
-                              dataLabelSettings:
-                                  DataLabelSettings(isVisible: false),
-                            );
-                          } else {
-                            return null; // Return null if no data exists for that subject
-                          }
-                        })
-                        .where((series) => series != null)
-                        .cast<SplineSeries<ScoreDataPoints, int>>()
-                        .toList(), // Filter out nulls
-                  ],
-                ),
-              )
-            ]),
-          ),
-        )
+        //                       dataSource: graphListMap[subject],
+        //                       xValueMapper: (ScoreDataPoints exam, _) => exam.x,
+        //                       yValueMapper: (ScoreDataPoints exam, _) =>
+        //                           exam.y == -1 ? null : exam.y,
+        //                       name: subject,
+        //                       // Enable data label
+        //                       dataLabelSettings:
+        //                           DataLabelSettings(isVisible: false),
+        //                     );
+        //                   } else {
+        //                     return null; // Return null if no data exists for that subject
+        //                   }
+        //                 })
+        //                 .where((series) => series != null)
+        //                 .cast<SplineSeries<ScoreDataPoints, int>>()
+        //                 .toList(), // Filter out nulls
+        //           ],
+        //         ),
+        //       )
+        //     ]),
+        //   ),
+        // )
       ],
     );
   }

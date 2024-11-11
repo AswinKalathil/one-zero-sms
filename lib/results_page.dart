@@ -175,12 +175,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       scrollDirection: Axis.vertical,
       child: Container(
         padding: const EdgeInsets.all(10),
-        height: _screenWidth > 1400
-            ? _screenHeight +
-                800 +
-                ((_allSubjects.length / 2).ceil() * 390) +
-                1000
-            : _screenHeight + 800 + (_allSubjects.length * 430) + 1000,
+        height: _screenWidth > 1200
+            ? _screenHeight * 2 + (((_allSubjects.length + 1) / 2).ceil() * 450)
+            : _screenHeight * 2 + ((_allSubjects.length + 1) * 520),
         child: Column(
           children: [
             Listener(
@@ -760,14 +757,17 @@ class GradeCard extends StatefulWidget {
 }
 
 class _GradeCardState extends State<GradeCard> {
-  String studentName = '';
+  String _studentName = '';
+  String _parentPhone = '';
   String className = '';
-  String studentAcadamicYeat = '';
+  String studentAcadamicYear = '';
   String currentMonth = DateTime.now().month.toString();
   String photoUrl = '';
   String schoolName = '';
   List<Map<String, dynamic>> subjects = [];
   List<Map<String, dynamic>> _radarData = [];
+  bool _enableEdit = false;
+  DatabaseHelper _dbHelper = DatabaseHelper();
 
   @override
   void initState() {
@@ -781,12 +781,11 @@ class _GradeCardState extends State<GradeCard> {
       print("Student id is 0");
       return;
     }
-    DatabaseHelper dbHelper = DatabaseHelper();
     List<Map<String, dynamic>> studentData =
-        await dbHelper.getStudentData(widget.studentId);
+        await _dbHelper.getStudentData(widget.studentId);
 
     List<Map<String, dynamic>> resultsfromDb =
-        await dbHelper.getGradeCard(widget.studentId);
+        await _dbHelper.getGradeCard(widget.studentId);
     if (resultsfromDb.isEmpty) {
       throw Exception("No data found for student name: ${widget.studentId}");
     }
@@ -796,9 +795,10 @@ class _GradeCardState extends State<GradeCard> {
     if (studentData.isNotEmpty) {
       if (mounted)
         setState(() {
-          studentName = studentData.first['student_name'] as String? ?? '-';
+          _studentName = studentData.first['student_name'] as String? ?? '-';
           className = studentData.first['class_name'] as String? ?? '-';
           schoolName = studentData.first['school_name'] as String? ?? '-';
+          _parentPhone = studentData.first['parent_phone'] as String? ?? '-';
           photoUrl = (studentData.first['gender'] == 'M'
               ? 'assets/ml.jpg'
               : 'assets/fl.jpg');
@@ -823,7 +823,7 @@ class _GradeCardState extends State<GradeCard> {
         }
 
         // Fetch the average score for the current subject
-        var avg = await dbHelper.getStudentSubjectAverage(
+        var avg = await _dbHelper.getStudentSubjectAverage(
             widget.studentId, element['subject_id']);
 
         // Ensure avg is a double and handle null values
@@ -1020,67 +1020,85 @@ class _GradeCardState extends State<GradeCard> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: 80,
-                    height: 100,
-                    child: Image.asset(
-                      photoUrl,
-                      fit: BoxFit.fitHeight, // Fills the circular container
-                      errorBuilder: (BuildContext context, Object error,
-                          StackTrace? stackTrace) {
-                        return Image.asset('assets/ml.jpg', fit: BoxFit.cover);
-                      },
+              Stack(children: [
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: 80,
+                          height: 100,
+                          child: Image.asset(
+                            photoUrl,
+                            fit: BoxFit
+                                .fitHeight, // Fills the circular container
+                            errorBuilder: (BuildContext context, Object error,
+                                StackTrace? stackTrace) {
+                              return Image.asset('assets/ml.jpg',
+                                  fit: BoxFit.cover);
+                            },
+                          ),
+                        ),
+                        Padding(
+                          padding:
+                              const EdgeInsets.only(left: 10.0, bottom: 10),
+                          child: SizedBox(
+                            width: 270,
+                            height: 100,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                Text(
+                                  _studentName,
+                                  style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                Text(
+                                  '$className',
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                                Text(
+                                  '$schoolName',
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Spacer(),
+                        getLogoColored(10, .6),
+                      ],
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 10.0, bottom: 10),
-                    child: SizedBox(
-                      width: 200,
-                      height: 100,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Text(
-                            studentName,
-                            style: const TextStyle(
-                                fontSize: 20, fontWeight: FontWeight.bold),
-                          ),
-                          Text(
-                            '$className',
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                          Text(
-                            '$schoolName',
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                        ],
+                    Align(
+                      alignment: Alignment.topLeft,
+                      child: const Text(
+                        'Latest Grades',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ),
-                  ),
-                  isFullApluss
-                      ? Padding(
-                          padding: const EdgeInsets.only(left: 20, top: 20.0),
+                  ],
+                ),
+                isFullApluss
+                    ? Positioned(
+                        right: 100,
+                        top: 20,
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 10, top: 20.0),
                           child: Image.asset(
                             'assets/apluss.png',
-                            width: 90,
-                            height: 90,
+                            width: 100,
+                            height: 100,
                           ),
-                        )
-                      : const SizedBox(),
-                  Spacer(),
-                  getLogoColored(10, .6),
-                ],
-              ),
-              SizedBox(height: 16.0),
-              const Text(
-                'Latest Grades',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+                        ),
+                      )
+                    : const SizedBox(),
+              ]),
               const SizedBox(height: 8.0),
               SizedBox(
                 height: 50 + subjects.length * 30.0,
@@ -1227,7 +1245,7 @@ class _GradeCardState extends State<GradeCard> {
                   Spacer(),
                   Container(
                     height: 225,
-                    width: 225,
+                    width: 320,
                     child: Center(
                       child: _radarData.length > 0
                           ? RadarChartWidget(
@@ -1325,6 +1343,13 @@ class _GradeCardState extends State<GradeCard> {
   }
 
   Widget horizontalCard() {
+    TextEditingController studentNameController = TextEditingController();
+    TextEditingController parentPhoneController = TextEditingController();
+    TextEditingController schoolController = TextEditingController();
+    TextEditingController classNameController = TextEditingController();
+    studentNameController.text = _studentName;
+    parentPhoneController.text = _parentPhone;
+    schoolController.text = schoolName;
     return Container(
       // padding: const EdgeInsets.all(30.0),
       // decoration: BoxDecoration(
@@ -1336,185 +1361,500 @@ class _GradeCardState extends State<GradeCard> {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           Container(
-            width: _screenWidth * .4,
+            padding: const EdgeInsets.all(30.0),
+            width: _screenWidth * .42,
             height: 600,
-            padding: const EdgeInsets.all(10.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: 80,
-                      height: 100,
-                      child: Image.asset(
-                        photoUrl,
-                        fit: BoxFit.fitHeight, // Fills the circular container
-                        errorBuilder: (BuildContext context, Object error,
-                            StackTrace? stackTrace) {
-                          return Image.asset('assets/ml.jpg',
-                              fit: BoxFit.cover);
-                        },
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(left: 10.0, bottom: 10),
-                      child: SizedBox(
-                        width: 300,
-                        height: 100,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            Text(
-                              studentName,
-                              style: const TextStyle(
-                                  fontSize: 20, fontWeight: FontWeight.bold),
-                            ),
-                            Text(
-                              '$className',
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                            Text(
-                              '$schoolName',
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16.0),
-                const Text(
-                  'Latest Grades',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8.0),
-                SizedBox(
-                  height: 50 + subjects.length * 30.0,
-                  child: Table(
-                    border: TableBorder.all(color: Colors.grey),
-                    columnWidths: const {
-                      0: FlexColumnWidth(3),
-                      1: FlexColumnWidth(2),
-                      2: FlexColumnWidth(1),
-                      3: FlexColumnWidth(1),
-                    },
+            child: !_enableEdit
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
                     children: [
-                      const TableRow(
-                        decoration: BoxDecoration(
-                          color: Color.fromRGBO(0, 0, 0, 0.05),
-                        ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Padding(
-                            padding: EdgeInsets.all(6.0),
-                            child: Center(
-                              child: FittedBox(
-                                child: Text(
-                                  'Subject',
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
+                          SizedBox(
+                            width: 80,
+                            height: 100,
+                            child: Image.asset(
+                              photoUrl,
+                              fit: BoxFit
+                                  .fitHeight, // Fills the circular container
+                              errorBuilder: (BuildContext context, Object error,
+                                  StackTrace? stackTrace) {
+                                return Image.asset('assets/ml.jpg',
+                                    fit: BoxFit.cover);
+                              },
                             ),
                           ),
                           Padding(
-                            padding: EdgeInsets.all(6.0),
-                            child: Center(
-                              child: FittedBox(
-                                child: Text(
-                                  'Marks',
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold),
-                                ),
+                            padding:
+                                const EdgeInsets.only(left: 10.0, bottom: 10),
+                            child: SizedBox(
+                              width: 300,
+                              height: 100,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    _studentName,
+                                    style: const TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  Text(
+                                    '$className',
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                  Text(
+                                    '$schoolName',
+                                    style: const TextStyle(fontSize: 16),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                          Padding(
-                            padding: EdgeInsets.all(6.0),
-                            child: Center(
-                              child: FittedBox(
-                                child: Text(
-                                  'Grade',
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.all(6.0),
-                            child: Center(
-                              child: Text(
-                                'Date',
-                                style: TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
+                          Spacer(),
+                          SizedBox(
+                            height: 150,
+                            child: Align(
+                              alignment: Alignment.topCenter,
+                              child: PopupMenuButton(
+                                itemBuilder: (BuildContext context) {
+                                  return [
+                                    PopupMenuItem(
+                                      child: Text('Edit'),
+                                      onTap: () {
+                                        setState(() {
+                                          _enableEdit = true;
+                                        });
+                                        // Implement edit functionality here
+                                      },
+                                    ),
+                                    PopupMenuItem(
+                                      child: Text('Delete'),
+                                      onTap: () async {
+                                        // Implement delete functionality here
+
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) {
+                                            return AlertDialog(
+                                              title:
+                                                  const Text('Delete Student'),
+                                              content: Text(
+                                                  'Are you sure you want to delete $_studentName?'),
+                                              actions: <Widget>[
+                                                TextButton(
+                                                  onPressed: () {
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                  child: const Text('Cancel'),
+                                                ),
+                                                TextButton(
+                                                  onPressed: () async {
+                                                    await _dbHelper
+                                                        .deleteFromTable(
+                                                            "student_table",
+                                                            widget.studentId);
+                                                    super.setState(() {});
+                                                    Navigator.of(context).pop();
+                                                  },
+                                                  child: const Text('Delete'),
+                                                ),
+                                              ],
+                                            );
+                                          },
+                                        );
+                                      },
+                                    ),
+                                  ];
+                                },
                               ),
                             ),
                           ),
                         ],
                       ),
-                      ...subjects.map(
-                        (subject) => TableRow(
+                      const SizedBox(height: 16.0),
+                      const Text(
+                        'Latest Grades',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8.0),
+                      SizedBox(
+                        height: 50 + subjects.length * 30.0,
+                        child: Table(
+                          border: TableBorder.all(color: Colors.grey),
+                          columnWidths: const {
+                            0: FlexColumnWidth(3),
+                            1: FlexColumnWidth(2),
+                            2: FlexColumnWidth(1),
+                            3: FlexColumnWidth(1),
+                          },
                           children: [
-                            Container(
-                              height: 30,
-                              padding: const EdgeInsets.all(5.5),
-                              child: FittedBox(
-                                  child: Text(subject['subject'] ?? '')),
-                            ),
-                            Container(
-                              height: 30,
-                              padding: const EdgeInsets.all(5.5),
-                              child: FittedBox(
-                                child: Text(
-                                    "  ${subject['marks']} / ${subject['maxMarks']}" ??
-                                        '-'),
+                            const TableRow(
+                              decoration: BoxDecoration(
+                                color: Color.fromRGBO(0, 0, 0, 0.05),
                               ),
+                              children: [
+                                Padding(
+                                  padding: EdgeInsets.all(6.0),
+                                  child: Center(
+                                    child: FittedBox(
+                                      child: Text(
+                                        'Subject',
+                                        style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.all(6.0),
+                                  child: Center(
+                                    child: FittedBox(
+                                      child: Text(
+                                        'Marks',
+                                        style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.all(6.0),
+                                  child: Center(
+                                    child: FittedBox(
+                                      child: Text(
+                                        'Grade',
+                                        style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.all(6.0),
+                                  child: Center(
+                                    child: Text(
+                                      'Date',
+                                      style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                            Container(
-                              height: 30,
-                              padding: const EdgeInsets.all(5.5),
-                              child: FittedBox(
-                                  child: Text(subject['grade'] ?? '')),
-                            ),
-                            Container(
-                              height: 30,
-                              padding: const EdgeInsets.all(5.5),
-                              child:
-                                  FittedBox(child: Text(subject['date'] ?? '')),
+                            ...subjects.map(
+                              (subject) => TableRow(
+                                children: [
+                                  Container(
+                                    height: 30,
+                                    padding: const EdgeInsets.all(5.5),
+                                    child: FittedBox(
+                                        child: Text(subject['subject'] ?? '')),
+                                  ),
+                                  Container(
+                                    height: 30,
+                                    padding: const EdgeInsets.all(5.5),
+                                    child: FittedBox(
+                                      child: Text(
+                                          "  ${subject['marks']} / ${subject['maxMarks']}" ??
+                                              '-'),
+                                    ),
+                                  ),
+                                  Container(
+                                    height: 30,
+                                    padding: const EdgeInsets.all(5.5),
+                                    child: FittedBox(
+                                        child: Text(subject['grade'] ?? '')),
+                                  ),
+                                  Container(
+                                    height: 30,
+                                    padding: const EdgeInsets.all(5.5),
+                                    child: FittedBox(
+                                        child: Text(subject['date'] ?? '')),
+                                  ),
+                                ],
+                              ),
                             ),
                           ],
                         ),
                       ),
+                      Container(
+                        height: 50,
+                        child: Text(
+                          'Overal Percentage: 66%    Consistency: 70% ',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      Spacer(),
+                      // Row(
+                      //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      //   children: [
+                      //     Text(
+                      //       ' ${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}',
+                      //       style: const TextStyle(fontSize: 10),
+                      //     ),
+                      //   ],
+                      // ),
+                    ],
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: 100,
+                            height: 120,
+                            child: Image.asset(
+                              photoUrl,
+                              fit: BoxFit
+                                  .fitHeight, // Fills the circular container
+                              errorBuilder: (BuildContext context, Object error,
+                                  StackTrace? stackTrace) {
+                                return Image.asset('assets/ml.jpg',
+                                    fit: BoxFit.cover);
+                              },
+                            ),
+                          ),
+                          SizedBox(
+                            width: 20,
+                          ),
+                          SizedBox(
+                            width: 400,
+                            height: 150,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    SizedBox(
+                                        width: 400,
+                                        child: TextField(
+                                          controller: studentNameController,
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 24),
+                                          decoration: InputDecoration(
+                                            enabled: _enableEdit,
+                                            label: Text(
+                                              'Student Name',
+                                            ),
+                                            border: UnderlineInputBorder(
+                                                borderSide: BorderSide.none),
+                                            enabledBorder: UnderlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors
+                                                      .grey), // Bottom border when enabled
+                                            ),
+                                            focusedBorder: UnderlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors
+                                                      .grey), // Bottom border when enabled
+                                            ),
+                                          ),
+                                        )),
+                                  ],
+                                ),
+                                SizedBox(
+                                  height: 10,
+                                ),
+                                Row(
+                                  children: [
+                                    SizedBox(
+                                        width: 150,
+                                        child: TextField(
+                                          controller: schoolController,
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18),
+                                          decoration: InputDecoration(
+                                            enabled: _enableEdit,
+                                            label: Text('School'),
+                                            border: UnderlineInputBorder(
+                                                borderSide: BorderSide.none),
+                                            enabledBorder: UnderlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors
+                                                      .grey), // Bottom border when enabled
+                                            ),
+                                            focusedBorder: UnderlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors
+                                                      .grey), // Bottom border when enabled
+                                            ),
+                                          ),
+                                        )),
+                                    Spacer(),
+                                    SizedBox(
+                                        width: 150,
+                                        child: TextField(
+                                          controller: classNameController,
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18),
+                                          decoration: InputDecoration(
+                                            enabled: _enableEdit,
+                                            label: Text(
+                                              'Class',
+                                            ),
+                                            border: UnderlineInputBorder(
+                                                borderSide: BorderSide.none),
+                                            enabledBorder: UnderlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors
+                                                      .grey), // Bottom border when enabled
+                                            ),
+                                            focusedBorder: UnderlineInputBorder(
+                                              borderSide: BorderSide(
+                                                  color: Colors
+                                                      .grey), // Bottom border when enabled
+                                            ),
+                                          ),
+                                        )),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 120,
+                          ),
+                          SizedBox(
+                              width: 150,
+                              child: TextField(
+                                controller: schoolController,
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 18),
+                                decoration: InputDecoration(
+                                  enabled: _enableEdit,
+                                  label: Text('Stream'),
+                                  border: UnderlineInputBorder(
+                                      borderSide: BorderSide.none),
+                                  enabledBorder: UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Colors
+                                            .grey), // Bottom border when enabled
+                                  ),
+                                  focusedBorder: UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Colors
+                                            .grey), // Bottom border when enabled
+                                  ),
+                                ),
+                              )),
+                          Spacer(),
+                          // SizedBox(
+                          //   width: 150,
+                          //   child: DropdownButton(
+                          //       value: 'M',
+                          //       items: [
+                          //         DropdownMenuItem(child: Text('M')),
+                          //         DropdownMenuItem(child: Text('F')),
+                          //         DropdownMenuItem(
+                          //           child: Text('Other'),
+                          //         )
+                          //       ],
+                          //       onChanged: (value) {}),
+                          // ),
+                        ],
+                      ),
+                      SizedBox(
+                        height: 20,
+                      ),
+                      Row(
+                        children: [
+                          SizedBox(
+                            width: 120,
+                          ),
+                          SizedBox(
+                              width: 150,
+                              child: TextField(
+                                controller: schoolController,
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 18),
+                                decoration: InputDecoration(
+                                  enabled: _enableEdit,
+                                  label: Text('Gender'),
+                                  border: UnderlineInputBorder(
+                                      borderSide: BorderSide.none),
+                                  enabledBorder: UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Colors
+                                            .grey), // Bottom border when enabled
+                                  ),
+                                  focusedBorder: UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Colors
+                                            .grey), // Bottom border when enabled
+                                  ),
+                                ),
+                              )),
+                          Spacer(),
+                          SizedBox(
+                              width: 150,
+                              child: TextField(
+                                controller: parentPhoneController,
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 18),
+                                decoration: InputDecoration(
+                                  enabled: _enableEdit,
+                                  label: Text(
+                                    'Parent Phone',
+                                  ),
+                                  border: UnderlineInputBorder(
+                                      borderSide: BorderSide.none),
+                                  enabledBorder: UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Colors
+                                            .grey), // Bottom border when enabled
+                                  ),
+                                  focusedBorder: UnderlineInputBorder(
+                                    borderSide: BorderSide(
+                                        color: Colors
+                                            .grey), // Bottom border when enabled
+                                  ),
+                                ),
+                              )),
+                          SizedBox(
+                            width: 65,
+                          )
+                        ],
+                      ),
+                      Spacer(),
+                      SizedBox(
+                        child: Align(
+                          alignment: Alignment.bottomRight,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              setState(() {
+                                _enableEdit = false;
+                              });
+                            },
+                            child: Text('Save'),
+                          ),
+                        ),
+                      )
                     ],
                   ),
-                ),
-                Container(
-                  height: 50,
-                  child: Text(
-                    'Overal Percentage: 66%    Consistency: 70% ',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                Spacer(),
-                // Row(
-                //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                //   children: [
-                //     Text(
-                //       ' ${DateTime.now().day.toString().padLeft(2, '0')}-${DateTime.now().month.toString().padLeft(2, '0')}-${DateTime.now().year}',
-                //       style: const TextStyle(fontSize: 10),
-                //     ),
-                //   ],
-                // ),
-              ],
-            ),
           ),
           Container(
             width: _screenWidth * .38,

@@ -10,7 +10,7 @@ ConnectionSettings dbSettingLocal = ConnectionSettings(
   port: 3306, // Default MySQL port
   user: 'root', // Update with your MySQL username
   password: '123', // Update with your MySQL password
-  db: 'one_zero_mysql_db', // Update with your MySQL database name
+  db: 'test3', // Update with your MySQL database name
   timeout: Duration(seconds: 1), // Connection timeout (default is 30 seconds)
 );
 ConnectionSettings dbSettingRemote = ConnectionSettings(
@@ -68,7 +68,7 @@ Map<String, Subject> SUBJECT_OBJECT = {
   'Social Science': Subject("Social Science",
       const Color.fromARGB(150, 190, 95, 0), 'assets/social-bg.png'),
   'Botany': Subject(
-      "Botany", const Color.fromARGB(150, 92, 244, 94), 'assets/bot-bg.png'),
+      "Botany", const Color.fromARGB(148, 65, 174, 67), 'assets/bot-bg.png'),
   'Zoology': Subject(
       "Zoology", const Color.fromARGB(150, 251, 170, 57), 'assets/zoo-bg.png'),
 };

@@ -245,6 +245,12 @@ JOIN (SELECT id, student_name
         where: 'id = ?', whereArgs: [id]);
   }
 
+  Future<int> updateStudent(String id, Map<String, dynamic> testScore) async {
+    final db = await database;
+    return await db.update('test_score_table', testScore,
+        where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<int?> getStudentId(String studentName) async {
     final db = await database;
 
@@ -561,6 +567,7 @@ JOIN (SELECT id, student_name
     s.student_name,
     s.photo_id AS photo_path,
     s.gender,
+    s.parent_phone,
     s.school_name,
     c.class_name,
     c.academic_year,
@@ -1200,7 +1207,7 @@ JOIN
     class_table c ON st.class_id = c.id
 WHERE c.id = ?
 ORDER BY 
-    t.last_modified DESC;  
+    t.test_date DESC;  
 
 
 ''';

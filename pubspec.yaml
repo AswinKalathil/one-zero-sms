@@ -2,7 +2,7 @@ name: one_zero
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: "none" # Remove this line if you wish to publish to pub.dev
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -35,18 +35,14 @@ dependencies:
   file_picker: ^5.2.0
   excel: ^2.0.9
 
-
   bitsdojo_window: ^0.1.2+1
   stroke_text: any
   flutter_screenutil: ^5.0.0+2
 
-  
   sqflite_common_ffi: 2.3.4
   mysql1: ^0.19.2
   shared_preferences: ^2.1.0
   uuid: ^3.0.6
-
-
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -56,7 +52,8 @@ dependencies:
   syncfusion_flutter_charts: ^27.1.50
   fl_chart: ^0.69.0
   flutter_radar_chart: ^0.2.1
-
+  ffi: ^2.0.1
+  provider: ^6.1.2
 
 dev_dependencies:
   flutter_test:
@@ -74,7 +71,6 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
@@ -99,11 +95,6 @@ flutter:
     - assets/hindi-bg.png
     - assets/social-bg.png
 
-
-
-
-    
-
     - assets/ml.jpg
     - assets/fl.jpg
     - assets/one_zero-logo-1.png
@@ -117,7 +108,7 @@ flutter:
     - assets/apluss.png
 
   fonts:
-    - family: Revue  # Give a name to your font
+    - family: Revue # Give a name to your font
       fonts:
         - asset: assets\fonts\Revue Std Bold.otf
 

@@ -15,13 +15,20 @@ import 'package:stroke_text/stroke_text.dart';
 import 'dart:async';
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   // Initialize the FFI
   sqfliteFfiInit();
 
   // Set the database factory
   databaseFactory = databaseFactoryFfi;
+  try {
+    logToFile('App started');
 
-  runApp(MyApp());
+    runApp(MyApp());
+  } catch (e) {
+    logToFile('Error starting app: $e');
+  }
 }
 
 class MyApp extends StatefulWidget {
@@ -38,7 +45,7 @@ class _MyAppState extends State<MyApp> {
       designSize: Size(360, 690), // Set your design dimensions
       builder: (BuildContext context, Widget? child) {
         return MaterialApp(
-          title: 'One-Zero SMS',
+          title: 'Insight',
           theme: ThemeData(
             primarySwatch: Colors.green,
             primaryColor: _isDarkMode
@@ -47,7 +54,7 @@ class _MyAppState extends State<MyApp> {
             secondaryHeaderColor: Color.fromRGBO(238, 108, 77, 1),
             scaffoldBackgroundColor: _isDarkMode
                 ? Color.fromRGBO(14, 22, 33, 1)
-                : Color.fromRGBO(240, 240, 240, 1),
+                : Color.fromRGBO(230, 230, 230, 1),
             brightness: _isDarkMode ? Brightness.dark : Brightness.light,
             canvasColor: _isDarkMode
                 ? Color.fromRGBO(36, 47, 61, 1)
@@ -722,10 +729,15 @@ class _MyHomePageState extends State<MyHomePage>
                                             Color.fromRGBO(255, 255, 255, .5),
                                         strokeWidth: 1,
                                         text: _classes[index]['class_name']
-                                            .substring(
-                                                0,
-                                                _classes[index]['class_name']
-                                                    .lastIndexOf(' ')),
+                                                .toString()
+                                                .contains(' ')
+                                            ? _classes[index]['class_name']
+                                                .substring(
+                                                    0,
+                                                    _classes[index]
+                                                            ['class_name']
+                                                        .lastIndexOf(' '))
+                                            : _classes[index]['class_name'],
                                         textStyle: const TextStyle(
                                           fontSize: 24,
                                           fontWeight: FontWeight.bold,
@@ -735,12 +747,16 @@ class _MyHomePageState extends State<MyHomePage>
                                         ),
                                       )),
                                       TextSpan(
-                                        text: '\n' +
-                                            _classes[index]['class_name']
-                                                .substring(_classes[index]
-                                                            ['class_name']
-                                                        .lastIndexOf(' ') +
-                                                    1),
+                                        text: _classes[index]['class_name']
+                                                .toString()
+                                                .contains(' ')
+                                            ? '\n' +
+                                                _classes[index]['class_name']
+                                                    .substring(_classes[index]
+                                                                ['class_name']
+                                                            .lastIndexOf(' ') +
+                                                        1)
+                                            : '',
                                         style: const TextStyle(
                                           fontSize:
                                               16, // Smaller font size for the second line
