@@ -185,7 +185,7 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                                   color: Theme.of(context).cardColor,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                height: 300,
+                                height: 290,
                                 child: SfCartesianChart(
                                   primaryXAxis: CategoryAxis(
                                     title: AxisTitle(
@@ -197,7 +197,7 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                                     maximum: 100,
                                     title: AxisTitle(
                                         text:
-                                            'Percentage Marks'), // Title for the Y-axis
+                                            'Score Percentage'), // Title for the Y-axis
                                   ),
                                   // Chart title
                                   title: ChartTitle(
@@ -264,7 +264,11 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                             ]),
                       );
                     } else {
-                      var result = widget.testResults[index];
+                      List<Map<String, dynamic>> result = [];
+
+                      if (widget.testResults.length <= index) {
+                        result = widget.testResults[index];
+                      }
 
                       return Container(
                         height: 400,
@@ -533,7 +537,7 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                                                 minimum: 0,
                                                 interval: 25,
                                                 title: AxisTitle(
-                                                    text: 'Percentage Marks',
+                                                    text: 'Score Percentage',
                                                     textStyle: TextStyle(
                                                         fontSize: 4.sp)),
                                               ),

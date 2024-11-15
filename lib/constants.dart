@@ -68,7 +68,7 @@ Map<String, Subject> SUBJECT_OBJECT = {
   'Social Science': Subject("Social Science",
       const Color.fromARGB(150, 190, 95, 0), 'assets/social-bg.png'),
   'Botany': Subject(
-      "Botany", const Color.fromARGB(148, 65, 174, 67), 'assets/bot-bg.png'),
+      "Botany", const Color.fromARGB(147, 49, 174, 52), 'assets/bot-bg.png'),
   'Zoology': Subject(
       "Zoology", const Color.fromARGB(150, 251, 170, 57), 'assets/zoo-bg.png'),
 };
@@ -175,11 +175,11 @@ Map<String, InputTableMetadata> tableMetadataMap = {
       "Student Name",
       "Stream Name",
       "School Name",
-      "Gender",
       "Parent Phone",
+      "Gender",
       "Remove"
     ],
-    columnLengths: [50, 200, 205, 150, 100, 150, 75],
+    columnLengths: [50, 200, 205, 150, 150, 100, 75],
   ),
   "subject_table": InputTableMetadata(
     tableName: "subject_table",

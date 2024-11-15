@@ -51,7 +51,7 @@ class RadarChartWidget extends StatelessWidget {
         ticks = [50, 100];
     }
 
-    return Container(
+    return SizedBox(
       // color: Colors.white,
       child: Center(
         child: RadarChart(
@@ -65,7 +65,7 @@ class RadarChartWidget extends StatelessWidget {
             color: Colors.grey.shade700,
           ),
           key: UniqueKey(),
-          axisColor: Colors.grey.shade300,
+          axisColor: Colors.grey.shade400,
           ticksTextStyle: TextStyle(
             fontSize: 10,
             color: Colors.grey.shade700,

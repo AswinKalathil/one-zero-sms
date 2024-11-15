@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:one_zero/appProviders.dart';
 import 'package:one_zero/custom-widgets.dart';
 import 'package:one_zero/database_helper.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
 class SetiingsPage extends StatefulWidget {
-  final Function onThemeChange;
   final String academic_year;
-  const SetiingsPage(
-      {Key? key, required this.onThemeChange, required this.academic_year})
-      : super(key: key);
+  const SetiingsPage({Key? key, required this.academic_year}) : super(key: key);
 
   @override
   _SetiingsPageState createState() => _SetiingsPageState();
@@ -18,12 +18,19 @@ class _SetiingsPageState extends State<SetiingsPage> {
   final TextEditingController classNameController = TextEditingController();
   final TextEditingController subjectController = TextEditingController();
   final FocusNode subjectFocusNode = FocusNode();
+  bool _autoSync = false;
+  bool _isDarkMode = false;
 
   List<String> _subjects = [];
 
   @override
   void initState() {
     super.initState();
+    SharedPreferences.getInstance().then((prefs) {
+      _autoSync = prefs.getBool('autoSync') ?? false;
+      _isDarkMode = prefs.getBool('isDarkMode') ?? false;
+      setState(() {});
+    });
     // Request focus when the widget is first built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (classNameController.text.isNotEmpty) {
@@ -42,115 +49,166 @@ class _SetiingsPageState extends State<SetiingsPage> {
 
   @override
   Widget build(BuildContext context) {
-    return buildSettings(context, widget.onThemeChange);
+    return buildSettings(context);
   }
 
-  Widget buildSettings(BuildContext context, Function onThemeChange) {
-    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
+  Widget buildSettings(BuildContext context) {
     return SingleChildScrollView(
       scrollDirection: Axis.vertical,
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
-        child: Container(
-          width: MediaQuery.of(context).size.width * .9,
-          child: Center(
-            child: Container(
-              width: 650,
-              height: 1500,
-              child: Column(
-                children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 35, vertical: 8),
-                      child: Text(
-                        "Appearance",
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 20),
+        child: Consumer<UserCoice>(builder: (context, userChoice, child) {
+          return Container(
+            width: MediaQuery.of(context).size.width * .9,
+            child: Center(
+              child: Container(
+                width: 650,
+                height: 1000,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).cardColor,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Column(
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 35, vertical: 8),
+                        child: Text(
+                          "Appearance",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 20),
+                        ),
                       ),
                     ),
-                  ),
-                  Container(
-                    width: 600,
-                    height: 200,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey, width: 1),
-                      borderRadius: BorderRadius.all(Radius.circular(4)),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              // child: Text("Theme"),
-                            ),
-                            Spacer(),
-                            Padding(
-                              padding: const EdgeInsets.all(20.0),
-                              child: IconButton(
-                                icon: isDarkMode
-                                    ? Icon(Icons.wb_sunny)
-                                    : Icon(Icons.nightlight_round),
-                                tooltip: isDarkMode ? "Light" : "Dark",
-                                onPressed: () {
-                                  onThemeChange(!isDarkMode);
-                                },
+                    Container(
+                      width: 600,
+                      height: 100,
+                      // decoration: BoxDecoration(
+                      //   color: Theme.of(context).cardColor,
+                      //   border: Border.all(color: Colors.grey, width: 1),
+                      //   borderRadius: BorderRadius.all(Radius.circular(4)),
+                      // ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(20.0),
+                                child: IconButton(
+                                  icon: _isDarkMode
+                                      ? Icon(Icons.wb_sunny)
+                                      : Icon(Icons.nightlight_round),
+                                  tooltip: _isDarkMode ? "Light" : "Dark",
+                                  onPressed: () {
+                                    setState(() {
+                                      _isDarkMode = !_isDarkMode;
+                                      SharedPreferences.getInstance()
+                                          .then((prefs) {
+                                        prefs.setBool(
+                                            'isDarkMode', _isDarkMode);
+                                      });
+                                      userChoice.toggleDarkMode();
+                                    });
+                                  },
+                                ),
                               ),
-                            ),
-                          ],
-                        )
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  // Second Section: New Class
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 35, vertical: 8),
-                      child: Text(
-                        "New Class",
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 20),
+                              Text(_isDarkMode ? "Light Mode" : "Dark Mode",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  )),
+                            ],
+                          )
+                        ],
                       ),
                     ),
-                  ),
-                  createClassPopup(context),
-                  // Third Section: Backup
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 35, vertical: 8),
-                      child: Text(
-                        "Backup",
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 20),
+                    SizedBox(height: 20),
+                    Divider(
+                      color: Colors.grey,
+                      thickness: 5,
+                    ),
+                    // Second Section: New Class
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 35, vertical: 8),
+                        child: Text(
+                          "New Class",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 20),
+                        ),
                       ),
                     ),
-                  ),
-                  Container(
-                    width: 600,
-                    height: 300,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey, width: 1),
-                      borderRadius: BorderRadius.all(Radius.circular(4)),
+                    createClassPopup(context),
+                    SizedBox(height: 20),
+                    Divider(
+                      color: Colors.grey,
+                      thickness: 5,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [],
+
+                    // Third Section: Backup
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 35, vertical: 8),
+                        child: Text(
+                          "Backup",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 20),
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                    Container(
+                      width: 600,
+                      height: 100,
+                      // decoration: BoxDecoration(
+                      //   color: Theme.of(context).cardColor,
+                      //   border: Border.all(color: Colors.grey, width: 1),
+                      //   borderRadius: BorderRadius.all(Radius.circular(4)),
+                      // ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Padding(
+                                padding: EdgeInsets.all(20),
+                                child: Switch(
+                                  // This bool value toggles the switch.
+                                  value: _autoSync,
+                                  activeColor: Colors.green,
+                                  onChanged: (bool value) {
+                                    // This is called when the user toggles the switch.
+                                    setState(() {
+                                      _autoSync = value;
+                                      SharedPreferences.getInstance()
+                                          .then((prefs) {
+                                        prefs.setBool('autoSync', value);
+                                      });
+                                    });
+                                  },
+                                ),
+                              ),
+                              Padding(
+                                padding: EdgeInsets.all(20),
+                                child: Text("Auto Sync"),
+                              )
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-        ),
+          );
+        }),
       ),
     );
   }
@@ -160,10 +218,11 @@ class _SetiingsPageState extends State<SetiingsPage> {
       width: 600,
       height: 430,
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey, width: 1),
-        borderRadius: const BorderRadius.all(Radius.circular(4)),
-      ),
+      // decoration: BoxDecoration(
+      //   color: Theme.of(context).cardColor,
+      //   border: Border.all(color: Colors.grey, width: 1),
+      //   borderRadius: const BorderRadius.all(Radius.circular(4)),
+      // ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,

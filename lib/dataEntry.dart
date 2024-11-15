@@ -458,7 +458,8 @@ class _DataEntryPageState extends State<DataEntryPage> {
                                     if (value.length == 10) {
                                       // Move to the next focus node if input is valid (10 digits)
                                       focusNodes[rowIndex][cellIndex].unfocus();
-                                      _addNewRow();
+                                      focusNodes[rowIndex][cellIndex + 1]
+                                          .requestFocus();
                                     }
                                   },
                                   onSubmitted: (value) {
@@ -525,7 +526,8 @@ class _DataEntryPageState extends State<DataEntryPage> {
                                             rowTextEditingControllers[rowIndex]
                                                     [header]!
                                                 .text = newValue;
-                                            focusNodes[rowIndex][cellIndex + 1]
+                                            _addNewRow();
+                                            focusNodes[rowIndex + 1][1]
                                                 .requestFocus();
                                           }
                                         });

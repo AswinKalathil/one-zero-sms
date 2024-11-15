@@ -5,14 +5,19 @@ import 'package:one_zero/constants.dart';
 import 'package:one_zero/custom-widgets.dart';
 import 'package:one_zero/database_helper.dart';
 import 'package:one_zero/examPage.dart';
+import 'package:one_zero/appProviders.dart';
 import 'package:one_zero/results_page.dart';
 import 'package:one_zero/dataEntry.dart';
 import 'package:one_zero/subpages.dart';
 
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:stroke_text/stroke_text.dart';
 import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,7 +30,15 @@ void main() async {
   try {
     logToFile('App started');
 
-    runApp(MyApp());
+    runApp(
+      MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => UserCoice()),
+          ChangeNotifierProvider(create: (_) => ClassPageValues()),
+        ],
+        child: MyApp(),
+      ),
+    );
   } catch (e) {
     logToFile('Error starting app: $e');
   }
@@ -37,47 +50,51 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  bool _isDarkMode = false;
-
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
       designSize: Size(360, 690), // Set your design dimensions
       builder: (BuildContext context, Widget? child) {
-        return MaterialApp(
-          title: 'Insight',
-          theme: ThemeData(
-            primarySwatch: Colors.green,
-            primaryColor: _isDarkMode
-                ? Color.fromRGBO(23, 33, 43, 1)
-                : Color.fromRGBO(53, 104, 84, 1),
-            secondaryHeaderColor: Color.fromRGBO(238, 108, 77, 1),
-            scaffoldBackgroundColor: _isDarkMode
-                ? Color.fromRGBO(14, 22, 33, 1)
-                : Color.fromRGBO(230, 230, 230, 1),
-            brightness: _isDarkMode ? Brightness.dark : Brightness.light,
-            canvasColor: _isDarkMode
-                ? Color.fromRGBO(36, 47, 61, 1)
-                : Color.fromRGBO(241, 241, 241, 1),
-            cardColor:
-                _isDarkMode ? Color.fromRGBO(24, 37, 51, 1) : Color(0xFDFEFFFF),
-            primaryTextTheme: TextTheme(
-              bodyMedium: TextStyle(
-                color: _isDarkMode
-                    ? Colors.grey[200] // Light grey for softer contrast
-                    : Colors.grey[850],
+        return Consumer<UserCoice>(builder: (context, userChoice, child) {
+          return MaterialApp(
+            title: 'Insight',
+            theme: ThemeData(
+              primarySwatch: Colors.green,
+              primaryColor: userChoice.isDarkMode
+                  ? Color.fromRGBO(23, 33, 43, 1)
+                  : Color.fromRGBO(53, 104, 84, 1),
+              secondaryHeaderColor: Color.fromRGBO(238, 108, 77, 1),
+              scaffoldBackgroundColor: userChoice.isDarkMode
+                  ? Color.fromRGBO(14, 22, 33, 1)
+                  : Color.fromRGBO(230, 230, 230, 1),
+              brightness:
+                  userChoice.isDarkMode ? Brightness.dark : Brightness.light,
+              canvasColor: userChoice.isDarkMode
+                  ? Color.fromRGBO(36, 47, 61, 1)
+                  : Color.fromRGBO(241, 241, 241, 1),
+              cardColor: userChoice.isDarkMode
+                  ? Color.fromRGBO(24, 37, 51, 1)
+                  : Color(0xFDFEFFFF),
+              primaryTextTheme: TextTheme(
+                bodyMedium: TextStyle(
+                  color: userChoice.isDarkMode
+                      ? Colors.grey[200] // Light grey for softer contrast
+                      : Colors.grey[850],
+                ),
               ),
             ),
-          ),
-          home: MyHomePage(
-            onThemeChanged: (bool value) {
-              setState(() {
-                _isDarkMode = value;
-              });
-            },
-            isDarkMode: _isDarkMode,
-          ),
-        );
+            home: MyHomePage(
+              onThemeChanged: (_) {
+                if (mounted) {
+                  setState(() {
+                    userChoice.toggleDarkMode();
+                  });
+                }
+              },
+              isDarkMode: userChoice.isDarkMode,
+            ),
+          );
+        });
       },
     );
   }
@@ -102,7 +119,6 @@ class _MyHomePageState extends State<MyHomePage>
   String _selectdClassID = '';
   String _selectedClass_name = '';
   int _classCount = 0;
-  bool _isMenuExpanded = false;
   bool _isClassTablesInitialized = false;
   List<Map<String, dynamic>> _classes = [];
   List<String> _academicYears = [];
@@ -124,7 +140,12 @@ class _MyHomePageState extends State<MyHomePage>
       vsync: this,
       duration: Duration(seconds: 2), // Duration for one complete rotation
     );
-    _startSync();
+    SharedPreferences.getInstance().then((prefs) {
+      var _autoSync = prefs.getBool('autoSync') ?? false;
+      if (_autoSync) _startSync();
+
+      setState(() {});
+    });
     _loadYears();
     _loadClasess();
     super.initState();
@@ -451,174 +472,179 @@ class _MyHomePageState extends State<MyHomePage>
   Widget build(BuildContext context) {
     if (!_isClassTablesInitialized) _loadClasess();
 
-    return Scaffold(
-      key: _scaffoldKey,
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            color: Theme.of(context).primaryColor,
-            width: _isMenuExpanded ? 200 : 60,
-            height: MediaQuery.of(context).size.height,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+    return Consumer(builder: (context, userChoice, child) {
+      return Scaffold(
+        key: _scaffoldKey,
+        body: Consumer<UserCoice>(builder: (context, userChoice, child) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                color: Theme.of(context).primaryColor,
+                width: userChoice.isMenuExpandedTrue ? 200 : 60,
+                height: MediaQuery.of(context).size.height,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: IconButton(
-                        icon: _isMenuExpanded
-                            ? Icon(Icons.menu_open, color: Colors.white)
-                            : Icon(Icons.menu, color: Colors.white),
-                        onPressed: () {
-                          setState(() {
-                            super.setState(() {
-                              _isMenuExpanded = !_isMenuExpanded;
-                            });
-                          });
-                        },
-                      ),
+                    Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: IconButton(
+                            icon: userChoice.isMenuExpandedTrue
+                                ? Icon(Icons.menu_open, color: Colors.white)
+                                : Icon(Icons.menu, color: Colors.white),
+                            onPressed: () {
+                              setState(() {
+                                super.setState(() {
+                                  userChoice.toggleMenu();
+
+                                  // userChoice.isMenuExpandedTrue = !userChoice.isMenuExpandedTrue;
+                                });
+                              });
+                            },
+                          ),
+                        ),
+                        userChoice.isMenuExpandedTrue
+                            ? Text(_selectedClass_name,
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold))
+                            : SizedBox()
+                      ],
                     ),
-                    _isMenuExpanded
-                        ? Text(_selectedClass_name,
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold))
-                        : SizedBox()
+                    // CustomDrawerItem(
+                    //   icon: userChoice.isMenuExpandedTrue ? Icons.menu_open : Icons.menu,
+                    //   selectedIcon: Icons.menu_open,
+                    //   label: _selectedClass_name,
+                    //   page: -1,
+                    //   selectedPage: _pageNumber,
+                    //   onTap: () {
+                    //     setState(() {
+                    //       super.setState(() {
+                    //         userChoice.isMenuExpandedTrue = !userChoice.isMenuExpandedTrue;
+                    //       });
+                    //     });
+                    //   },
+                    //   isMenuExpanded: userChoice.isMenuExpandedTrue,
+                    // ),
+                    SizedBox(
+                      height: 20,
+                    ),
+                    CustomDrawerItem(
+                      icon: Icons.home_outlined,
+                      selectedIcon: Icons.home,
+                      label: 'Home',
+                      page: 0,
+                      selectedPage: _pageNumber,
+                      onTap: () {
+                        setState(() {
+                          _pageNumber = 0;
+                          _selectedClass_name = '';
+                        });
+                      },
+                      isMenuExpanded: userChoice.isMenuExpandedTrue,
+                    ),
+                    _pageNumber != 0 && _pageNumber != 5
+                        ? CustomDrawerItem(
+                            icon: Icons.analytics_outlined,
+                            selectedIcon: Icons.analytics,
+                            label: 'Reports',
+                            page: 1,
+                            selectedPage: _pageNumber,
+                            onTap: () {
+                              setState(() {
+                                _pageNumber = 1;
+                              });
+                            },
+                            isMenuExpanded: userChoice.isMenuExpandedTrue,
+                          )
+                        : SizedBox(),
+                    _pageNumber != 0 && _pageNumber != 5
+                        ? CustomDrawerItem(
+                            icon: Icons.group_add_outlined,
+                            selectedIcon: Icons.group_add_rounded,
+                            label: 'Enroll',
+                            page: 2,
+                            selectedPage: _pageNumber,
+                            onTap: () {
+                              setState(() {
+                                initializeStreamNames(_selectdClassID);
+                                _pageNumber = 2;
+                              });
+                            },
+                            isMenuExpanded: userChoice.isMenuExpandedTrue,
+                          )
+                        : SizedBox(),
+                    _pageNumber != 0 && _pageNumber != 5
+                        ? CustomDrawerItem(
+                            icon: Icons.add_box_outlined,
+                            selectedIcon: Icons.add_box,
+                            label: 'Exams',
+                            page: 4,
+                            selectedPage: _pageNumber,
+                            onTap: () {
+                              setState(() {
+                                _pageNumber = 4;
+                              });
+                            },
+                            isMenuExpanded: userChoice.isMenuExpandedTrue,
+                          )
+                        : SizedBox(),
+                    Spacer(),
+                    CustomDrawerItem(
+                      icon: Icons.settings_outlined,
+                      selectedIcon: Icons.settings,
+                      label: 'Settings',
+                      page: 5,
+                      selectedPage: _pageNumber,
+                      onTap: () {
+                        setState(() {
+                          _pageNumber = 5;
+                          _selectedClass_name = '';
+                        });
+                      },
+                      isMenuExpanded: userChoice.isMenuExpandedTrue,
+                    ),
+                    SizedBox(
+                      height: 20,
+                    ),
                   ],
                 ),
-                // CustomDrawerItem(
-                //   icon: _isMenuExpanded ? Icons.menu_open : Icons.menu,
-                //   selectedIcon: Icons.menu_open,
-                //   label: _selectedClass_name,
-                //   page: -1,
-                //   selectedPage: _pageNumber,
-                //   onTap: () {
-                //     setState(() {
-                //       super.setState(() {
-                //         _isMenuExpanded = !_isMenuExpanded;
-                //       });
-                //     });
-                //   },
-                //   isMenuExpanded: _isMenuExpanded,
-                // ),
-                SizedBox(
-                  height: 20,
-                ),
-                CustomDrawerItem(
-                  icon: Icons.home_outlined,
-                  selectedIcon: Icons.home,
-                  label: 'Home',
-                  page: 0,
-                  selectedPage: _pageNumber,
-                  onTap: () {
-                    setState(() {
-                      _pageNumber = 0;
-                      _selectedClass_name = '';
-                    });
-                  },
-                  isMenuExpanded: _isMenuExpanded,
-                ),
-                _pageNumber != 0 && _pageNumber != 5
-                    ? CustomDrawerItem(
-                        icon: Icons.analytics_outlined,
-                        selectedIcon: Icons.analytics,
-                        label: 'Reports',
-                        page: 1,
-                        selectedPage: _pageNumber,
-                        onTap: () {
-                          setState(() {
-                            _pageNumber = 1;
-                          });
-                        },
-                        isMenuExpanded: _isMenuExpanded,
-                      )
-                    : SizedBox(),
-                _pageNumber != 0 && _pageNumber != 5
-                    ? CustomDrawerItem(
-                        icon: Icons.group_add_outlined,
-                        selectedIcon: Icons.group_add_rounded,
-                        label: 'Enroll',
-                        page: 2,
-                        selectedPage: _pageNumber,
-                        onTap: () {
-                          setState(() {
-                            initializeStreamNames(_selectdClassID);
-                            _pageNumber = 2;
-                          });
-                        },
-                        isMenuExpanded: _isMenuExpanded,
-                      )
-                    : SizedBox(),
-                _pageNumber != 0 && _pageNumber != 5
-                    ? CustomDrawerItem(
-                        icon: Icons.add_box_outlined,
-                        selectedIcon: Icons.add_box,
-                        label: 'Exams',
-                        page: 4,
-                        selectedPage: _pageNumber,
-                        onTap: () {
-                          setState(() {
-                            _pageNumber = 4;
-                          });
-                        },
-                        isMenuExpanded: _isMenuExpanded,
-                      )
-                    : SizedBox(),
-                Spacer(),
-                CustomDrawerItem(
-                  icon: Icons.settings_outlined,
-                  selectedIcon: Icons.settings,
-                  label: 'Settings',
-                  page: 5,
-                  selectedPage: _pageNumber,
-                  onTap: () {
-                    setState(() {
-                      _pageNumber = 5;
-                      _selectedClass_name = '';
-                    });
-                  },
-                  isMenuExpanded: _isMenuExpanded,
-                ),
-                SizedBox(
-                  height: 20,
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-              child: Column(
-            children: [
-              Row(children: TopBarActions()),
+              ),
               Expanded(
-                  child: switch (_pageNumber) {
-                0 => _buildClassRooms(context),
-                1 => _buildClassPage(
-                    index: _selectedClass_index, isDedicatedPage: true),
-                2 => _buildEntrySection(UniqueKey()),
-                3 => _buildClassPage(
-                    index: _selectedClass_index, isDedicatedPage: false),
-                4 => ExamScoreSheet(
-                    classId: _selectdClassID,
-                    isClassTablesInitialized: _isClassTablesInitialized,
-                    classes: _classes,
-                    isMenuExpanded: _isMenuExpanded,
-                  ),
-                5 => SetiingsPage(
-                    onThemeChange: widget.onThemeChanged,
-                    academic_year: _selectdAcadamicYear,
-                  ),
+                  child: Column(
+                children: [
+                  Row(children: TopBarActions()),
+                  Expanded(
+                      child: switch (_pageNumber) {
+                    0 => _buildClassRooms(context),
+                    1 => _buildClassPage(
+                        index: _selectedClass_index, isDedicatedPage: true),
+                    2 => _buildEntrySection(UniqueKey()),
+                    3 => _buildClassPage(
+                        index: _selectedClass_index, isDedicatedPage: false),
+                    4 => ExamScoreSheet(
+                        classId: _selectdClassID,
+                        isClassTablesInitialized: _isClassTablesInitialized,
+                        classes: _classes,
+                        isMenuExpanded: userChoice.isMenuExpandedTrue,
+                      ),
+                    5 => SetiingsPage(
+                        academic_year: _selectdAcadamicYear,
+                      ),
 
-                // TODO: Handle this case.
-                int() => throw UnimplementedError(),
-              })
+                    // TODO: Handle this case.
+                    int() => throw UnimplementedError(),
+                  })
+                ],
+              )),
             ],
-          )),
-        ],
-      ),
-    );
+          );
+        }),
+      );
+    });
   }
 
   final List<String> _menuOptions = [
