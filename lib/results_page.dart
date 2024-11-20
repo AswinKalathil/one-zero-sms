@@ -41,7 +41,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
   final ScrollController _scrollController = ScrollController();
   int resultBoardIndex = 0;
-  // bool showGradeCard = false;
+
   List<String> _classSubjects = [];
 
   List<Map<String, dynamic>> _allSubjects = [];
@@ -54,15 +54,19 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     super.initState();
     _selectedcriteria = 'Student';
     _criteriaOptions = ['Student', 'Class'];
-    setAllSubjects();
-    setTestCount();
+    _studentId = '';
 
-    if (widget.isDedicatedPage) {
-      resultBoardIndex = 4;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final myProvider = Provider.of<ClassPageValues>(context, listen: false);
+      myProvider.setShowGradeCard(false);
+      myProvider.setClassId(widget.classId);
+      setAllSubjects();
+      setTestCount();
+      if (widget.isDedicatedPage) {
+        resultBoardIndex = 4;
         onSubmittedSerch(context, 'class');
-      });
-    }
+      }
+    });
   }
 
   void setAllSubjects() async {
@@ -70,29 +74,31 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
   }
 
   void _onSelected(String criteria) {
-    setState(() {
-      _selectedcriteria = criteria;
-      switch (criteria) {
-        case 'Student':
-          resultBoardIndex = 0;
-          Provider.of<ClassPageValues>(context, listen: false)
-              .setShowGradeCard(false);
+    if (mounted) {
+      setState(() {
+        _selectedcriteria = criteria;
+        switch (criteria) {
+          case 'Student':
+            resultBoardIndex = 0;
+            Provider.of<ClassPageValues>(context, listen: false)
+                .setShowGradeCard(false);
 
-          break;
-        case 'Class':
-          resultBoardIndex = 1;
-          Provider.of<ClassPageValues>(context, listen: false)
-              .setShowGradeCard(false);
+            break;
+          case 'Class':
+            resultBoardIndex = 1;
+            Provider.of<ClassPageValues>(context, listen: false)
+                .setShowGradeCard(false);
 
-          break;
-        case 'Subject':
-          resultBoardIndex = 2;
-          Provider.of<ClassPageValues>(context, listen: false)
-              .setShowGradeCard(false);
+            break;
+          case 'Subject':
+            resultBoardIndex = 2;
+            Provider.of<ClassPageValues>(context, listen: false)
+                .setShowGradeCard(false);
 
-          break;
-      }
-    });
+            break;
+        }
+      });
+    }
   }
 
   DatabaseHelper _dbHelper = DatabaseHelper();
@@ -114,20 +120,22 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
         _resultTitle = "students of '$value'";
       }
 
-      setState(() {
-        searchText = value;
-        _studentsOfNameList =
-            _selectedcriteria == 'Student' ? fetchedStudentsList : [];
-        _studentsOfClassList =
-            _selectedcriteria == 'Class' ? fetchedStudentsList : [];
-        _studentsOfSubjectList =
-            _selectedcriteria == 'Subject' ? fetchedStudentsList : [];
-        resultBoardIndex = _selectedcriteria == 'Student'
-            ? 3
-            : _selectedcriteria == 'Class'
-                ? 4
-                : 5;
-      });
+      if (mounted) {
+        setState(() {
+          searchText = value;
+          _studentsOfNameList =
+              _selectedcriteria == 'Student' ? fetchedStudentsList : [];
+          _studentsOfClassList =
+              _selectedcriteria == 'Class' ? fetchedStudentsList : [];
+          _studentsOfSubjectList =
+              _selectedcriteria == 'Subject' ? fetchedStudentsList : [];
+          resultBoardIndex = _selectedcriteria == 'Student'
+              ? 3
+              : _selectedcriteria == 'Class'
+                  ? 4
+                  : 5;
+        });
+      }
     }
 
     if (widget.isDedicatedPage && value == 'class') {
@@ -146,7 +154,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       searchText = value;
     }
     classPageValues.setStudentsListToShow(fetchedStudentsList);
-    setState(() {});
+    if (mounted) setState(() {});
   }
 
   double _screenWidth = 0;
@@ -170,7 +178,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     }
 
     if (mounted) {
-      setState(() {});
+      if (mounted) setState(() {});
     }
   }
 
@@ -389,16 +397,20 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                                 classPageValues
                                                     .setShowGradeCard(false);
 
-                                                setState(() {
-                                                  searchTextfinal =
-                                                      value.trim();
-                                                });
+                                                if (mounted) {
+                                                  setState(() {
+                                                    searchTextfinal =
+                                                        value.trim();
+                                                  });
+                                                }
                                               },
                                               onSubmitted: (value) {
-                                                setState(() {
-                                                  searchTextfinal =
-                                                      value.trim();
-                                                });
+                                                if (mounted) {
+                                                  setState(() {
+                                                    searchTextfinal =
+                                                        value.trim();
+                                                  });
+                                                }
                                                 onSubmittedSerch(
                                                     context, searchTextfinal);
                                               },
@@ -521,11 +533,13 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     }
 
     // Update the state to rebuild the widget with new data
-    setState(() {
-      // Use a unique key for the TestAnalytics widget to trigger a rebuild
-      _testResults =
-          _testResults; // This is a redundant assignment, just for clarity
-    });
+    if (mounted) {
+      setState(() {
+        // Use a unique key for the TestAnalytics widget to trigger a rebuild
+        _testResults =
+            _testResults; // This is a redundant assignment, just for clarity
+      });
+    }
   }
 
   Widget _criteriaDropdown() {
@@ -550,9 +564,11 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       }).toList(),
       onChanged: (String? newValue) {
         if (newValue != null) {
-          setState(() {
-            _selectedcriteria = newValue;
-          });
+          if (mounted) {
+            setState(() {
+              _selectedcriteria = newValue;
+            });
+          }
         }
       },
       isExpanded: true,
@@ -606,32 +622,31 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                     child: Row(
                       children: [
                         Container(
-                          width: 50,
-                          height: 50,
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              shape: BoxShape
+                                  .circle, // Make the container circular
+                              border: Border.all(color: Colors.grey),
+                            ),
+                            clipBehavior: Clip
+                                .hardEdge, // Ensures the image is clipped to the circular shape
 
-                          decoration: BoxDecoration(
-                            shape:
-                                BoxShape.circle, // Make the container circular
-                            border: Border.all(color: Colors.grey),
-                          ),
-                          clipBehavior: Clip
-                              .hardEdge, // Ensures the image is clipped to the circular shape
-
-                          child: student['photo_path'] != null &&
-                                  student['photo_path']! != '-'
-                              ? Image.file(
-                                  File(student[
-                                      'photo_path']!), // Display the image without adding it as an asset
-                                  fit: BoxFit.cover,
-                                )
-                              : Image.asset(
+                            child: Image.file(
+                              File(student[
+                                  'photo_path']!), // Display the image without adding it as an asset
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                // Error fallback if Image.file fails
+                                return Image.asset(
                                   (student['gender'] == 'F'
                                       ? 'assets/fl.jpg'
                                       : 'assets/ml.jpg'),
                                   fit: BoxFit
                                       .cover, // Fills the circular container
-                                ),
-                        ),
+                                );
+                              },
+                            )),
                         Padding(
                           padding: const EdgeInsets.only(left: 8.0, top: 10),
                           child: Column(
@@ -649,11 +664,13 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                     ),
                   ),
                   onTap: () {
-                    setState(() {
-                      _studentId = student['id'];
-                      Provider.of<ClassPageValues>(context, listen: false)
-                          .setShowGradeCard(true);
-                    });
+                    if (mounted) {
+                      setState(() {
+                        _studentId = student['id'];
+                        Provider.of<ClassPageValues>(context, listen: false)
+                            .setShowGradeCard(true);
+                      });
+                    }
                     setAnalyticsStudentId(_studentId);
                   },
                 ),

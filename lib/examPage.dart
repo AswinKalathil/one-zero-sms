@@ -103,13 +103,14 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                   scrollDirection: Axis.horizontal,
                   child: Container(
                     width: 1330,
-                    padding: EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 50, vertical: 10),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.start,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Container(
-                          margin: EdgeInsets.all(5),
+                          margin: const EdgeInsets.all(5),
                           child: SizedBox(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.start,
@@ -133,14 +134,14 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                       ),
                                       child: Row(
                                         children: [
-                                          Text(
+                                          const Text(
                                             'Create Exam',
                                             style: TextStyle(
                                               fontSize: 20,
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                          Spacer(),
+                                          const Spacer(),
 
                                           CustomButton(
                                               text: "ADD",
@@ -414,7 +415,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                                 width: .5,
                                               ),
                                             ),
-                                            child: Text(
+                                            child: const Text(
                                               'Recent Exams',
                                               style: TextStyle(
                                                 fontSize: 20,
@@ -453,7 +454,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                   ),
                                 ),
                               )
-                            : SizedBox(),
+                            : const SizedBox(),
                       ],
                     ),
                   ),
@@ -462,7 +463,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
             ),
           )
         : Container(
-            child: Center(
+            child: const Center(
               child: Text("No Class Data Found"),
             ),
           );
@@ -562,7 +563,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                               horizontal: 20, vertical: 10),
                           child: Text(
                             _testHistory[index]['subject_name'] ?? "--",
-                            style: TextStyle(
+                            style: const TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -570,20 +571,20 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                           padding: const EdgeInsets.all(10),
                           child: Text(
                             _testHistory[index]['topic'] ?? "_",
-                            style: TextStyle(fontSize: 12),
+                            style: const TextStyle(fontSize: 12),
                           ),
                         ),
-                        Spacer(),
+                        const Spacer(),
                         PopupMenuButton(
                           iconColor: Colors.grey.shade800,
                           iconSize: 15,
                           itemBuilder: (context) {
                             return [
-                              PopupMenuItem(
+                              const PopupMenuItem(
                                 child: Text("Edit"),
                                 value: "edit",
                               ),
-                              PopupMenuItem(
+                              const PopupMenuItem(
                                 child: Text("Delete"),
                                 value: "delete",
                               ),
@@ -655,17 +656,17 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         Padding(
-                          padding: EdgeInsets.only(left: 20),
+                          padding: const EdgeInsets.only(left: 20),
                           child: Text(
                             _testHistory[index]['class_name'] ?? "--",
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 10,
                             ),
                           ),
                         ),
-                        Spacer(),
+                        const Spacer(),
                         Padding(
-                          padding: EdgeInsets.only(right: 20),
+                          padding: const EdgeInsets.only(right: 20),
                           child: Text(
                             _testHistory[index]['test_date'] != null
                                 ? (() {
@@ -689,7 +690,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
                                     }
                                   }())
                                 : "--/--/--",
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 10,
                             ),
                           ),
@@ -707,7 +708,7 @@ class _ExamScoreSheetState extends State<ExamScoreSheet> {
   }
 
   saveExam() async {
-    var uuid = Uuid();
+    var uuid = const Uuid();
     // if (_classNameController.text.isEmpty ||
     if (_subjectNameController.text.isEmpty ||
         _topicController.text.isEmpty ||
@@ -891,10 +892,10 @@ class _ExamEntryState extends State<ExamEntry> {
                       height: 100,
                       fit: BoxFit.cover,
                     ),
-                    SizedBox(
+                    const SizedBox(
                       height: 20,
                     ),
-                    Text(
+                    const Text(
                       "No Students Found",
                       style: TextStyle(
                           fontFamily: 'revue',
@@ -909,7 +910,7 @@ class _ExamEntryState extends State<ExamEntry> {
   Widget buildDataTable() {
     return Container(
       margin: const EdgeInsets.all(16.0),
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(4.0),
@@ -932,12 +933,15 @@ class _ExamEntryState extends State<ExamEntry> {
                   style: const TextStyle(
                       fontSize: 20, fontWeight: FontWeight.bold),
                 ),
+                const SizedBox(
+                  width: 10,
+                ),
                 Text(
                   "${testDetails['topic']} ",
                   style: const TextStyle(
-                      fontSize: 18, fontStyle: FontStyle.normal),
+                      fontSize: 20, fontStyle: FontStyle.normal),
                 ),
-                Spacer(),
+                const Spacer(),
                 Align(
                   alignment: Alignment.centerRight,
                   child: Padding(

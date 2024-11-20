@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
 import 'package:one_zero/DataSyncMethods.dart';
 import 'package:one_zero/constants.dart';
 import 'package:one_zero/custom-widgets.dart';
@@ -16,7 +16,6 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:stroke_text/stroke_text.dart';
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 
 void main() async {
@@ -53,7 +52,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return ScreenUtilInit(
-      designSize: Size(360, 690), // Set your design dimensions
+      designSize: const Size(360, 690), // Set your design dimensions
       builder: (BuildContext context, Widget? child) {
         return Consumer<UserCoice>(builder: (context, userChoice, child) {
           return MaterialApp(
@@ -61,20 +60,20 @@ class _MyAppState extends State<MyApp> {
             theme: ThemeData(
               primarySwatch: Colors.green,
               primaryColor: userChoice.isDarkMode
-                  ? Color.fromRGBO(23, 33, 43, 1)
-                  : Color.fromRGBO(53, 104, 84, 1),
-              secondaryHeaderColor: Color.fromRGBO(238, 108, 77, 1),
+                  ? const Color.fromRGBO(23, 33, 43, 1)
+                  : const Color.fromRGBO(53, 104, 84, 1),
+              secondaryHeaderColor: const Color.fromRGBO(238, 108, 77, 1),
               scaffoldBackgroundColor: userChoice.isDarkMode
-                  ? Color.fromRGBO(14, 22, 33, 1)
-                  : Color.fromRGBO(230, 230, 230, 1),
+                  ? const Color.fromRGBO(14, 22, 33, 1)
+                  : const Color.fromRGBO(230, 230, 230, 1),
               brightness:
                   userChoice.isDarkMode ? Brightness.dark : Brightness.light,
               canvasColor: userChoice.isDarkMode
-                  ? Color.fromRGBO(36, 47, 61, 1)
-                  : Color.fromRGBO(241, 241, 241, 1),
+                  ? const Color.fromRGBO(36, 47, 61, 1)
+                  : const Color.fromRGBO(241, 241, 241, 1),
               cardColor: userChoice.isDarkMode
-                  ? Color.fromRGBO(24, 37, 51, 1)
-                  : Color(0xFDFEFFFF),
+                  ? const Color.fromRGBO(24, 37, 51, 1)
+                  : const Color(0xFDFEFFFF),
               primaryTextTheme: TextTheme(
                 bodyMedium: TextStyle(
                   color: userChoice.isDarkMode
@@ -122,7 +121,7 @@ class _MyHomePageState extends State<MyHomePage>
   bool _isClassTablesInitialized = false;
   List<Map<String, dynamic>> _classes = [];
   List<String> _academicYears = [];
-  String _selectdAcadamicYear = '';
+  // String _selectdAcadamicYear = '';
   late AnimationController _animationController;
   bool _isSyncing = false;
   List<String> appBarTitle = [
@@ -136,47 +135,69 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   void initState() {
+    super.initState();
+
+    // Initialize AnimationController
     _animationController = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 2), // Duration for one complete rotation
+      duration: const Duration(seconds: 2),
     );
-    SharedPreferences.getInstance().then((prefs) {
-      var _autoSync = prefs.getBool('autoSync') ?? false;
-      if (_autoSync) _startSync();
 
-      setState(() {});
-    });
+    // Load shared preferences and start sync if enabled
+    _initializePreferences();
+
+    // Load academic years and classes
     _loadYears();
-    _loadClasess();
-    super.initState();
+    _loadClasses();
+  }
+
+  void _initializePreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    final _autoSync = prefs.getBool('autoSync') ?? false;
+
+    if (_autoSync) {
+      _startSync();
+    }
+
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   void _loadYears() async {
     _academicYears = await _dbHelper.getAcademicYears();
-    _selectdAcadamicYear =
-        (_academicYears.isNotEmpty ? _academicYears.last : '-')!;
-    setState(() {
-      _selectdAcadamicYear;
-      _academicYears;
-    });
+
+    if (mounted) {
+      final myProvider = Provider.of<UserCoice>(context, listen: false);
+      if (myProvider.selectedAcadamicYear.isEmpty) {
+        myProvider.setselectedAcadamicYear(
+          (_academicYears.isNotEmpty ? _academicYears.last : '-')!,
+        );
+      }
+      setState(() {});
+    }
   }
 
-  void _loadClasess() async {
+  void _loadClasses() async {
     if (_academicYears.isEmpty) {
       return;
     }
 
-    _classes = await _dbHelper.getClasses(_selectdAcadamicYear);
+    _classes = await _dbHelper.getClasses(
+      Provider.of<UserCoice>(context, listen: false).selectedAcadamicYear,
+    );
 
-    _isClassTablesInitialized = _classCount == 0 ? false : true;
-
-    setState(() {
-      _classes;
-      _classCount = _classes.length;
-    });
+    if (mounted) {
+      setState(() {
+        _classCount = _classes.length;
+        _isClassTablesInitialized = _classCount > 0;
+      });
+    }
   }
 
   void newYearDialog() async {
+    final myProvider = Provider.of<UserCoice>(context, listen: false);
+
     TextEditingController textFieldController = TextEditingController();
     textFieldController.text =
         "${DateTime.now().year}-${(DateTime.now().year + 1).toString().substring(2)}";
@@ -184,7 +205,7 @@ class _MyHomePageState extends State<MyHomePage>
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Start New Acadamic Year'),
+          title: const Text('Start New Acadamic Year'),
           content: TextField(
             controller: textFieldController,
           ),
@@ -193,7 +214,7 @@ class _MyHomePageState extends State<MyHomePage>
               onPressed: () {
                 Navigator.of(context).pop(null); // Dismiss without input
               },
-              child: Text('Cancel'),
+              child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () async {
@@ -213,10 +234,10 @@ class _MyHomePageState extends State<MyHomePage>
                     _academicYears.add(textFieldController.text);
                     _academicYears = _academicYears.toSet().toList();
 
-                    _selectdAcadamicYear =
-                        textFieldController.text; // Set new year as selected
+                    myProvider
+                        .setselectedAcadamicYear(textFieldController.text);
                   });
-                  _loadClasess();
+                  _loadClasses();
 
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
@@ -236,7 +257,7 @@ class _MyHomePageState extends State<MyHomePage>
                 Navigator.of(context)
                     .pop(textFieldController.text); // Return input
               },
-              child: Text('Submit'),
+              child: const Text('Submit'),
             ),
           ],
         );
@@ -268,7 +289,7 @@ class _MyHomePageState extends State<MyHomePage>
       print('Error during sync: $e');
     } finally {
       _loadYears();
-      _loadClasess();
+      _loadClasses();
       _animationController.stop();
       // Stop the animation
       setState(() {
@@ -293,7 +314,7 @@ class _MyHomePageState extends State<MyHomePage>
     );
 
     // Add spacer
-    actions.add(Spacer());
+    actions.add(const Spacer());
 
     // Add sync button
 
@@ -318,14 +339,14 @@ class _MyHomePageState extends State<MyHomePage>
 // Sync button widget
   Widget _buildSyncButton() {
     return Padding(
-      padding: EdgeInsets.only(right: 16.0),
+      padding: const EdgeInsets.only(right: 16.0),
       child: RotationTransition(
         turns: Tween<double>(
           begin: 1.0,
           end: 0.0, // 1.0 for a full clockwise rotation
         ).animate(_animationController),
         child: IconButton(
-          icon: Icon(
+          icon: const Icon(
             Icons.sync_rounded,
           ),
           onPressed: _isSyncing ? null : _startSync,
@@ -338,8 +359,10 @@ class _MyHomePageState extends State<MyHomePage>
 // Dropdown for selecting academic year
 
   Widget _buildAcademicYearDropdown() {
+    final myProvider = Provider.of<UserCoice>(context, listen: false);
+
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       width: 200,
       height: 70,
       decoration: BoxDecoration(
@@ -354,16 +377,16 @@ class _MyHomePageState extends State<MyHomePage>
           ),
           contentPadding: const EdgeInsets.all(15.0),
         ),
-        value: _selectdAcadamicYear != null &&
-                _academicYears.contains(_selectdAcadamicYear)
-            ? _selectdAcadamicYear
+        value: myProvider.selectedAcadamicYear != null &&
+                _academicYears.contains(myProvider.selectedAcadamicYear)
+            ? myProvider.selectedAcadamicYear
             : null,
         items: _academicYears.map((year) {
           return DropdownMenuItem(
             value: year,
             child: Text(
               year,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 16,
                 fontFamily: 'Revue',
               ),
@@ -372,8 +395,8 @@ class _MyHomePageState extends State<MyHomePage>
         }).toList(),
         onChanged: (value) {
           setState(() {
-            _selectdAcadamicYear = value!;
-            _loadClasess();
+            myProvider.setselectedAcadamicYear(value!);
+            _loadClasses();
             _pageNumber = 0;
           });
         },
@@ -442,7 +465,7 @@ class _MyHomePageState extends State<MyHomePage>
           BoxShadow(
             color: Colors.grey.withOpacity(.5),
             blurRadius: 5,
-            offset: Offset(2, 2),
+            offset: const Offset(2, 2),
           ),
         ],
       ),
@@ -470,7 +493,7 @@ class _MyHomePageState extends State<MyHomePage>
 
   @override
   Widget build(BuildContext context) {
-    if (!_isClassTablesInitialized) _loadClasess();
+    if (!_isClassTablesInitialized) _loadClasses();
 
     return Consumer(builder: (context, userChoice, child) {
       return Scaffold(
@@ -492,8 +515,9 @@ class _MyHomePageState extends State<MyHomePage>
                           padding: const EdgeInsets.all(8.0),
                           child: IconButton(
                             icon: userChoice.isMenuExpandedTrue
-                                ? Icon(Icons.menu_open, color: Colors.white)
-                                : Icon(Icons.menu, color: Colors.white),
+                                ? const Icon(Icons.menu_open,
+                                    color: Colors.white)
+                                : const Icon(Icons.menu, color: Colors.white),
                             onPressed: () {
                               setState(() {
                                 super.setState(() {
@@ -507,11 +531,11 @@ class _MyHomePageState extends State<MyHomePage>
                         ),
                         userChoice.isMenuExpandedTrue
                             ? Text(_selectedClass_name,
-                                style: TextStyle(
+                                style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold))
-                            : SizedBox()
+                            : const SizedBox()
                       ],
                     ),
                     // CustomDrawerItem(
@@ -529,7 +553,7 @@ class _MyHomePageState extends State<MyHomePage>
                     //   },
                     //   isMenuExpanded: userChoice.isMenuExpandedTrue,
                     // ),
-                    SizedBox(
+                    const SizedBox(
                       height: 20,
                     ),
                     CustomDrawerItem(
@@ -560,7 +584,7 @@ class _MyHomePageState extends State<MyHomePage>
                             },
                             isMenuExpanded: userChoice.isMenuExpandedTrue,
                           )
-                        : SizedBox(),
+                        : const SizedBox(),
                     _pageNumber != 0 && _pageNumber != 5
                         ? CustomDrawerItem(
                             icon: Icons.group_add_outlined,
@@ -576,7 +600,7 @@ class _MyHomePageState extends State<MyHomePage>
                             },
                             isMenuExpanded: userChoice.isMenuExpandedTrue,
                           )
-                        : SizedBox(),
+                        : const SizedBox(),
                     _pageNumber != 0 && _pageNumber != 5
                         ? CustomDrawerItem(
                             icon: Icons.add_box_outlined,
@@ -591,23 +615,27 @@ class _MyHomePageState extends State<MyHomePage>
                             },
                             isMenuExpanded: userChoice.isMenuExpandedTrue,
                           )
-                        : SizedBox(),
-                    Spacer(),
-                    CustomDrawerItem(
-                      icon: Icons.settings_outlined,
-                      selectedIcon: Icons.settings,
-                      label: 'Settings',
-                      page: 5,
-                      selectedPage: _pageNumber,
-                      onTap: () {
-                        setState(() {
-                          _pageNumber = 5;
-                          _selectedClass_name = '';
-                        });
-                      },
-                      isMenuExpanded: userChoice.isMenuExpandedTrue,
-                    ),
-                    SizedBox(
+                        : const SizedBox(),
+                    const Spacer(),
+                    _pageNumber == 0
+                        ? CustomDrawerItem(
+                            icon: Icons.settings_outlined,
+                            selectedIcon: Icons.settings,
+                            label: 'Settings',
+                            page: 5,
+                            selectedPage: _pageNumber,
+                            onTap: () {
+                              setState(() {
+                                _pageNumber = 5;
+                                _selectedClass_name = '';
+                              });
+                            },
+                            isMenuExpanded: userChoice.isMenuExpandedTrue,
+                          )
+                        : const SizedBox(
+                            height: 20,
+                          ),
+                    const SizedBox(
                       height: 20,
                     ),
                   ],
@@ -632,7 +660,7 @@ class _MyHomePageState extends State<MyHomePage>
                         isMenuExpanded: userChoice.isMenuExpandedTrue,
                       ),
                     5 => SetiingsPage(
-                        academic_year: _selectdAcadamicYear,
+                        academic_year: userChoice.selectedAcadamicYear,
                       ),
 
                     // TODO: Handle this case.
@@ -668,7 +696,7 @@ class _MyHomePageState extends State<MyHomePage>
             key: ValueKey(_isSyncing.hashCode),
           )
         : Container(
-            child: Center(
+            child: const Center(
               child: Text("No Class Data Found"),
             ),
           );
@@ -682,14 +710,16 @@ class _MyHomePageState extends State<MyHomePage>
             key: key,
           )
         : Container(
-            child: Center(
+            child: const Center(
               child: Text("No Class Data Found"),
             ),
           );
   }
 
   Widget _buildClassRooms(BuildContext context) {
-    _loadClasess();
+    _loadClasses();
+    final myProvider = Provider.of<UserCoice>(context, listen: false);
+
     bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     int crossAxisCount = (MediaQuery.of(context).size.width / 400).floor() + 1;
     return _isClassTablesInitialized
@@ -719,7 +749,7 @@ class _MyHomePageState extends State<MyHomePage>
                         _selectedClass_index = index;
                         _pageNumber = 1;
                       });
-                      _loadClasess();
+                      _loadClasses();
                     },
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -751,8 +781,8 @@ class _MyHomePageState extends State<MyHomePage>
                                     children: [
                                       WidgetSpan(
                                           child: StrokeText(
-                                        strokeColor:
-                                            Color.fromRGBO(255, 255, 255, .5),
+                                        strokeColor: const Color.fromRGBO(
+                                            255, 255, 255, .5),
                                         strokeWidth: 1,
                                         text: _classes[index]['class_name']
                                                 .toString()
@@ -764,12 +794,12 @@ class _MyHomePageState extends State<MyHomePage>
                                                             ['class_name']
                                                         .lastIndexOf(' '))
                                             : _classes[index]['class_name'],
-                                        textStyle: const TextStyle(
-                                          fontSize: 24,
+                                        textStyle: TextStyle(
+                                          fontSize: 6.sp,
                                           fontWeight: FontWeight.bold,
                                           fontFamily: 'Revue',
-                                          color:
-                                              Color.fromARGB(221, 59, 57, 57),
+                                          color: const Color.fromARGB(
+                                              221, 59, 57, 57),
                                         ),
                                       )),
                                       TextSpan(
@@ -783,13 +813,13 @@ class _MyHomePageState extends State<MyHomePage>
                                                             .lastIndexOf(' ') +
                                                         1)
                                             : '',
-                                        style: const TextStyle(
-                                          fontSize:
-                                              16, // Smaller font size for the second line
+                                        style: TextStyle(
+                                          fontSize: 4
+                                              .sp, // Smaller font size for the second line
 
                                           fontFamily: 'Revue',
-                                          color:
-                                              Color.fromARGB(221, 59, 57, 57),
+                                          color: const Color.fromARGB(
+                                              221, 59, 57, 57),
                                         ),
                                       ),
                                     ],
@@ -797,8 +827,8 @@ class _MyHomePageState extends State<MyHomePage>
                                 ),
                               ),
                               Positioned(
-                                bottom: 20,
-                                left: 20,
+                                bottom: 4.sp,
+                                left: 4.sp,
                                 child: SizedBox(
                                   width: 50,
                                   height: 25,
@@ -806,16 +836,19 @@ class _MyHomePageState extends State<MyHomePage>
                                     children: [
                                       Icon(
                                         Icons.people_sharp,
-                                        color: Color.fromRGBO(59, 57, 57, .5),
+                                        color: const Color.fromRGBO(
+                                            59, 57, 57, .5),
+                                        size: 6.sp,
                                       ),
                                       Text(
                                         ' ${_classes[index]['studentsCount']}',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          fontSize:
-                                              14, // Smaller font size for the second line
+                                          fontSize: 4
+                                              .sp, // Smaller font size for the second line
 
-                                          color: Color.fromRGBO(59, 57, 57, .5),
+                                          color: const Color.fromRGBO(
+                                              59, 57, 57, .5),
                                         ),
                                       )
                                     ],
@@ -832,18 +865,18 @@ class _MyHomePageState extends State<MyHomePage>
                                 // ),
                               ),
                               Positioned(
-                                  bottom: 10,
-                                  right: 60,
+                                  bottom: 2.sp,
+                                  right: 12.sp,
                                   child: Padding(
-                                      padding: EdgeInsets.all(8),
+                                      padding: const EdgeInsets.all(8),
                                       child: StrokeText(
-                                        text: _selectdAcadamicYear,
-                                        strokeColor:
-                                            Color.fromRGBO(250, 250, 250, .2),
+                                        text: myProvider.selectedAcadamicYear,
+                                        strokeColor: const Color.fromRGBO(
+                                            250, 250, 250, .2),
                                         strokeWidth: .2,
                                         textStyle: TextStyle(
                                           fontWeight: FontWeight.bold,
-                                          fontSize: 16,
+                                          fontSize: 4.sp,
                                           color: Colors.grey.shade700
                                               .withOpacity(.2),
                                         ),
@@ -879,10 +912,10 @@ class _MyHomePageState extends State<MyHomePage>
                     fit: BoxFit.cover,
                   ),
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 30,
                 ),
-                Text(
+                const Text(
                   "Create New Batch",
                   style: TextStyle(
                       fontFamily: 'revue', color: Colors.grey, fontSize: 30),

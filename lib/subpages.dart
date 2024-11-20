@@ -70,11 +70,11 @@ class _SetiingsPageState extends State<SetiingsPage> {
                 ),
                 child: Column(
                   children: [
-                    Align(
+                    const Align(
                       alignment: Alignment.centerLeft,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 35, vertical: 8),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 35, vertical: 8),
                         child: Text(
                           "Appearance",
                           style: TextStyle(
@@ -99,8 +99,8 @@ class _SetiingsPageState extends State<SetiingsPage> {
                                 padding: const EdgeInsets.all(20.0),
                                 child: IconButton(
                                   icon: _isDarkMode
-                                      ? Icon(Icons.wb_sunny)
-                                      : Icon(Icons.nightlight_round),
+                                      ? const Icon(Icons.wb_sunny)
+                                      : const Icon(Icons.nightlight_round),
                                   tooltip: _isDarkMode ? "Light" : "Dark",
                                   onPressed: () {
                                     setState(() {
@@ -116,7 +116,7 @@ class _SetiingsPageState extends State<SetiingsPage> {
                                 ),
                               ),
                               Text(_isDarkMode ? "Light Mode" : "Dark Mode",
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
                                   )),
@@ -125,17 +125,17 @@ class _SetiingsPageState extends State<SetiingsPage> {
                         ],
                       ),
                     ),
-                    SizedBox(height: 20),
-                    Divider(
+                    const SizedBox(height: 20),
+                    const Divider(
                       color: Colors.grey,
                       thickness: 5,
                     ),
                     // Second Section: New Class
-                    Align(
+                    const Align(
                       alignment: Alignment.centerLeft,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 35, vertical: 8),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 35, vertical: 8),
                         child: Text(
                           "New Class",
                           style: TextStyle(
@@ -144,18 +144,18 @@ class _SetiingsPageState extends State<SetiingsPage> {
                       ),
                     ),
                     createClassPopup(context),
-                    SizedBox(height: 20),
-                    Divider(
+                    const SizedBox(height: 20),
+                    const Divider(
                       color: Colors.grey,
                       thickness: 5,
                     ),
 
                     // Third Section: Backup
-                    Align(
+                    const Align(
                       alignment: Alignment.centerLeft,
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 35, vertical: 8),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 35, vertical: 8),
                         child: Text(
                           "Backup",
                           style: TextStyle(
@@ -177,7 +177,7 @@ class _SetiingsPageState extends State<SetiingsPage> {
                           Row(
                             children: [
                               Padding(
-                                padding: EdgeInsets.all(20),
+                                padding: const EdgeInsets.all(20),
                                 child: Switch(
                                   // This bool value toggles the switch.
                                   value: _autoSync,
@@ -194,7 +194,7 @@ class _SetiingsPageState extends State<SetiingsPage> {
                                   },
                                 ),
                               ),
-                              Padding(
+                              const Padding(
                                 padding: EdgeInsets.all(20),
                                 child: Text("Auto Sync"),
                               )
@@ -227,7 +227,7 @@ class _SetiingsPageState extends State<SetiingsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          SizedBox(
+          const SizedBox(
             height: 20,
           ),
           SizedBox(
@@ -310,7 +310,7 @@ class _SetiingsPageState extends State<SetiingsPage> {
               },
             ),
           ),
-          SizedBox(height: 20),
+          const SizedBox(height: 20),
           Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -344,7 +344,7 @@ class _SetiingsPageState extends State<SetiingsPage> {
   void saveClass(
       String className, String academic_year, List<String> newSubjects) async {
     var dbHelper = DatabaseHelper();
-    String newClassID = Uuid().v4();
+    String newClassID = const Uuid().v4();
     int check1 = 0;
     int check2 = 0;
     int check3 = 0;
@@ -359,7 +359,7 @@ class _SetiingsPageState extends State<SetiingsPage> {
 
     check1 = await dbHelper.insertToTable('class_table', classData);
 
-    String streamID = Uuid().v4();
+    String streamID = const Uuid().v4();
     Map<String, dynamic> streamData = {
       'id': streamID,
       'stream_name': className,
@@ -367,7 +367,7 @@ class _SetiingsPageState extends State<SetiingsPage> {
     };
     check3 = await dbHelper.insertToTable('stream_table', streamData);
     for (var subject in newSubjects) {
-      String subjectID = Uuid().v4();
+      String subjectID = const Uuid().v4();
       Map<String, dynamic> subjectData = {
         'id': subjectID,
         'subject_name': subject,

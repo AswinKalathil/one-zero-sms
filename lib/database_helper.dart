@@ -3,6 +3,10 @@ import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:uuid/uuid.dart';
 
+import 'dart:io';
+import 'package:path/path.dart' as path;
+import 'package:path_provider/path_provider.dart';
+
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;
@@ -20,8 +24,27 @@ class DatabaseHelper {
     return _database!;
   }
 
+  Future<String> getAppDatabasesPath() async {
+    // Get the application's documents directory
+    final documentsDir = await getApplicationDocumentsDirectory();
+
+    // Create the `one_zero_insight/data` directory structure
+    final dataDir =
+        Directory(path.join(documentsDir.path, 'one_zero_insight', 'data'));
+
+    // Ensure the directory structure exists
+    if (!await dataDir.exists()) {
+      await dataDir.create(recursive: true);
+    }
+
+    // Define the database file path within the `data` directory
+    final databasePath = path.join(dataDir.path, 'one_zero_sqlite_db_file.db');
+
+    return databasePath;
+  }
+
   Future<Database> _initDatabase() async {
-    String path = join(await getDatabasesPath(), 'one_zero_sqlite_db_file.db');
+    String path = await getAppDatabasesPath();
     print("Database path: $path");
 
     // Open the database and enable foreign key support
@@ -595,9 +618,8 @@ WHERE
       return result;
     } catch (e) {
       // Handle any exceptions that occur
-      print("Error occurred while fetching grade card: $e");
-      throw Exception(
-          "Failed to retrieve grade card data. Please try again later.");
+      print("Failed to retrieve grade card data$e");
+      return [];
     }
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:one_zero/appProviders.dart';
 import 'package:one_zero/constants.dart';
+import 'package:one_zero/custom-widgets.dart';
 import 'package:one_zero/database_helper.dart';
 import 'package:one_zero/pieChart.dart';
 import 'package:provider/provider.dart';
@@ -25,10 +26,15 @@ class GradeCard extends StatefulWidget {
 class _GradeCardState extends State<GradeCard> {
   String _studentName = '';
   String _parentPhone = '';
-  String className = '';
+  String _className = '';
+  String _classId = '';
+
   String studentAcadamicYear = '';
   String currentMonth = DateTime.now().month.toString();
-  String photoUrl = 'assets/ml.jpg';
+  String photoUrl = '';
+  String errorPhotoUrl = 'assets/ml.jpg';
+  String _streamName = '';
+  String _gender = '';
   String schoolName = '';
   List<Map<String, dynamic>> subjects = [];
   List<Map<String, dynamic>> _radarData = [];
@@ -51,6 +57,9 @@ class _GradeCardState extends State<GradeCard> {
     }
     List<Map<String, dynamic>> studentData =
         await _dbHelper.getStudentData(widget.studentId);
+    if (studentData.isEmpty) {
+      return;
+    }
 
     List<Map<String, dynamic>> resultsfromDb =
         await _dbHelper.getGradeCard(widget.studentId);
@@ -64,15 +73,25 @@ class _GradeCardState extends State<GradeCard> {
       if (mounted) {
         setState(() {
           _studentName = studentData.first['student_name'] as String? ?? '-';
-          className = studentData.first['class_name'] as String? ?? '-';
+          _className = studentData.first['class_name'] as String? ?? '-';
           schoolName = studentData.first['school_name'] as String? ?? '-';
+          _streamName = studentData.first['stream_name'] as String? ?? '-';
           _parentPhone = studentData.first['parent_phone'] as String? ?? '-';
           photoUrl = studentData.first['photo_path'];
-          if (photoUrl == '-' || photoUrl == '') {
-            photoUrl = (studentData.first['gender'] == 'M'
-                ? 'assets/ml.jpg'
-                : 'assets/fl.jpg');
+          _gender = studentData.first['gender'] as String? ?? 'M';
+
+          if (!File(photoUrl).existsSync()) {
+            errorPhotoUrl =
+                (_gender == 'M' ? 'assets/ml.jpg' : 'assets/fl.jpg');
           }
+
+          studentNameController.text = _studentName;
+          parentPhoneController.text = _parentPhone;
+          schoolController.text = schoolName;
+          streamController.text = _streamName;
+          _classId =
+              Provider.of<ClassPageValues>(context, listen: false).classId;
+          initializeStreamNames(_classId);
         });
       }
     }
@@ -301,22 +320,19 @@ class _GradeCardState extends State<GradeCard> {
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         SizedBox(
-                          width: 80,
-                          height: 100,
-                          child: photoUrl != null ||
-                                  photoUrl != '' ||
-                                  photoUrl != '-'
-                              ? Image.file(
-                                  File(
-                                      photoUrl!), // Display the image without adding it as an asset
+                            width: 80,
+                            height: 100,
+                            child: Image.file(
+                              File(
+                                  photoUrl!), // Display the image without adding it as an asset
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Image.asset(
+                                  errorPhotoUrl,
                                   fit: BoxFit.cover,
-                                )
-                              : Image.asset(
-                                  'assets/ml.jpg',
-                                  fit: BoxFit
-                                      .fitHeight, // Fills the circular container
-                                ),
-                        ),
+                                );
+                              },
+                            )),
                         Padding(
                           padding:
                               const EdgeInsets.only(left: 10.0, bottom: 10),
@@ -334,7 +350,7 @@ class _GradeCardState extends State<GradeCard> {
                                       fontWeight: FontWeight.bold),
                                 ),
                                 Text(
-                                  '$className',
+                                  '$_className',
                                   style: const TextStyle(fontSize: 16),
                                 ),
                                 Text(
@@ -567,27 +583,23 @@ class _GradeCardState extends State<GradeCard> {
     );
   }
 
-  Widget horizontalCard() {
-    TextEditingController studentNameController = TextEditingController();
-    TextEditingController parentPhoneController = TextEditingController();
-    TextEditingController schoolController = TextEditingController();
-    // TextEditingController classNameController = TextEditingController();
-    TextEditingController streamController = TextEditingController();
-    TextEditingController genderController = TextEditingController();
-    studentNameController.text = _studentName;
-    parentPhoneController.text = _parentPhone;
-    schoolController.text = schoolName;
+  TextEditingController studentNameController = TextEditingController();
+  TextEditingController parentPhoneController = TextEditingController();
+  TextEditingController schoolController = TextEditingController();
+  // TextEditingController classNameController = TextEditingController();
+  TextEditingController streamController = TextEditingController();
 
-    genderController.text = 'M';
+  Widget horizontalCard() {
     return Container(
       // padding: const EdgeInsets.all(30.0),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey.withOpacity(1)),
-        borderRadius: BorderRadius.circular(8.0),
-        color: Theme.of(context).cardColor,
-      ),
+      // decoration: BoxDecoration(
+      //   border: Border.all(color: Colors.grey.withOpacity(1)),
+      //   borderRadius: BorderRadius.circular(8.0),
+      //   color: Theme.of(context).cardColor,
+      // ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.all(10.0),
@@ -604,16 +616,17 @@ class _GradeCardState extends State<GradeCard> {
                           SizedBox(
                               width: 80,
                               height: 100,
-                              child: photoUrl != null ||
-                                      photoUrl != '' ||
-                                      photoUrl != '-'
-                                  ? Image.file(
-                                      File(
-                                          photoUrl!), // Display the image without adding it as an asset
-                                      fit: BoxFit.cover,
-                                    )
-                                  : Image.asset('assets/ml.jpg',
-                                      fit: BoxFit.cover)),
+                              child: Image.file(
+                                File(
+                                    photoUrl!), // Display the image without adding it as an asset
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return Image.asset(
+                                    errorPhotoUrl,
+                                    fit: BoxFit.cover,
+                                  );
+                                },
+                              )),
                           Padding(
                             padding:
                                 const EdgeInsets.only(left: 10.0, bottom: 10),
@@ -631,11 +644,11 @@ class _GradeCardState extends State<GradeCard> {
                                         fontWeight: FontWeight.bold),
                                   ),
                                   Text(
-                                    '$className',
+                                    _className,
                                     style: const TextStyle(fontSize: 16),
                                   ),
                                   Text(
-                                    '$schoolName',
+                                    schoolName,
                                     style: const TextStyle(fontSize: 16),
                                   ),
                                 ],
@@ -647,21 +660,25 @@ class _GradeCardState extends State<GradeCard> {
                             height: 150,
                             child: Align(
                               alignment: Alignment.topCenter,
-                              child: PopupMenuButton(
-                                itemBuilder: (BuildContext context) {
-                                  return [
-                                    PopupMenuItem(
-                                      child: const Text('Edit'),
-                                      onTap: () {
-                                        setState(() {
-                                          _enableEdit = true;
-                                        });
-                                        // Implement edit functionality here
-                                      },
+                              child: Column(
+                                children: [
+                                  IconButton(
+                                    tooltip: 'Edit Student Details',
+                                    onPressed: () {
+                                      setState(() {
+                                        _enableEdit = true;
+                                      });
+                                    },
+                                    icon: const Icon(
+                                      Icons.edit_rounded,
                                     ),
-                                    PopupMenuItem(
-                                      child: const Text('Delete'),
-                                      onTap: () async {
+                                  ),
+                                  SizedBox(
+                                    height: 10,
+                                  ),
+                                  IconButton(
+                                      tooltip: 'Delete Student',
+                                      onPressed: () async {
                                         // Implement delete functionality here
 
                                         showDialog(
@@ -712,9 +729,8 @@ class _GradeCardState extends State<GradeCard> {
                                           },
                                         );
                                       },
-                                    ),
-                                  ];
-                                },
+                                      icon: const Icon(Icons.delete_rounded))
+                                ],
                               ),
                             ),
                           ),
@@ -856,16 +872,17 @@ class _GradeCardState extends State<GradeCard> {
                               SizedBox(
                                   width: 100,
                                   height: 120,
-                                  child: photoUrl != null ||
-                                          photoUrl != '' ||
-                                          photoUrl != '-'
-                                      ? Image.file(
-                                          File(
-                                              photoUrl!), // Display the image without adding it as an asset
-                                          fit: BoxFit.cover,
-                                        )
-                                      : Image.asset('assets/ml.jpg',
-                                          fit: BoxFit.cover)),
+                                  child: Image.file(
+                                    File(
+                                        photoUrl!), // Display the image without adding it as an asset
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Image.asset(
+                                        errorPhotoUrl,
+                                        fit: BoxFit.cover,
+                                      );
+                                    },
+                                  )),
                               if (_enableEdit)
                                 Positioned(
                                   right: 0,
@@ -942,9 +959,9 @@ class _GradeCardState extends State<GradeCard> {
                                         width: 150,
                                         child: TextField(
                                           controller: schoolController,
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 18),
+                                          // style: const TextStyle(
+                                          //     fontWeight: FontWeight.bold,
+                                          //     fontSize: 18),
                                           decoration: InputDecoration(
                                             enabled: _enableEdit,
                                             label: const Text('School'),
@@ -966,30 +983,36 @@ class _GradeCardState extends State<GradeCard> {
                                         )),
                                     const Spacer(),
                                     SizedBox(
-                                        width: 150,
-                                        child: TextField(
-                                          controller: streamController,
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 18),
-                                          decoration: InputDecoration(
-                                            enabled: _enableEdit,
-                                            label: const Text('Stream'),
-                                            border: const UnderlineInputBorder(
-                                                borderSide: BorderSide.none),
-                                            enabledBorder:
-                                                const UnderlineInputBorder(
+                                        width: 210,
+                                        child: DropdownButtonFormField<String>(
+                                          decoration: const InputDecoration(
+                                            focusedBorder: OutlineInputBorder(
                                               borderSide: BorderSide(
-                                                  color: Colors
-                                                      .grey), // Bottom border when enabled
+                                                  color: Colors.grey),
                                             ),
-                                            focusedBorder:
-                                                const UnderlineInputBorder(
-                                              borderSide: BorderSide(
-                                                  color: Colors
-                                                      .grey), // Bottom border when enabled
-                                            ),
+                                            border: InputBorder.none,
                                           ),
+                                          value:
+                                              _streamName, // Default to first item if no selection
+                                          items:
+                                              STREAM_NAMES.map((String value) {
+                                            return DropdownMenuItem<String>(
+                                              value: value,
+                                              child: Text(
+                                                value,
+                                                style: const TextStyle(
+                                                    fontWeight:
+                                                        FontWeight.normal),
+                                              ),
+                                            );
+                                          }).toList(),
+                                          onChanged: (String? newValue) {
+                                            setState(() {
+                                              if (newValue != null) {
+                                                _streamName = newValue;
+                                              }
+                                            });
+                                          },
                                         )),
                                   ],
                                 ),
@@ -998,17 +1021,6 @@ class _GradeCardState extends State<GradeCard> {
                           ),
                         ],
                       ),
-                      const Row(
-                        children: [
-                          SizedBox(
-                            width: 120,
-                          ),
-                          Spacer(),
-                        ],
-                      ),
-                      const SizedBox(
-                        height: 20,
-                      ),
                       Row(
                         children: [
                           const SizedBox(
@@ -1016,160 +1028,168 @@ class _GradeCardState extends State<GradeCard> {
                           ),
                           SizedBox(
                             width: 150,
-                            height: 50,
-                            child: DropdownButton(
-                                hint: const Text("Gender"),
-                                value: genderController.text,
-                                items: [
-                                  const DropdownMenuItem(
-                                    child: Text('M'),
-                                    value: 'M',
-                                  ),
-                                  const DropdownMenuItem(
-                                      child: Text('F'), value: 'F'),
-                                  const DropdownMenuItem(
-                                    child: Text('Other'),
-                                    value: 'Other',
-                                  )
-                                ],
-                                onChanged: (value) {
-                                  genderController.text = value!;
-                                }),
+                            child: TextField(
+                              controller: parentPhoneController,
+                              // style: const TextStyle(
+                              //     fontWeight: FontWeight.bold, fontSize: 18),
+                              decoration: InputDecoration(
+                                enabled: _enableEdit,
+                                label: const Text(
+                                  'Parent Phone',
+                                ),
+                                border: const UnderlineInputBorder(
+                                    borderSide: BorderSide.none),
+                                enabledBorder: const UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                      color: Colors
+                                          .grey), // Bottom border when enabled
+                                ),
+                                focusedBorder: const UnderlineInputBorder(
+                                  borderSide: BorderSide(
+                                      color: Colors
+                                          .grey), // Bottom border when enabled
+                                ),
+                              ),
+                            ),
                           ),
-                          // SizedBox(
-                          //     width: 150,
-                          //     child: TextField(
-                          //       controller: genderController,
-                          //       style: TextStyle(
-                          //           fontWeight: FontWeight.bold, fontSize: 18),
-                          //       decoration: InputDecoration(
-                          //         enabled: _enableEdit,
-                          //         label: Text('Gender'),
-                          //         border: UnderlineInputBorder(
-                          //             borderSide: BorderSide.none),
-                          //         enabledBorder: UnderlineInputBorder(
-                          //           borderSide: BorderSide(
-                          //               color: Colors
-                          //                   .grey), // Bottom border when enabled
-                          //         ),
-                          //         focusedBorder: UnderlineInputBorder(
-                          //           borderSide: BorderSide(
-                          //               color: Colors
-                          //                   .grey), // Bottom border when enabled
-                          //         ),
-                          //       ),
-                          //     )),
                           const Spacer(),
                           SizedBox(
                               width: 150,
-                              child: TextField(
-                                controller: parentPhoneController,
-                                style: const TextStyle(
-                                    fontWeight: FontWeight.bold, fontSize: 18),
-                                decoration: InputDecoration(
-                                  enabled: _enableEdit,
-                                  label: const Text(
-                                    'Parent Phone',
+                              height: 50,
+                              child: DropdownButtonFormField<String>(
+                                decoration: const InputDecoration(
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: Colors.grey),
                                   ),
-                                  border: const UnderlineInputBorder(
-                                      borderSide: BorderSide.none),
-                                  enabledBorder: const UnderlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: Colors
-                                            .grey), // Bottom border when enabled
-                                  ),
-                                  focusedBorder: const UnderlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: Colors
-                                            .grey), // Bottom border when enabled
-                                  ),
+                                  border: InputBorder.none,
                                 ),
+                                value:
+                                    _gender, // Default to first item if no selection
+                                items: ['M', 'F', 'Other'].map((String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Text(
+                                      value,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.normal),
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    if (newValue != null) {
+                                      _gender = newValue;
+                                    }
+                                  });
+                                },
                               )),
                           const SizedBox(
-                            width: 65,
+                            width: 45,
                           )
                         ],
                       ),
                       const Spacer(),
-                      SizedBox(
-                        child: Align(
-                          alignment: Alignment.bottomRight,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              studentData = {
-                                'student_name': studentNameController.text,
-                                'school_name': schoolController.text,
-                                'parent_phone': parentPhoneController.text,
-                                'gender': genderController.text,
-                                'photo_id': photoUrl
-                              };
-                              var r = _dbHelper.updateStudent(
-                                widget.studentId,
-                                studentData,
-                              );
-                              if (r != 0) {
-                                setState(() {
-                                  _studentName = studentNameController.text;
-                                  _parentPhone = parentPhoneController.text;
-                                  schoolName = schoolController.text;
-                                  _enableEdit = false;
-                                });
+                      Align(
+                        alignment: Alignment.bottomRight,
+                        child: CustomButton(
+                          text: "Save",
+                          onPressed: () async {
+                            String streamId = await _dbHelper.getStreamId(
+                                _streamName, _classId);
+                            studentData = {
+                              'student_name': studentNameController.text,
+                              'school_name': schoolController.text,
+                              'parent_phone': parentPhoneController.text,
+                              'gender': _gender,
+                              'stream_id': streamId,
+                              'photo_id': photoUrl
+                            };
+                            print('Student data: $studentData');
+                            var r = _dbHelper.updateStudent(
+                              widget.studentId,
+                              studentData,
+                            );
+                            if (r != 0) {
+                              setState(() {
+                                _studentName = studentNameController.text;
+                                _parentPhone = parentPhoneController.text;
+                                schoolName = schoolController.text;
+                                _enableEdit = false;
+                              });
 
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Student data updated'),
-                                  ),
-                                );
-                              }
-                            },
-                            child: const Text('Save'),
-                          ),
+                              updateStudentsList();
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Student data updated'),
+                                ),
+                              );
+                            }
+                          },
+                          width: 100,
+                          height: 40,
+                          textColor: Colors.white,
                         ),
+                      ),
+                      const SizedBox(
+                        height: 250,
                       )
                     ],
                   ),
           ),
-          Container(
+          SizedBox(
             width: _screenWidth * .36,
-            height: 550,
+            height: 480,
+            // decoration: BoxDecoration(
+            //   border: Border.all(color: Colors.grey.withOpacity(0.3)),
+            //   borderRadius: BorderRadius.circular(8.0),
+            //   color: Theme.of(context).cardColor,
+            // ),
             child: Stack(
               children: [
-                Center(
-                  child: Container(
-                    height: 480,
-                    width: 550,
-                    child: _radarData.length > 0
-                        ? RadarChartWidget(
-                            subjectsData: _radarData,
-                          )
-                        : const SizedBox(),
+                Positioned(
+                  left: 70,
+                  child: Center(
+                    child: SizedBox(
+                      height: 480,
+                      width: 480,
+                      child: _radarData.isNotEmpty
+                          ? RadarChartWidget(
+                              subjectsData: _radarData,
+                            )
+                          : const SizedBox(),
+                    ),
                   ),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 15,
-                      height: 15,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.green, // Assign color
+                Positioned(
+                  bottom: 20,
+                  left: 20,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 15,
+                        height: 15,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.green, // Assign color
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Text('Average'),
-                    const SizedBox(width: 20),
-                    Container(
-                      width: 15,
-                      height: 15,
-                      decoration: const BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: Colors.blue, // Assign color
+                      const SizedBox(width: 8),
+                      const Text('Average'),
+                      const SizedBox(width: 20),
+                      Container(
+                        width: 15,
+                        height: 15,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.blue, // Assign color
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    const Text('Current'),
-                  ],
+                      const SizedBox(width: 8),
+                      const Text('Current'),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -1223,22 +1243,19 @@ class _GradeCardState extends State<GradeCard> {
                       mainAxisAlignment: MainAxisAlignment.start,
                       children: [
                         SizedBox(
-                          width: 80,
-                          height: 100,
-                          child: photoUrl != null ||
-                                  photoUrl != '' ||
-                                  photoUrl != '-'
-                              ? Image.file(
-                                  File(
-                                      photoUrl!), // Display the image without adding it as an asset
+                            width: 80,
+                            height: 100,
+                            child: Image.file(
+                              File(
+                                  photoUrl!), // Display the image without adding it as an asset
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Image.asset(
+                                  errorPhotoUrl,
                                   fit: BoxFit.cover,
-                                )
-                              : Image.asset(
-                                  'assets/ml.jpg',
-                                  fit: BoxFit
-                                      .fitHeight, // Fills the circular container
-                                ),
-                        ),
+                                );
+                              },
+                            )),
                         Padding(
                           padding:
                               const EdgeInsets.only(left: 10.0, bottom: 10),
@@ -1256,11 +1273,11 @@ class _GradeCardState extends State<GradeCard> {
                                       fontWeight: FontWeight.bold),
                                 ),
                                 Text(
-                                  '$className',
+                                  _className,
                                   style: const TextStyle(fontSize: 16),
                                 ),
                                 Text(
-                                  '$schoolName',
+                                  schoolName,
                                   style: const TextStyle(fontSize: 16),
                                 ),
                               ],
@@ -1689,16 +1706,37 @@ class _GradeCardState extends State<GradeCard> {
     }
   }
 
+  Future<Directory> getAppImageDirPath() async {
+    // Get the application's documents directory
+    final documentsDir = await getApplicationDocumentsDirectory();
+    final accYear =
+        Provider.of<UserCoice>(context, listen: false).selectedAcadamicYear;
+
+    // Create the `one_zero_insight/data` directory structure
+    final imgDir = Directory(path.join(
+        documentsDir.path, 'one_zero_insight', 'Images', accYear, _className));
+
+    // Ensure the directory structure exists
+    if (!await imgDir.exists()) {
+      await imgDir.create(recursive: true);
+    }
+
+    return imgDir;
+  }
+
   Future<String?> saveImage(String imagePath) async {
     try {
       final documentsDir = await getApplicationDocumentsDirectory();
-      final imageDir = Directory(path.join(documentsDir.path, 'images'));
+      // final imageDir = Directory(path.join(documentsDir.path, 'images'));
+      final imageDir = await getAppImageDirPath();
       if (!await imageDir.exists()) {
         await imageDir.create();
       }
 
       // final fileName = path.basename(imagePath);
-      final fileName = widget.studentId + '.jpg';
+      final fileName =
+          "${_studentName}-${widget.studentId}-${DateTime.timestamp()}.jpg"
+              .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_');
       final savedImagePath = path.join(imageDir.path, fileName);
 
       final imageFile = File(imagePath);
@@ -1720,5 +1758,14 @@ class _GradeCardState extends State<GradeCard> {
       return result.files.single.path;
     }
     return null;
+  }
+
+  void updateStudentsList() async {
+    String classId =
+        Provider.of<ClassPageValues>(context, listen: false).classId;
+    List<Map<String, dynamic>> studentsList =
+        await _dbHelper.getStudentsOfClass(classId);
+    Provider.of<ClassPageValues>(context, listen: false)
+        .setStudentsListToShow(studentsList);
   }
 }
