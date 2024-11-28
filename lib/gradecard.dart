@@ -16,14 +16,14 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
 class GradeCard extends StatefulWidget {
-  final String studentId;
+  String studentId;
 
   GradeCard({Key? key, required this.studentId}) : super(key: key);
   @override
-  _GradeCardState createState() => _GradeCardState();
+  GradeCardState createState() => GradeCardState();
 }
 
-class _GradeCardState extends State<GradeCard> {
+class GradeCardState extends State<GradeCard> {
   String _studentName = '';
   String _parentPhone = '';
   String _className = '';
@@ -48,6 +48,12 @@ class _GradeCardState extends State<GradeCard> {
     super.initState();
 
     fetchStudentData();
+  }
+
+  void updateStudentId(String newStudentId) {
+    setState(() {
+      widget.studentId = newStudentId;
+    });
   }
 
   Future<void> fetchStudentData() async {

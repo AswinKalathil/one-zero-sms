@@ -266,7 +266,7 @@ class _TestAnalyticsState extends State<TestAnalytics> {
                     } else {
                       List<Map<String, dynamic>> result = [];
 
-                      if (widget.testResults.length >= index) {
+                      if (widget.testResults.length > index) {
                         result = widget.testResults[index];
 
                         return Container(

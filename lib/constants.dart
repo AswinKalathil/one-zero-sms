@@ -49,8 +49,8 @@ class Subject {
   Subject(this.name, this.color, this.image);
 }
 
-Subject DEFAULT_SUBJECT =
-    Subject("Default", Colors.grey, 'assets/maths-bg.png');
+Subject DEFAULT_SUBJECT = Subject(
+    "Default", Color.fromARGB(150, 50, 129, 255), 'assets/maths-bg.png');
 
 Map<String, Subject> SUBJECT_OBJECT = {
   'Physics': Subject("Physics", const Color.fromARGB(150, 0, 73, 189),

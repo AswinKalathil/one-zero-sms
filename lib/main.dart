@@ -830,7 +830,7 @@ class _MyHomePageState extends State<MyHomePage>
                                 bottom: 4.sp,
                                 left: 4.sp,
                                 child: SizedBox(
-                                  width: 50,
+                                  width: 60,
                                   height: 25,
                                   child: Row(
                                     children: [

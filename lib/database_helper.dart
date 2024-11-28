@@ -131,7 +131,8 @@ class DatabaseHelper {
 
   Future<List<Map<String, dynamic>>> getClasses(String selected_year) async {
     final db = await database;
-    String query = 'SELECT * FROM class_table WHERE academic_year = ?';
+    String query =
+        'SELECT * FROM class_table WHERE academic_year = ? ORDER BY last_modified ; ';
 
     // Fetching the classes from the table for the specified academic year
     var results = await db.rawQuery(
@@ -406,7 +407,7 @@ JOIN (SELECT id, student_name
       JOIN 
         subject_table sub ON ss.subject_id = sub.id
       WHERE 
-        ss.stream_id = (SELECT stream_id FROM student_table WHERE id = ?);
+        ss.stream_id = (SELECT stream_id FROM student_table WHERE id = ?) ;
     ''';
 
       final result = await db.rawQuery(query, [studentId]);
@@ -719,7 +720,6 @@ WHERE
       }
 
       double avg = results[0]['average_percentage'] as double;
-
       return avg;
     } catch (e) {
       // Handle any exceptions that occur
@@ -732,7 +732,7 @@ WHERE
   Future<int> getMaxId(String tableName) async {
     final db = await database;
 
-    String query = 'SELECT MAX(id) AS max_id FROM $tableName;';
+    String query = 'SELECT count(*) AS max_id FROM $tableName;';
 
     List<Map<String, dynamic>> result = await db.rawQuery(query);
 
@@ -740,24 +740,6 @@ WHERE
       return result[0]['max_id'] as int;
     } else {
       int maxId = 0;
-
-      if (tableName == 'class_table') {
-        maxId = 1000;
-      } else if (tableName == 'subject_table') {
-        maxId = 2000;
-      } else if (tableName == 'stream_table') {
-        maxId = 3000;
-      } else if (tableName == 'student_table') {
-        maxId = 4000;
-      } else if (tableName == 'test_table') {
-        maxId = 5000;
-      } else if (tableName == 'test_score_table') {
-        maxId = 6000;
-      } else if (tableName == 'stream_subjects_table') {
-        maxId = 7000;
-      } else {
-        maxId = 0;
-      }
 
       return maxId;
     }

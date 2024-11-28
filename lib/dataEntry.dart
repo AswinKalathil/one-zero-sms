@@ -35,7 +35,9 @@ class _DataEntryPageState extends State<DataEntryPage> {
     headers = widget.metadata.columnNames; // Initialize headers
     columnLengths = widget.metadata.columnLengths;
     // setMaxId();
-    for (var i = 0; i < 1; i++) {
+    initializeStreamNames(widget.classId);
+
+    for (var i = 0; i < 10; i++) {
       _addNewRow();
     }
   }
@@ -64,11 +66,11 @@ class _DataEntryPageState extends State<DataEntryPage> {
       rowTextEditingControllers.add(controllers);
       focusNodes.add(nodes);
 
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (nodes.isNotEmpty) {
-          FocusScope.of(context).requestFocus(nodes[1]);
-        }
-      });
+      // WidgetsBinding.instance.addPostFrameCallback((_) {
+      //   if (nodes.isNotEmpty) {
+      //     FocusScope.of(context).requestFocus(nodes[1]);
+      //   }
+      // });
     });
   }
 
@@ -77,6 +79,9 @@ class _DataEntryPageState extends State<DataEntryPage> {
 
     int insertionSuccess = 0;
     for (var row in rowTextEditingControllers) {
+      if (row['Student Name']?.text.isEmpty ?? false) {
+        continue;
+      }
       if (row.values.any((controller) => controller.text.isEmpty)) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -88,44 +93,19 @@ class _DataEntryPageState extends State<DataEntryPage> {
       }
     }
 
-    List<Map<String, String>> data = rowTextEditingControllers.map((row) {
-      return row
-          .map((key, controller) => MapEntry(key, controller.text.trim()));
-    }).toList();
-    // Insert data to the database
+    List<Map<String, String>> data = rowTextEditingControllers
+        .where((row) =>
+            row['Student Name']?.text.isNotEmpty ?? false) // Filter rows
+        .map((row) =>
+            row.map((key, controller) => MapEntry(key, controller.text.trim())))
+        .toList();
 
-    if (widget.metadata.tableName == 'class_table') {
-      // var check1 = -1;
-      // var check2 = -1;
-      // // prepare data for class table
-      // var subjectId = await dbHelper.getMaxId('subject_table');
-      // for (var row in data) {
-      //   // Insert data to the database
-      //   Map<String, dynamic> classData = {
-      //     'id': row['ID']!,
-      //     'class_name': row['Class Name']!,
-      //     'academic_year': row['Academic Year']!,
-      //   };
-      //   check1 = await dbHelper.insertToTable('class_table', classData);
-      //   var subjects = row['Subjects']!.split(',');
-      //   for (var subject in subjects) {
-      //     Map<String, dynamic> subjectData = {
-      //       'id': subjectId,
-      //       'subject_name': subject,
-      //       'class_id': row['ID']!,
-      //     };
-      //     check2 = await dbHelper.insertToTable('subject_table', subjectData);
-      //     subjectId++;
-      //   }
-      // }
-      // if (check1 == -1 && check2 == -1) {
-      //   insertionSuccess = 0;
-      // } else {
-      //   insertionSuccess = 1;
-      // }
-    } else if (widget.metadata.tableName == 'student_table') {
+    // Insert data to the database
+    int insertedCount = 0;
+    if (widget.metadata.tableName == 'student_table') {
       var uuid = Uuid();
-      print("Student table data $data");
+      // print("Student table data $data");
+
       for (var row in data) {
         String straemId =
             await dbHelper.getStreamId(row['Stream Name']!, widget.classId);
@@ -155,6 +135,7 @@ class _DataEntryPageState extends State<DataEntryPage> {
           insertionSuccess = 0;
         } else {
           insertionSuccess = 1;
+          insertedCount++;
         }
       }
     }
@@ -169,8 +150,8 @@ class _DataEntryPageState extends State<DataEntryPage> {
     } else {
       // setMaxId();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Data submitted successfully!'),
+        SnackBar(
+          content: Text('$insertedCount Students Enrolled successfully!'),
           backgroundColor: Colors.green,
         ),
       );
@@ -233,14 +214,23 @@ class _DataEntryPageState extends State<DataEntryPage> {
   }
 
   void loadData(List<Map<String, dynamic>> importedData) {
-    if (!rowTextEditingControllers.isNotEmpty) {
-      _addNewRow();
-    }
+    int currentRowIndex = 0;
+
     for (var row in importedData) {
-      rowTextEditingControllers.last.forEach((key, controller) {
-        if (row[key] != null) controller.text = row[key].toString();
+      // If currentRowIndex exceeds available rows, add a new row
+      if (currentRowIndex >= rowTextEditingControllers.length) {
+        _addNewRow();
+      }
+
+      // Populate the existing or newly added row
+      var currentRow = rowTextEditingControllers[currentRowIndex];
+      currentRow.forEach((key, controller) {
+        if (controller.text.isEmpty && row[key] != null) {
+          controller.text = row[key].toString();
+        }
       });
-      if (row != importedData.last) _addNewRow();
+
+      currentRowIndex++;
     }
   }
 
@@ -465,7 +455,9 @@ class _DataEntryPageState extends State<DataEntryPage> {
                                   onSubmitted: (value) {
                                     if (value.length == 10) {
                                       // Move to the next focus node if input is valid (10 digits)
-                                      _addNewRow();
+                                      focusNodes[rowIndex][cellIndex].unfocus();
+                                      focusNodes[rowIndex][cellIndex + 1]
+                                          .requestFocus();
                                     } else {
                                       // Show error if input is not valid (not 10 digits)
                                       focusNodes[rowIndex][cellIndex]
@@ -526,7 +518,12 @@ class _DataEntryPageState extends State<DataEntryPage> {
                                             rowTextEditingControllers[rowIndex]
                                                     [header]!
                                                 .text = newValue;
-                                            _addNewRow();
+                                            if (rowIndex ==
+                                                rowTextEditingControllers
+                                                        .length -
+                                                    1) {
+                                              _addNewRow();
+                                            }
                                             focusNodes[rowIndex + 1][1]
                                                 .requestFocus();
                                           }
