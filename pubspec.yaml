@@ -58,6 +58,7 @@ dependencies:
   path: ^1.8.3 # For path manipulation
   pdf: ^3.9.0 # For creating PDF files
   screenshot: ^3.0.0
+  printing: ^5.12.4
 
 dev_dependencies:
   flutter_test:

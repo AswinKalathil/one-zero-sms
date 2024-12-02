@@ -310,7 +310,8 @@ JOIN (SELECT id, student_name
     final db = await database;
     String query = '''
     SELECT 
-      Distinct sub.id as subject_id,sub.subject_name,
+      Distinct sub.id as subject_id,
+      sub.subject_name,
       c.id AS class_id
     FROM 
       subject_table sub

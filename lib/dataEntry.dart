@@ -214,7 +214,36 @@ class _DataEntryPageState extends State<DataEntryPage> {
   }
 
   void loadData(List<Map<String, dynamic>> importedData) {
-    int currentRowIndex = 0;
+    int currentRowIndex;
+    bool rowEmpty = false;
+
+    for (currentRowIndex = 0;
+        currentRowIndex < rowTextEditingControllers.length;
+        currentRowIndex++) {
+      Map<String, TextEditingController> rowTextEditingController =
+          rowTextEditingControllers[currentRowIndex];
+
+      rowEmpty = true; // Assume the row is empty unless proven otherwise
+
+      for (var entry in rowTextEditingController.entries) {
+        var key = entry.key; // The key (String)
+        var controller = entry.value; // The TextEditingController
+
+        // Check if text is not empty and the key is not "ID" or "Stream Name"
+        if (controller.text.isNotEmpty && key != "ID" && key != "Stream Name") {
+          rowEmpty = false; // Row is not empty if condition is met
+          break; // Exit loop once we find non-empty text
+        }
+      }
+
+      if (rowEmpty) {
+        break; // Exit outer loop when a row with all empty controllers or "ID" or "Stream Name" key is found
+      }
+    }
+
+    if (!rowEmpty) {}
+
+    // int currentRowIndex = rowTextEditingControllers.length - 1;
 
     for (var row in importedData) {
       // If currentRowIndex exceeds available rows, add a new row

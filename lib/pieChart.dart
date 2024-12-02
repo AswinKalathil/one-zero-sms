@@ -381,12 +381,84 @@ class RadarChartPainter extends CustomPainter {
 
       path.close();
       canvas.drawPath(path, graphPaint);
-      canvas.drawPath(path, graphOutlinePaint);
+      if (index == 0) {
+        var dashArray = [5.0, 5.0]; // [dash length, gap length]
+        _drawDashedLine(canvas, path, graphOutlinePaint, dashArray);
+      } else {
+        canvas.drawPath(path, graphOutlinePaint);
+      }
     });
+  }
+
+  void _drawDashedLine(
+      Canvas canvas, Path path, Paint paint, List<double> dashArray) {
+    var dashPath = Path();
+    for (var pathMetric in path.computeMetrics()) {
+      var distance = 0.0;
+      final totalLength = pathMetric.length;
+      var isDash = true;
+      while (distance < totalLength) {
+        final length = dashArray[isDash ? 0 : 1];
+        if (isDash) {
+          dashPath.addPath(
+            pathMetric.extractPath(distance, distance + length),
+            Offset.zero,
+          );
+        }
+        distance += length;
+        isDash = !isDash;
+      }
+    }
+    canvas.drawPath(dashPath, paint);
   }
 
   @override
   bool shouldRepaint(RadarChartPainter oldDelegate) {
     return oldDelegate.fraction != fraction;
+  }
+}
+
+class LegendItem extends StatelessWidget {
+  final Color color;
+  final bool isDotted;
+  final String label;
+
+  const LegendItem({
+    required this.color,
+    required this.isDotted,
+    required this.label,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        // Line representation
+        Container(
+          width: 30, // Length of the line
+          height: 4, // Thickness of the line
+          child: isDotted
+              ? Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: List.generate(
+                    3, // Number of dots
+                    (index) => Container(
+                      width: 6, // Width of each dot
+                      height: 4, // Height of each dot
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.rectangle,
+                      ),
+                    ),
+                  ),
+                )
+              : Container(
+                  color: color,
+                ),
+        ),
+        SizedBox(width: 8), // Space between line and text
+        Text(label),
+      ],
+    );
   }
 }

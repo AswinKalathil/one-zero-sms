@@ -18,6 +18,7 @@ import 'package:pdf/pdf.dart';
 import 'package:provider/provider.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:screenshot/screenshot.dart';
+import 'package:printing/printing.dart';
 
 class ClassDetailPage extends StatefulWidget {
   final String className;
@@ -84,6 +85,9 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
 
   void setAllSubjects() async {
     _classSubjects = (await _dbHelper.getClassSubjects(widget.classId))!;
+    setState(() {
+      _classSubjects = _classSubjects;
+    });
   }
 
   void _onSelected(String criteria) {
@@ -247,6 +251,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                           _printSelected = false;
                           _markAttendance = false;
                           _studentId = '';
+                          _allSubjects = [];
+
                           classPageValues.setShowGradeCard(false);
                         });
                       },
@@ -498,12 +504,14 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                               Padding(
                                                 padding:
                                                     const EdgeInsets.all(10),
-                                                child: Text(
-                                                  _resultTitle,
-                                                  style: const TextStyle(
-                                                      fontSize: 24,
-                                                      fontWeight:
-                                                          FontWeight.bold),
+                                                child: FittedBox(
+                                                  child: Text(
+                                                    _resultTitle,
+                                                    style: const TextStyle(
+                                                        fontSize: 20,
+                                                        fontWeight:
+                                                            FontWeight.bold),
+                                                  ),
                                                 ),
                                                 // child: switch (resultBoardIndex) {
                                                 //   3 => Text(
@@ -748,6 +756,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                                         print(
                                                             "Print Reports tapped!:\n printing ${selectedIds.length} reports");
                                                         // Add logic for printing reports
+                                                        triggerPdfGeneration(
+                                                            true);
                                                       },
                                                       child: Container(
                                                         margin: const EdgeInsets
@@ -806,7 +816,8 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                                         print(
                                                             "save Reports tapped!:\n printing ${selectedIds.length} reports");
 
-                                                        triggerPdfGeneration();
+                                                        triggerPdfGeneration(
+                                                            false);
                                                         // Add logic for printing reports
                                                         classPageValues
                                                             .setShowGradeCard(
@@ -859,7 +870,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                                                       ),
                                                     ),
                                                   ),
-                                                  SizedBox(
+                                                  const SizedBox(
                                                     height: 2,
                                                   ),
                                                   if (_isSaving)
@@ -1307,14 +1318,16 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                             _studentId = '';
                             Provider.of<ClassPageValues>(context, listen: false)
                                 .setShowGradeCard(false);
+                            _allSubjects = [];
+
                             return;
                           }
                           _studentId = student['id'];
                           Provider.of<ClassPageValues>(context, listen: false)
                               .setShowGradeCard(true);
+                          setAnalyticsStudentId(_studentId);
                         });
                       }
-                      setAnalyticsStudentId(_studentId);
                     },
                     onTap: () {
                       if (_showActions) {
@@ -1335,14 +1348,16 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                             _studentId = '';
                             Provider.of<ClassPageValues>(context, listen: false)
                                 .setShowGradeCard(false);
+                            _allSubjects = [];
+
                             return;
                           }
                           _studentId = student['id'];
                           Provider.of<ClassPageValues>(context, listen: false)
                               .setShowGradeCard(true);
+                          setAnalyticsStudentId(_studentId);
                         });
                       }
-                      setAnalyticsStudentId(_studentId);
                     },
                   ),
                 ),
@@ -1354,17 +1369,21 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     );
   }
 
-  Future<void> triggerPdfGeneration() async {
+  Future<void> triggerPdfGeneration(bool isPrint) async {
     _savedCount = 0;
     _progress = 0.0;
-    String? directoryPath = await _pickDirectory();
+    String? directoryPath;
+    if (!isPrint)
+      directoryPath = await _pickDirectory();
+    else
+      directoryPath = '';
 
     for (var studentId in List.from(selectedIds)) {
       setState(() {
         _radarData.clear();
         _isRadarDataAvailable = false;
       });
-      await generatePDF(directoryPath!, studentId);
+      await generatePDF(directoryPath!, studentId, isPrint);
 
       setState(() {
         _progress = (_savedCount + 1) / selectedIds.length;
@@ -1906,7 +1925,7 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                   ),
                 ),
               ),
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1916,40 +1935,23 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
                     children: [
                       Row(
                         children: [
-                          Container(
-                            width: 15,
-                            height: 15,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.green, // Assign color
-                            ),
+                          LegendItem(
+                            color: Colors.green,
+                            isDotted: true,
+                            label: 'Average',
                           ),
-                          const SizedBox(width: 8),
-                          const Text('Average'),
-                          const SizedBox(width: 20),
-                        ],
-                      ),
-                      const SizedBox(
-                        height: 20,
-                      ),
-                      Row(
-                        children: [
-                          Container(
-                            width: 15,
-                            height: 15,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.blue, // Assign color
-                            ),
+                          SizedBox(width: 16),
+                          LegendItem(
+                            color: Colors.blue,
+                            isDotted: false,
+                            label: 'Latest',
                           ),
-                          const SizedBox(width: 8),
-                          const Text('Current'),
                         ],
                       ),
                     ],
                   ),
-                  const Spacer(),
-                  const Column(
+                  Spacer(),
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
@@ -2002,12 +2004,14 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
     );
   }
 
-  Future<void> generatePDF(String directoryPath, String idForPdf) async {
+  Future<void> generatePDF(
+      String directoryPath, String idForPdf, bool isPrint) async {
     await fetchStudentData(idForPdf);
     if (_studentName.isEmpty) {
       return;
     }
-    if (directoryPath == null || directoryPath.isEmpty) return; // User canceled
+    if ((directoryPath == null || directoryPath.isEmpty) && !isPrint)
+      return; // User canceled
 
     // Generate a unique file name for each student
     String timestamp = DateTime.now()
@@ -2063,7 +2067,14 @@ class _ClassDetailPageState extends State<ClassDetailPage> {
       final outputFile = File(outputPath);
 
       try {
-        await outputFile.writeAsBytes(await pdf.save());
+        if (isPrint) {
+          await Printing.layoutPdf(
+            onLayout: (PdfPageFormat format) async => pdf.save(),
+          );
+        } else {
+          await outputFile.writeAsBytes(await pdf.save());
+        }
+
         // Show success feedback
 
         setState(() {

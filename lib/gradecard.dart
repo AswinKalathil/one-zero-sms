@@ -497,7 +497,7 @@ class GradeCardState extends State<GradeCard> {
                   ],
                 ),
               ),
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -507,40 +507,23 @@ class GradeCardState extends State<GradeCard> {
                     children: [
                       Row(
                         children: [
-                          Container(
-                            width: 15,
-                            height: 15,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.green, // Assign color
-                            ),
+                          LegendItem(
+                            color: Colors.green,
+                            isDotted: true,
+                            label: 'Average',
                           ),
-                          const SizedBox(width: 8),
-                          const Text('Average'),
-                          const SizedBox(width: 20),
-                        ],
-                      ),
-                      const SizedBox(
-                        height: 20,
-                      ),
-                      Row(
-                        children: [
-                          Container(
-                            width: 15,
-                            height: 15,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.blue, // Assign color
-                            ),
+                          SizedBox(width: 16),
+                          LegendItem(
+                            color: Colors.blue,
+                            isDotted: false,
+                            label: 'Latest',
                           ),
-                          const SizedBox(width: 8),
-                          const Text('Current'),
                         ],
                       ),
                     ],
                   ),
-                  const Spacer(),
-                  const Column(
+                  Spacer(),
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
@@ -679,7 +662,7 @@ class GradeCardState extends State<GradeCard> {
                                       Icons.edit_rounded,
                                     ),
                                   ),
-                                  SizedBox(
+                                  const SizedBox(
                                     height: 10,
                                   ),
                                   IconButton(
@@ -1167,33 +1150,23 @@ class GradeCardState extends State<GradeCard> {
                     ),
                   ),
                 ),
-                Positioned(
+                const Positioned(
                   bottom: 20,
                   left: 20,
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        width: 15,
-                        height: 15,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.green, // Assign color
-                        ),
+                      LegendItem(
+                        color: Colors.green,
+                        isDotted: true,
+                        label: 'Average',
                       ),
-                      const SizedBox(width: 8),
-                      const Text('Average'),
-                      const SizedBox(width: 20),
-                      Container(
-                        width: 15,
-                        height: 15,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.blue, // Assign color
-                        ),
+                      SizedBox(width: 16),
+                      LegendItem(
+                        color: Colors.blue,
+                        isDotted: false,
+                        label: 'Latest',
                       ),
-                      const SizedBox(width: 8),
-                      const Text('Current'),
                     ],
                   ),
                 ),
@@ -1457,7 +1430,7 @@ class GradeCardState extends State<GradeCard> {
                   ),
                 ),
               ),
-              Row(
+              const Row(
                 mainAxisAlignment: MainAxisAlignment.start,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1467,40 +1440,23 @@ class GradeCardState extends State<GradeCard> {
                     children: [
                       Row(
                         children: [
-                          Container(
-                            width: 15,
-                            height: 15,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.green, // Assign color
-                            ),
+                          LegendItem(
+                            color: Colors.green,
+                            isDotted: true,
+                            label: 'Average',
                           ),
-                          const SizedBox(width: 8),
-                          const Text('Average'),
-                          const SizedBox(width: 20),
-                        ],
-                      ),
-                      const SizedBox(
-                        height: 20,
-                      ),
-                      Row(
-                        children: [
-                          Container(
-                            width: 15,
-                            height: 15,
-                            decoration: const BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: Colors.blue, // Assign color
-                            ),
+                          SizedBox(width: 16),
+                          LegendItem(
+                            color: Colors.blue,
+                            isDotted: false,
+                            label: 'Latest',
                           ),
-                          const SizedBox(width: 8),
-                          const Text('Current'),
                         ],
                       ),
                     ],
                   ),
-                  const Spacer(),
-                  const Column(
+                  Spacer(),
+                  Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(

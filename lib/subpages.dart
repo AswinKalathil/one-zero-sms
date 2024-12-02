@@ -20,6 +20,10 @@ class _SetiingsPageState extends State<SetiingsPage> {
   final FocusNode subjectFocusNode = FocusNode();
   bool _autoSync = false;
   bool _isDarkMode = false;
+  bool _isClassNewSec = true;
+
+  List<Map<String, dynamic>> _classes = [];
+  DatabaseHelper _dbHelper = DatabaseHelper();
 
   List<String> _subjects = [];
 
@@ -29,6 +33,7 @@ class _SetiingsPageState extends State<SetiingsPage> {
     SharedPreferences.getInstance().then((prefs) {
       _autoSync = prefs.getBool('autoSync') ?? false;
       _isDarkMode = prefs.getBool('isDarkMode') ?? false;
+
       setState(() {});
     });
     // Request focus when the widget is first built
@@ -70,80 +75,132 @@ class _SetiingsPageState extends State<SetiingsPage> {
                 ),
                 child: Column(
                   children: [
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 35, vertical: 8),
-                        child: Text(
-                          "Appearance",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 20),
+                    Container(
+                      width: 700,
+                      height: 70,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).scaffoldBackgroundColor,
+                        border: Border.all(
+                          width: 0,
+                          color: Colors.transparent,
                         ),
                       ),
-                    ),
-                    Container(
-                      width: 600,
-                      height: 100,
-                      // decoration: BoxDecoration(
-                      //   color: Theme.of(context).cardColor,
-                      //   border: Border.all(color: Colors.grey, width: 1),
-                      //   borderRadius: BorderRadius.all(Radius.circular(4)),
-                      // ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          Row(
+                          ToggleButtons(
+                            isSelected: [_isClassNewSec, !_isClassNewSec],
+                            onPressed: (index) async {
+                              _isClassNewSec = index == 0;
+
+                              _classes = await _dbHelper.getClasses(
+                                widget.academic_year,
+                              );
+
+                              setState(() {});
+                            },
+
+                            fillColor:
+                                Colors.transparent, // Removes the fill color
+                            borderColor: Colors
+                                .transparent, // Removes the default border color
+                            selectedBorderColor:
+                                Colors.transparent, // Removes selected border
+                            borderWidth: 0, // Ensures no borders are visible
+                            renderBorder:
+                                false, // Disables all borders entirely
                             children: [
-                              Padding(
-                                padding: const EdgeInsets.all(20.0),
-                                child: IconButton(
-                                  icon: _isDarkMode
-                                      ? const Icon(Icons.wb_sunny)
-                                      : const Icon(Icons.nightlight_round),
-                                  tooltip: _isDarkMode ? "Light" : "Dark",
-                                  onPressed: () {
-                                    setState(() {
-                                      _isDarkMode = !_isDarkMode;
-                                      SharedPreferences.getInstance()
-                                          .then((prefs) {
-                                        prefs.setBool(
-                                            'isDarkMode', _isDarkMode);
-                                      });
-                                      userChoice.toggleDarkMode();
-                                    });
-                                  },
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: _isClassNewSec
+                                      ? Theme.of(context).cardColor
+                                      : Theme.of(context)
+                                          .scaffoldBackgroundColor,
+                                  border: _isClassNewSec
+                                      ? Border(
+                                          left: BorderSide(
+                                              color: Theme.of(context)
+                                                  .dividerColor),
+                                          right: BorderSide(
+                                              color: Theme.of(context)
+                                                  .dividerColor),
+                                          top: BorderSide(
+                                              color: Theme.of(context)
+                                                  .dividerColor),
+                                        )
+                                      : null,
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(
+                                        _isClassNewSec ? 10 : 0),
+                                    topRight: Radius.circular(
+                                        _isClassNewSec ? 10 : 0),
+                                  ),
+                                ),
+                                width: 200,
+                                height: 50,
+                                child: const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 35, vertical: 0),
+                                    child: Text(
+                                      "New Class",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 20),
+                                    ),
+                                  ),
                                 ),
                               ),
-                              Text(_isDarkMode ? "Light Mode" : "Dark Mode",
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  )),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: !_isClassNewSec
+                                      ? Theme.of(context).cardColor
+                                      : Theme.of(context)
+                                          .scaffoldBackgroundColor,
+                                  border: !_isClassNewSec
+                                      ? Border(
+                                          left: BorderSide(
+                                              color: Theme.of(context)
+                                                  .dividerColor),
+                                          right: BorderSide(
+                                              color: Theme.of(context)
+                                                  .dividerColor),
+                                          top: BorderSide(
+                                              color: Theme.of(context)
+                                                  .dividerColor),
+                                        )
+                                      : null,
+                                  borderRadius: BorderRadius.only(
+                                    topLeft: Radius.circular(
+                                        !_isClassNewSec ? 10 : 0),
+                                    topRight: Radius.circular(
+                                        !_isClassNewSec ? 10 : 0),
+                                  ),
+                                ),
+                                width: 200,
+                                height: 50,
+                                child: const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal: 35, vertical: 0),
+                                    child: Text(
+                                      "Edit Class",
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 20),
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ],
-                          )
+                          ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
-                    const Divider(
-                      color: Colors.grey,
-                      thickness: 5,
-                    ),
-                    // Second Section: New Class
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 35, vertical: 8),
-                        child: Text(
-                          "New Class",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 20),
-                        ),
-                      ),
-                    ),
-                    createClassPopup(context),
+
+                    _isClassNewSec
+                        ? createClassPopup(context)
+                        : editClasses(context),
                     const SizedBox(height: 20),
                     const Divider(
                       color: Colors.grey,
@@ -203,6 +260,65 @@ class _SetiingsPageState extends State<SetiingsPage> {
                         ],
                       ),
                     ),
+                    const Divider(
+                      color: Colors.grey,
+                      thickness: 5,
+                    ),
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Padding(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 35, vertical: 8),
+                        child: Text(
+                          "Appearance",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 20),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      width: 600,
+                      height: 100,
+                      // decoration: BoxDecoration(
+                      //   color: Theme.of(context).cardColor,
+                      //   border: Border.all(color: Colors.grey, width: 1),
+                      //   borderRadius: BorderRadius.all(Radius.circular(4)),
+                      // ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(20.0),
+                                child: IconButton(
+                                  icon: _isDarkMode
+                                      ? const Icon(Icons.wb_sunny)
+                                      : const Icon(Icons.nightlight_round),
+                                  tooltip: _isDarkMode ? "Light" : "Dark",
+                                  onPressed: () {
+                                    setState(() {
+                                      _isDarkMode = !_isDarkMode;
+                                      SharedPreferences.getInstance()
+                                          .then((prefs) {
+                                        prefs.setBool(
+                                            'isDarkMode', _isDarkMode);
+                                      });
+                                      userChoice.toggleDarkMode();
+                                    });
+                                  },
+                                ),
+                              ),
+                              Text(_isDarkMode ? "Light Mode" : "Dark Mode",
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  )),
+                            ],
+                          )
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -251,6 +367,7 @@ class _SetiingsPageState extends State<SetiingsPage> {
           ),
           Expanded(
             child: GridView.builder(
+              addRepaintBoundaries: false,
               physics: const NeverScrollableScrollPhysics(),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 4, // 4 columns
@@ -405,5 +522,123 @@ class _SetiingsPageState extends State<SetiingsPage> {
         ),
       );
     }
+  }
+
+  int _hoveredIndex = -1;
+
+  Widget editClasses(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 20),
+      width: 700,
+      height: 430,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Text(
+              'Classes in ${widget.academic_year}',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 330,
+            child: ListView.builder(
+              itemBuilder: (context, index) {
+                return MouseRegion(
+                  onEnter: (_) {
+                    setState(() {
+                      _hoveredIndex = index;
+                    });
+                  },
+                  onExit: (_) {
+                    setState(() {
+                      _hoveredIndex = -1; // Reset hover index
+                    });
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.all(8),
+                    width: 400,
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 25,
+                          height: 50,
+                          decoration: BoxDecoration(
+                              color: Theme.of(context).primaryColor,
+                              borderRadius: BorderRadius.only(
+                                topLeft: Radius.circular(4),
+                                bottomLeft: Radius.circular(4),
+                              )),
+                        ),
+                        Container(
+                          width: 400,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).cardColor,
+                            border: Border.all(color: Colors.grey, width: 1),
+                            borderRadius: BorderRadius.only(
+                              topRight: Radius.circular(4),
+                              bottomRight: Radius.circular(4),
+                            ),
+                          ),
+                          child: ListTile(
+                            title: Text(_classes[index]['class_name']),
+                            hoverColor: Colors.grey.shade200,
+                            trailing: _hoveredIndex == index
+                                ? IconButton(
+                                    onPressed: () {
+                                      // Delete the class
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) {
+                                          return AlertDialog(
+                                            title: const Text('Delete Class'),
+                                            content: Text(
+                                                'Are you sure you want to delete  ${_classes[index]['class_name']}?\n\nThis Class Contains ${_classes[index]['studentsCount']} Students'),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () {
+                                                  Navigator.of(context).pop();
+                                                },
+                                                child: const Text('Cancel'),
+                                              ),
+                                              TextButton(
+                                                onPressed: () async {
+                                                  await _dbHelper
+                                                      .deleteFromTable(
+                                                          "class_table",
+                                                          _classes[index]
+                                                              ['id']);
+                                                  _classes.removeAt(index);
+                                                  setState(() {});
+                                                  Navigator.of(context).pop();
+                                                },
+                                                child: const Text('Delete'),
+                                              ),
+                                            ],
+                                          );
+                                        },
+                                      );
+                                    },
+                                    icon: Icon(Icons.delete),
+                                    tooltip: 'Delete',
+                                  )
+                                : null,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+              itemCount: _classes.length,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
