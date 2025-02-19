@@ -434,13 +434,20 @@ class _SetiingsPageState extends State<SetiingsPage> {
               CustomButton(
                 text: 'Save',
                 onPressed: () {
-                  if (classNameController.text.isEmpty || _subjects.isEmpty) {
+                  if (classNameController.text.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
                             'Class name cannot be empty ${classNameController.text}  ${_subjects.length}   '),
                       ),
                     );
+                    if (_subjects.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Subjects cannot be empty'),
+                        ),
+                      );
+                    }
                     return;
                   } else {
                     saveClass(classNameController.text, widget.academic_year,

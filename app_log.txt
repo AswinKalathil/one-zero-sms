@@ -1075,3 +1075,89 @@
 [2024-12-02T07:44:49.250765] Error pushing local changes to cloud: SocketException: Connection timed out, host: localhost, port: 3306
 [2024-12-02T07:44:49.266975] Stored last sync time: 2024-12-02 02:14:49.253770Z
 [2024-12-02T07:44:49.390994] Total sync duration: 2 seconds
+[2024-12-06T12:48:07.141046] App started
+[2024-12-06T12:48:51.890637] App started
+[2024-12-06T12:50:20.455339] App started
+[2024-12-06T12:50:39.619603] App started
+[2024-12-06T12:52:03.796157] App started
+[2024-12-06T12:52:08.799093] App started
+[2024-12-06T12:52:13.171613] App started
+[2024-12-06T12:52:18.243512] App started
+[2024-12-06T12:55:44.660902] App started
+[2024-12-06T12:55:55.853017] App started
+[2024-12-06T12:56:11.908790] App started
+[2024-12-06T12:56:14.114167] App started
+[2024-12-06T12:56:16.946079] App started
+[2024-12-06T12:56:19.426031] App started
+[2024-12-06T12:56:22.873959] App started
+[2024-12-10T21:39:21.094980] App started
+[2025-02-19T03:22:59.687726] App started
+[2025-02-19T03:23:02.351922] Starting database sync...
+[2025-02-19T03:23:02.376926] Last sync time: 2025-02-17 16:19:53.309877Z
+[2025-02-19T03:23:03.513006] Error connecting to MySQL or syncing data: SocketException: Connection timed out, host: localhost, port: 3306
+[2025-02-19T03:23:04.554083] Error pushing local changes to cloud: SocketException: Connection timed out, host: localhost, port: 3306
+[2025-02-19T03:23:04.628090] Stored last sync time: 2025-02-18 21:53:04.559087Z
+[2025-02-19T03:23:04.633090] Total sync duration: 2 seconds
+[2025-02-19T04:12:23.597207] App started
+[2025-02-19T04:12:25.702988] Starting database sync...
+[2025-02-19T04:12:25.725775] Last sync time: 2025-02-18 21:53:04.559087Z
+[2025-02-19T04:12:26.850898] Error connecting to MySQL or syncing data: SocketException: Connection timed out, host: localhost, port: 3306
+[2025-02-19T04:12:27.875169] Error pushing local changes to cloud: SocketException: Connection timed out, host: localhost, port: 3306
+[2025-02-19T04:12:27.949117] Stored last sync time: 2025-02-18 22:42:27.939003Z
+[2025-02-19T04:12:27.961641] Total sync duration: 2 seconds
+[2025-02-19T04:33:56.002388] App started
+[2025-02-19T04:33:57.472664] Starting database sync...
+[2025-02-19T04:33:57.537401] Last sync time: 2025-02-18 22:42:27.939003Z
+[2025-02-19T04:33:58.688045] Error connecting to MySQL or syncing data: SocketException: Connection timed out, host: localhost, port: 3306
+[2025-02-19T04:33:59.749935] Error pushing local changes to cloud: SocketException: Connection timed out, host: localhost, port: 3306
+[2025-02-19T04:34:00.038829] Stored last sync time: 2025-02-18 23:04:00.038291Z
+[2025-02-19T04:34:00.038829] Total sync duration: 2 seconds
+[2025-02-19T04:36:49.236718] App started
+[2025-02-19T04:36:50.965025] Starting database sync...
+[2025-02-19T04:36:50.995022] Last sync time: 2025-02-18 23:04:00.038291Z
+[2025-02-19T04:36:52.130820] Error connecting to MySQL or syncing data: SocketException: Connection timed out, host: localhost, port: 3306
+[2025-02-19T04:36:53.212109] Error pushing local changes to cloud: SocketException: Connection timed out, host: localhost, port: 3306
+[2025-02-19T04:36:53.230149] Stored last sync time: 2025-02-18 23:06:53.221148Z
+[2025-02-19T04:36:53.356157] Total sync duration: 2 seconds
+[2025-02-19T04:44:49.899182] App started
+[2025-02-19T04:44:51.462359] Starting database sync...
+[2025-02-19T04:44:51.492361] Last sync time: 2025-02-18 23:06:53.221148Z
+[2025-02-19T04:44:52.742990] Error connecting to MySQL or syncing data: SocketException: Connection timed out, host: localhost, port: 3306
+[2025-02-19T04:44:53.762342] Error pushing local changes to cloud: SocketException: Connection timed out, host: localhost, port: 3306
+[2025-02-19T04:44:53.764461] Stored last sync time: 2025-02-18 23:14:53.764461Z
+[2025-02-19T04:44:53.780085] Total sync duration: 2 seconds
+[2025-02-19T04:48:42.331323] App started
+[2025-02-19T04:48:43.888358] Starting database sync...
+[2025-02-19T04:48:43.918896] Last sync time: 2025-02-18 23:14:53.764461Z
+[2025-02-19T04:48:45.065250] Error connecting to MySQL or syncing data: SocketException: Connection timed out, host: localhost, port: 3306
+[2025-02-19T04:48:46.133999] Error pushing local changes to cloud: SocketException: Connection timed out, host: localhost, port: 3306
+[2025-02-19T04:48:46.145] Stored last sync time: 2025-02-18 23:18:46.136Z
+[2025-02-19T04:48:46.160009] Total sync duration: 2 seconds
+[2025-02-19T05:58:59.389174] App started
+[2025-02-19T05:59:00.908204] Starting database sync...
+[2025-02-19T05:59:00.934205] Last sync time: 2025-02-18 23:18:46.136Z
+[2025-02-19T05:59:02.038770] Error connecting to MySQL or syncing data: SocketException: Connection timed out, host: localhost, port: 3306
+[2025-02-19T05:59:03.081724] Error pushing local changes to cloud: SocketException: Connection timed out, host: localhost, port: 3306
+[2025-02-19T05:59:03.101536] Stored last sync time: 2025-02-19 00:29:03.093017Z
+[2025-02-19T05:59:03.117164] Total sync duration: 2 seconds
+[2025-02-19T06:08:43.779783] App started
+[2025-02-19T06:08:45.212360] Starting database sync...
+[2025-02-19T06:08:45.236361] Last sync time: 2025-02-19 00:29:03.093017Z
+[2025-02-19T06:08:46.406225] Error connecting to MySQL or syncing data: SocketException: Connection timed out, host: localhost, port: 3306
+[2025-02-19T06:08:47.704914] Error pushing local changes to cloud: SocketException: Connection timed out, host: localhost, port: 3306
+[2025-02-19T06:08:47.766922] Stored last sync time: 2025-02-19 00:38:47.759919Z
+[2025-02-19T06:08:47.785922] Total sync duration: 2 seconds
+[2025-02-19T06:56:26.819112] App started
+[2025-02-19T06:56:28.464246] Starting database sync...
+[2025-02-19T06:56:28.489249] Last sync time: 2025-02-19 00:38:47.759919Z
+[2025-02-19T06:56:29.692790] Error connecting to MySQL or syncing data: SocketException: Connection timed out, host: localhost, port: 3306
+[2025-02-19T06:56:30.736714] Error pushing local changes to cloud: SocketException: Connection timed out, host: localhost, port: 3306
+[2025-02-19T06:56:30.750720] Stored last sync time: 2025-02-19 01:26:30.741712Z
+[2025-02-19T06:56:30.766713] Total sync duration: 2 seconds
+[2025-02-19T07:16:13.912234] App started
+[2025-02-19T07:16:15.556878] Starting database sync...
+[2025-02-19T07:16:15.580876] Last sync time: 2025-02-19 01:26:30.741712Z
+[2025-02-19T07:16:16.648400] Error connecting to MySQL or syncing data: SocketException: Connection timed out, host: localhost, port: 3306
+[2025-02-19T07:16:17.671553] Error pushing local changes to cloud: SocketException: Connection timed out, host: localhost, port: 3306
+[2025-02-19T07:16:17.687552] Stored last sync time: 2025-02-19 01:46:17.674549Z
+[2025-02-19T07:16:17.717550] Total sync duration: 2 seconds

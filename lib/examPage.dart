@@ -6,7 +6,13 @@ import 'package:intl/intl.dart';
 import 'package:one_zero/custom-widgets.dart';
 
 import 'package:one_zero/database_helper.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
+
+import 'package:excel/excel.dart' as ex;
+import 'dart:io';
+import 'package:path/path.dart' as path;
+import 'package:file_picker/file_picker.dart';
 
 class ExamScoreSheet extends StatefulWidget {
   final String classId;
@@ -807,9 +813,9 @@ class ExamEntry extends StatefulWidget {
 class _ExamEntryState extends State<ExamEntry> {
   late List<String> headers;
   late List<double> columnLengths;
-  List<TextEditingController> rowTextEditingControllers = [];
+  List<TextEditingController> _scoreControllers = [];
   List<FocusNode> focusNodes = [];
-  List<Map<String, dynamic>> _studentScoreList = [];
+  List<Map<String, dynamic>> _studentNamesList = [];
   Map<String, dynamic> testDetails = {};
 
   DatabaseHelper dbHelper = DatabaseHelper();
@@ -824,7 +830,7 @@ class _ExamEntryState extends State<ExamEntry> {
     fetchStudents(widget.test_id);
     super.initState();
 
-    if (rowTextEditingControllers.isEmpty) {
+    if (_scoreControllers.isEmpty) {
       // Delay for 2 seconds before showing the "No Students Found" message
       Future.delayed(const Duration(seconds: 1), () {
         if (mounted) {
@@ -844,22 +850,21 @@ class _ExamEntryState extends State<ExamEntry> {
     // print("Test id $testId");
     // studentList = await dbHelper.getStudentIdsAndNamesByTestId(testId);
 
-    _studentScoreList = await dbHelper.getTestDataSheetForUpdate(testId);
+    _studentNamesList = await dbHelper.getTestDataSheetForUpdate(testId);
     testDetails = await dbHelper.getTestDetails(testId);
-    // print(" Students length ${_studentScoreList.length}");
+    // print(" Students length ${_studentNamesList.length}");
     if (mounted) {
       setState(() {
-        rowTextEditingControllers =
-            List.generate(_studentScoreList.length, (index) {
+        _scoreControllers = List.generate(_studentNamesList.length, (index) {
           return TextEditingController();
         });
-        focusNodes.addAll(List.generate(_studentScoreList.length, (index) {
+        focusNodes.addAll(List.generate(_studentNamesList.length, (index) {
           return FocusNode();
         }));
 
-        for (int i = 0; i < _studentScoreList.length; i++) {
-          rowTextEditingControllers[i].text =
-              _studentScoreList[i]['score']?.toString() ?? "";
+        for (int i = 0; i < _studentNamesList.length; i++) {
+          _scoreControllers[i].text =
+              _studentNamesList[i]['score']?.toString() ?? "";
         }
 
         maxScore = testDetails['max_mark'];
@@ -875,7 +880,7 @@ class _ExamEntryState extends State<ExamEntry> {
 
   @override
   Widget build(BuildContext context) {
-    return rowTextEditingControllers.isNotEmpty
+    return _scoreControllers.isNotEmpty
         ? buildDataTable() // Function that contains your DataTable widget
         : _isLoading
             ? const Center(
@@ -925,23 +930,28 @@ class _ExamEntryState extends State<ExamEntry> {
         children: [
           SizedBox(
             width: 550,
+            height: 50,
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Text(
-                  "${testDetails['subject_name']} ",
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(
-                  width: 10,
-                ),
-                Text(
-                  "${testDetails['topic']} ",
-                  style: const TextStyle(
-                      fontSize: 20, fontStyle: FontStyle.normal),
+                SizedBox(
+                  width: 200,
+                  height: 50,
+                  child: Text(
+                    "${testDetails['subject_name']} ",
+                    textAlign: TextAlign.left,
+                    style: const TextStyle(
+                      fontSize: 30,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
                 const Spacer(),
+                Container(
+                    width: 100,
+                    child: Text(
+                        "${testDetails['test_date'].toString().substring(0, 10)}")),
                 Align(
                   alignment: Alignment.centerRight,
                   child: Padding(
@@ -956,16 +966,54 @@ class _ExamEntryState extends State<ExamEntry> {
                         textColor: Colors.white),
                   ),
                 ),
+                PopupMenuButton(
+                  iconColor: Colors.grey.shade800,
+                  iconSize: 15,
+                  itemBuilder: (context) {
+                    return [
+                      const PopupMenuItem(
+                        child: Text("Create Sheet"),
+                        value: "export",
+                      ),
+                      const PopupMenuItem(
+                        child: Text("Upload Scores"),
+                        value: "import",
+                      ),
+                    ];
+                  },
+                  onSelected: (value) async {
+                    if (value == "export") {
+                      // create excel sheet for the test with 2 columns student name and score
+                      await createExcelSheet(
+                          _studentNamesList,
+                          testDetails['subject_name'],
+                          testDetails['topic'],
+                          testDetails['test_date']);
+                    } else if (value == "import") {
+                      // upload scores
+                      uploadScores();
+                    }
+                  },
+                ),
               ],
             ),
           ),
           Row(
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              Container(
-                  width: 400,
+              SizedBox(
+                width: 300,
+                height: 30,
+                child: FittedBox(
+                  alignment: Alignment.centerLeft,
                   child: Text(
-                      "${testDetails['test_date'].toString().substring(0, 10)}")),
+                    "${testDetails['topic']} ",
+                    textAlign: TextAlign.left,
+                    style: const TextStyle(
+                        fontSize: 14, fontStyle: FontStyle.normal),
+                  ),
+                ),
+              ),
             ],
           ),
           Divider(
@@ -999,10 +1047,10 @@ class _ExamEntryState extends State<ExamEntry> {
                     );
                   }).toList(),
                   rows: List<DataRow>.generate(
-                    _studentScoreList.length,
+                    _studentNamesList.length,
                     (rowIndex) {
-                      var student = _studentScoreList[rowIndex];
-                      var controller = rowTextEditingControllers[rowIndex];
+                      var student = _studentNamesList[rowIndex];
+                      var controller = _scoreControllers[rowIndex];
                       return DataRow(
                         color:
                             MaterialStateProperty.resolveWith<Color>((states) {
@@ -1051,9 +1099,156 @@ class _ExamEntryState extends State<ExamEntry> {
     );
   }
 
+  String formatDate(String timestamp) {
+    DateTime dateTime = DateTime.parse(timestamp);
+    return "${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}";
+  }
+
+  Future<void> createExcelSheet(List<Map<String, dynamic>> studentScores,
+      String subjectName, String chapterName, String date) async {
+    var excel = ex.Excel.createExcel();
+    ex.Sheet sheetObject = excel['Sheet1']; // Use default sheet
+
+    // Define styles
+    var headerCellStyle = ex.CellStyle(
+      bold: true,
+      fontColorHex: "#FFFFFF",
+      fontSize: 12,
+      backgroundColorHex: "#4F81BD",
+      horizontalAlign: ex.HorizontalAlign.Center,
+      verticalAlign: ex.VerticalAlign.Center,
+    );
+
+    var titleCellStyle = ex.CellStyle(
+      bold: true,
+      fontSize: 14,
+      fontColorHex: "#FFFFFF",
+      backgroundColorHex: "#356854",
+      horizontalAlign: ex.HorizontalAlign.Center,
+      verticalAlign: ex.VerticalAlign.Center,
+    );
+
+    // Merge Title Row (A1:B2) to cover two rows
+    sheetObject.merge(
+      ex.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0), // A1
+      ex.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: 1), // B2
+    );
+
+    sheetObject.setColWidth(0, 40);
+    sheetObject.setColWidth(1, 20);
+
+    // Set Title Text in Merged Cell
+    var formatedDate = formatDate(date);
+    var titleCell = sheetObject
+        .cell(ex.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0));
+    titleCell.value = "$subjectName - $chapterName ($formatedDate) ";
+    titleCell.cellStyle = titleCellStyle;
+
+    // Add headers (A3, B3)
+    var headerRow = ['Student Name', 'Score'];
+    for (int col = 0; col < headerRow.length; col++) {
+      var cell = sheetObject
+          .cell(ex.CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 2));
+      cell.value = headerRow[col]; // Set header text
+      cell.cellStyle = headerCellStyle; // Apply styling
+    }
+
+    // Add student scores starting from row 4 (A4, B4)
+    for (int row = 0; row < studentScores.length; row++) {
+      sheetObject.cell(
+          ex.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row + 3))
+        ..value = studentScores[row]['student_name'].toString();
+
+      sheetObject.cell(
+          ex.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row + 3))
+        ..value = studentScores[row]['score'];
+    }
+
+    // Auto-adjust column width
+    sheetObject.setColAutoFit(0);
+    sheetObject.setColAutoFit(1);
+
+    // Save the file
+    final documentsDir = await getApplicationDocumentsDirectory();
+    final examScoreSheet =
+        Directory(path.join(documentsDir.path, 'one_zero_insight', 'Exams'));
+
+    String outputPath = path.join(examScoreSheet.path,
+        "${subjectName}_${chapterName}_${formatDate(date)}.xlsx");
+
+    var vall = File(outputPath)
+      ..createSync(recursive: true)
+      ..writeAsBytesSync(excel.encode()!);
+
+    if (vall.existsSync()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Excel file created successfully!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      print('✅ Excel file created at: $outputPath');
+    }
+  }
+
+  void uploadScores() async {
+    // Step 1: Pick an Excel file
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['xlsx'],
+    );
+
+    if (result == null) {
+      print('❌ No file selected.');
+      return;
+    }
+
+    File file = File(result.files.single.path!);
+
+    // Step 2: Read Excel file
+    var bytes = file.readAsBytesSync();
+    var excel = ex.Excel.decodeBytes(bytes);
+
+    // Assuming data is in the first sheet
+    var sheet = excel.tables.keys.isNotEmpty
+        ? excel.tables[excel.tables.keys.first]!
+        : null;
+
+    if (sheet == null) {
+      print('❌ No data found in Excel file.');
+      return;
+    }
+
+    // Step 3: Extract student names and scores from Excel
+    Map<String, String> scoreMap = {}; // Map<Student Name, Score>
+
+    for (var row in sheet.rows.skip(1)) {
+      // Skip header row
+      if (row.length >= 2 && row[0] != null && row[1] != null) {
+        String studentName = row[0]!.value.toString().trim();
+        String score = row[1]!.value.toString().trim();
+        scoreMap[studentName] = score;
+      }
+    }
+
+    // Step 4: Update TextEditingControllers
+
+    for (int i = 0; i < _studentNamesList.length; i++) {
+      String studentName = _studentNamesList[i]['student_name'];
+      int? score = int.tryParse(scoreMap[studentName] ?? '');
+      print("$studentName: ${scoreMap[studentName]}");
+      if (scoreMap.containsKey(studentName)) {
+        _scoreControllers[i].text = scoreMap[studentName]!;
+      }
+    }
+
+    setState(() {}); // Refresh UI
+    print('✅ Scores updated successfully.');
+  }
+
   void saveExamScores() async {
     bool abort = false;
-    var data = rowTextEditingControllers.map((controller) {
+    var data = _scoreControllers.map((controller) {
       if (controller.text.isNotEmpty) {
         if (int.parse(controller.text) > maxScore ||
             int.parse(controller.text) < 0) {
@@ -1074,13 +1269,13 @@ class _ExamEntryState extends State<ExamEntry> {
     if (abort) return;
     DatabaseHelper dbHelper = DatabaseHelper();
 
-    print(_studentScoreList);
+    print(_studentNamesList);
 
-    for (int i = 0; i < _studentScoreList.length; i++) {
-      print("${_studentScoreList[i]['test_score_id']} :${data[i]} ");
+    for (int i = 0; i < _studentNamesList.length; i++) {
+      print("${_studentNamesList[i]['test_score_id']} :${data[i]} ");
 
       var changes = await dbHelper
-          .updateTestScore(_studentScoreList[i]['test_score_id'], {
+          .updateTestScore(_studentNamesList[i]['test_score_id'], {
         'score': data[i].toString(),
       });
       // print("Changes $changes");

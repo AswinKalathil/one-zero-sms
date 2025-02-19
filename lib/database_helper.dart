@@ -7,6 +7,8 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
   static Database? _database;
@@ -29,6 +31,7 @@ class DatabaseHelper {
     final documentsDir = await getApplicationDocumentsDirectory();
 
     // Create the `one_zero_insight/data` directory structure
+
     final dataDir =
         Directory(path.join(documentsDir.path, 'one_zero_insight', 'data'));
 
@@ -37,8 +40,22 @@ class DatabaseHelper {
       await dataDir.create(recursive: true);
     }
 
+    String dbFileName = '';
+ dbFileName = 'one_zero_sqlite_db_file.db';
+
+    // final prefs = await SharedPreferences.getInstance();
+    // int usedCount = prefs.getInt('usedCount') ?? 0;
+    // prefs.setInt("usedCount", usedCount + 1);
+    // if (usedCount < 3) {
+    //   dbFileName = 'one_zero_sqlite_db_file.db';
+    // } else {
+    //   int cc = usedCount ~/ 10;
+
+    //   dbFileName = 'one_zero_sqlite_db_file_${cc}.db';
+    // }
+
     // Define the database file path within the `data` directory
-    final databasePath = path.join(dataDir.path, 'one_zero_sqlite_db_file.db');
+    final databasePath = path.join(dataDir.path, dbFileName);
 
     return databasePath;
   }

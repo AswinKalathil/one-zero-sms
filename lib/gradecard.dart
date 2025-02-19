@@ -89,6 +89,11 @@ class GradeCardState extends State<GradeCard> {
           if (!File(photoUrl).existsSync()) {
             errorPhotoUrl =
                 (_gender == 'M' ? 'assets/ml.jpg' : 'assets/fl.jpg');
+
+            if (_gender == 'Other') {
+              errorPhotoUrl = 'assets/ml.jpg';
+              photoUrl = 'assets/ml.jpg';
+            }
           }
 
           studentNameController.text = _studentName;
