@@ -988,6 +988,7 @@ class _ExamEntryState extends State<ExamEntry> {
                           _studentNamesList,
                           testDetails['subject_name'],
                           testDetails['topic'],
+                          testDetails['max_mark'].toString(),
                           testDetails['test_date']);
                     } else if (value == "import") {
                       // upload scores
@@ -1104,8 +1105,12 @@ class _ExamEntryState extends State<ExamEntry> {
     return "${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}";
   }
 
-  Future<void> createExcelSheet(List<Map<String, dynamic>> studentScores,
-      String subjectName, String chapterName, String date) async {
+  Future<void> createExcelSheet(
+      List<Map<String, dynamic>> studentScores,
+      String subjectName,
+      String chapterName,
+      String maxMark,
+      String date) async {
     var excel = ex.Excel.createExcel();
     ex.Sheet sheetObject = excel['Sheet1']; // Use default sheet
 
@@ -1145,7 +1150,7 @@ class _ExamEntryState extends State<ExamEntry> {
     titleCell.cellStyle = titleCellStyle;
 
     // Add headers (A3, B3)
-    var headerRow = ['Student Name', 'Score'];
+    var headerRow = ['Student Name', 'Score(${maxMark})'];
     for (int col = 0; col < headerRow.length; col++) {
       var cell = sheetObject
           .cell(ex.CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 2));
@@ -1250,8 +1255,8 @@ class _ExamEntryState extends State<ExamEntry> {
     bool abort = false;
     var data = _scoreControllers.map((controller) {
       if (controller.text.isNotEmpty) {
-        if (int.parse(controller.text) > maxScore ||
-            int.parse(controller.text) < 0) {
+        if (double.parse(controller.text) > maxScore ||
+            double.parse(controller.text) < 0) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Score should be within $maxScore'),
@@ -1272,7 +1277,13 @@ class _ExamEntryState extends State<ExamEntry> {
     print(_studentNamesList);
 
     for (int i = 0; i < _studentNamesList.length; i++) {
-      print("${_studentNamesList[i]['test_score_id']} :${data[i]} ");
+      if (data[i] is String && data[i].contains('.')) {
+        double? parsedValue = double.tryParse(data[i]);
+        if (parsedValue != null) {
+          data[i] = parsedValue.round().toString();
+          print("Rounded value: ${data[i]}");
+        }
+      }
 
       var changes = await dbHelper
           .updateTestScore(_studentNamesList[i]['test_score_id'], {
@@ -1371,10 +1382,10 @@ class StudentDataCell extends StatelessWidget {
             decoration: const InputDecoration(
               border: InputBorder.none,
             ),
-            keyboardType: TextInputType.number,
-            inputFormatters: <TextInputFormatter>[
-              FilteringTextInputFormatter.digitsOnly,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
             ],
+            keyboardType: TextInputType.numberWithOptions(decimal: true),
             onSubmitted: (value) {
               int? score = int.tryParse(value);
 
